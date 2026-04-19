@@ -15,13 +15,13 @@ export class PageProject extends LitElement {
   @state() private _showDone = false;
 
   static styles = css`
-    :host { display: block; padding: 28px 32px; overflow-y: auto; height: 100%; }
+    :host { display: block; padding: 28px 28px; overflow-y: auto; height: 100%; }
 
     .header {
       display: flex;
       align-items: center;
       gap: 14px;
-      margin-bottom: 28px;
+      margin-bottom: 24px;
     }
 
     .color-dot {
@@ -29,76 +29,93 @@ export class PageProject extends LitElement {
       height: 14px;
       border-radius: 50%;
       flex-shrink: 0;
+      box-shadow: 0 0 10px currentColor;
     }
 
     h1 {
-      font-size: 22px;
-      font-weight: 700;
-      color: #e8eaf0;
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--color-text);
       flex: 1;
+      letter-spacing: -0.5px;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .toggle-done {
       font-size: 12px;
-      color: rgba(232,234,240,0.4);
-      cursor: pointer;
-      padding: 4px 10px;
-      border-radius: 6px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      transition: color 120ms, background 120ms;
-    }
-
-    .toggle-done:hover { color: #e8eaf0; background: rgba(255,255,255,0.08); }
-
-    .task-form-wrap {
-      margin-bottom: 20px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 12px;
-      padding: 14px;
-    }
-
-    .task-list {
+      color: var(--color-text-muted);
+      padding: 5px 12px;
+      border-radius: 8px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      transition: color var(--transition-fast), background var(--transition-fast);
+      white-space: nowrap;
+      flex-shrink: 0;
       display: flex;
-      flex-direction: column;
-      gap: 4px;
+      align-items: center;
+      gap: 6px;
     }
+
+    .toggle-done:hover { color: var(--color-text); background: var(--glass-bg-raised); }
+
+    .add-card {
+      margin-bottom: 20px;
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-card);
+      padding: 16px 18px;
+      box-shadow: var(--glass-shadow);
+    }
+
+    .task-list { display: flex; flex-direction: column; gap: 5px; }
 
     .section-label {
       font-size: 11px;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.7px;
-      color: rgba(232,234,240,0.3);
-      margin: 16px 0 6px;
+      color: var(--color-text-muted);
+      margin: 16px 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .empty {
-      padding: 32px;
+    .empty-state {
+      padding: 40px;
       text-align: center;
-      color: rgba(232,234,240,0.3);
-      font-size: 13px;
+      color: var(--color-text-muted);
+    }
+
+    .empty-state i {
+      font-size: 30px;
+      opacity: 0.2;
+      display: block;
+      margin-bottom: 12px;
     }
 
     /* Skeleton */
     .sk-title {
-      height: 22px;
-      width: 40%;
-      border-radius: 6px;
-      background: rgba(255,255,255,0.08);
+      height: 24px; width: 38%;
+      border-radius: 8px;
+      background: var(--glass-bg);
       animation: shimmer 1.4s ease-in-out infinite;
-      background-image: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%);
+      background-image: var(--shimmer);
       background-size: 200% 100%;
     }
 
     .sk-task {
-      height: 42px;
-      border-radius: 10px;
-      margin-bottom: 4px;
-      background: rgba(255,255,255,0.05);
+      height: 44px;
+      border-radius: 12px;
+      margin-bottom: 5px;
+      background: var(--glass-bg);
       animation: shimmer 1.4s ease-in-out infinite;
-      background-image: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%);
+      background-image: var(--shimmer);
       background-size: 200% 100%;
     }
 
@@ -106,12 +123,15 @@ export class PageProject extends LitElement {
       0% { background-position: -200% 0; }
       100% { background-position: 200% 0; }
     }
+
+    @media (max-width: 768px) {
+      :host { padding: 16px 14px; }
+      h1 { font-size: 20px; }
+    }
   `;
 
   updated(changed: Map<string, unknown>) {
-    if (changed.has('projectId') && this.projectId) {
-      this._load();
-    }
+    if (changed.has('projectId') && this.projectId) this._load();
   }
 
   connectedCallback() {
@@ -159,42 +179,47 @@ export class PageProject extends LitElement {
   render() {
     if (this._loading) {
       return html`
-        <div class="header">
-          <div class="sk-title"></div>
-        </div>
+        <div class="header"><div class="sk-title"></div></div>
         ${[1,2,3,4].map(() => html`<div class="sk-task"></div>`)}
       `;
     }
 
-    if (!this._project) return html`<div class="empty">Project niet gevonden.</div>`;
+    if (!this._project) return html`<div class="empty-state">Project niet gevonden.</div>`;
 
     const active = this._active();
     const done = this._done();
 
     return html`
       <div class="header">
-        <div class="color-dot" style="background:${this._project.color}"></div>
+        <div class="color-dot" style="background:${this._project.color};color:${this._project.color}"></div>
         <h1>${this._project.name}</h1>
         ${done.length > 0 ? html`
           <button class="toggle-done" @click=${() => this._showDone = !this._showDone}>
-            ${this._showDone ? 'Verberg' : 'Toon'} ${done.length} gedaan
+            <i class="fa-solid fa-${this._showDone ? 'eye-slash' : 'eye'}"></i>
+            ${done.length} gedaan
           </button>
         ` : ''}
       </div>
 
-      <div class="task-form-wrap">
+      <div class="add-card">
         <doen-task-form .project=${this._project}></doen-task-form>
       </div>
 
       <div class="task-list">
         ${active.length === 0 && done.length === 0 ? html`
-          <div class="empty">Geen taken. Geniet ervan, het duurt niet lang. 🍺</div>
+          <div class="empty-state">
+            <i class="fa-solid fa-clipboard-list"></i>
+            Geen taken. Voeg er een toe hierboven.
+          </div>
         ` : ''}
 
         ${active.map(t => html`<doen-task .task=${t}></doen-task>`)}
 
         ${this._showDone && done.length > 0 ? html`
-          <div class="section-label">Afgerond (${done.length})</div>
+          <div class="section-label">
+            <i class="fa-solid fa-circle-check"></i>
+            Afgerond (${done.length})
+          </div>
           ${done.map(t => html`<doen-task .task=${t}></doen-task>`)}
         ` : ''}
       </div>
@@ -203,7 +228,5 @@ export class PageProject extends LitElement {
 }
 
 declare global {
-  interface HTMLElementTagNameMap {
-    'page-project': PageProject;
-  }
+  interface HTMLElementTagNameMap { 'page-project': PageProject; }
 }

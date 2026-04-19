@@ -15,85 +15,57 @@ export class DoenTaskForm extends LitElement {
   static styles = css`
     :host { display: block; }
 
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
+    form { display: flex; flex-direction: column; gap: 10px; }
 
-    .row {
-      display: flex;
-      gap: 8px;
-    }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
 
     input[type="text"] {
       flex: 1;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 8px;
-      padding: 9px 14px;
-      color: #e8eaf0;
+      min-width: 140px;
+      padding: 10px 14px;
       font-size: 13px;
-      outline: none;
-      transition: border-color 120ms ease-out;
-    }
-
-    input[type="text"]:focus {
-      border-color: #6366f1;
+      border-radius: 10px;
     }
 
     input[type="date"] {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 8px;
-      padding: 9px 12px;
-      color: #e8eaf0;
+      padding: 10px 12px;
       font-size: 12px;
-      outline: none;
+      border-radius: 10px;
+      min-width: 0;
     }
 
     select {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 8px;
-      padding: 9px 12px;
-      color: #e8eaf0;
+      padding: 10px 12px;
       font-size: 12px;
-      outline: none;
+      border-radius: 10px;
     }
 
     .btn-add {
-      background: #6366f1;
+      background: var(--color-accent);
       color: white;
       border: none;
-      border-radius: 8px;
-      padding: 9px 16px;
+      border-radius: 10px;
+      padding: 10px 18px;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      transition: background 120ms ease-out, transform 120ms ease-out;
+      transition: background var(--transition-fast), transform var(--transition-fast);
       white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-shrink: 0;
     }
 
-    .btn-add:hover:not(:disabled) {
-      background: #818cf8;
-    }
-
-    .btn-add:active:not(:disabled) {
-      transform: scale(0.97);
-    }
-
-    .btn-add:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+    .btn-add:hover:not(:disabled) { background: var(--color-accent-hover); }
+    .btn-add:active:not(:disabled) { transform: scale(0.97); }
+    .btn-add:disabled { opacity: 0.45; cursor: not-allowed; }
   `;
 
   private async _submit(e: Event) {
     e.preventDefault();
     if (!this._title.trim() || this._submitting) return;
     this._submitting = true;
-
     try {
       const task = await api.post<Task>(`/projects/${this.project.id}/tasks`, {
         title: this._title.trim(),
@@ -104,7 +76,7 @@ export class DoenTaskForm extends LitElement {
       this._priority = 'none';
       this._dueDate = '';
       this.dispatchEvent(new CustomEvent<Task>('task-created', { detail: task, bubbles: true, composed: true }));
-      toast.success('Taak aangemaakt! Nu nog uitvoeren... 😅');
+      toast.success('Taak aangemaakt!');
     } catch (e) {
       if (e instanceof ApiError) toast.error(`Aanmaken mislukt: ${e.message}`);
     } finally {
@@ -124,18 +96,17 @@ export class DoenTaskForm extends LitElement {
             ?disabled=${this._submitting}
           />
           <button class="btn-add" type="submit" ?disabled=${this._submitting || !this._title.trim()}>
-            ${this._submitting ? '...' : '+ Toevoegen'}
+            <i class="fa-solid fa-${this._submitting ? 'spinner fa-spin' : 'plus'}"></i>
+            ${this._submitting ? 'Bezig...' : 'Toevoegen'}
           </button>
         </div>
         <div class="row">
-          <select
-            .value=${this._priority}
-            @change=${(e: Event) => this._priority = (e.target as HTMLSelectElement).value as TaskPriority}
-          >
+          <select .value=${this._priority}
+            @change=${(e: Event) => this._priority = (e.target as HTMLSelectElement).value as TaskPriority}>
             <option value="none">Geen prioriteit</option>
             <option value="low">Laag</option>
             <option value="medium">Middel</option>
-            <option value="high">Hoog - brandweer erbij!</option>
+            <option value="high">Hoog</option>
           </select>
           <input
             type="date"
@@ -149,7 +120,5 @@ export class DoenTaskForm extends LitElement {
 }
 
 declare global {
-  interface HTMLElementTagNameMap {
-    'doen-task-form': DoenTaskForm;
-  }
+  interface HTMLElementTagNameMap { 'doen-task-form': DoenTaskForm; }
 }

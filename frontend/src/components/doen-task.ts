@@ -11,78 +11,62 @@ export class DoenTask extends LitElement {
   @state() private _done = false;
 
   static styles = css`
-    :host {
-      display: block;
-    }
+    :host { display: block; }
 
     .task-row {
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 10px 14px;
-      border-radius: 10px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.07);
-      transition: background 220ms ease-out, transform 220ms ease-out, opacity 220ms ease-out;
-      cursor: default;
+      padding: 11px 14px;
+      border-radius: 12px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: background var(--transition-smooth), transform var(--transition-smooth), opacity var(--transition-smooth), border-color var(--transition-fast);
     }
 
     .task-row:hover {
-      background: rgba(255,255,255,0.07);
+      background: var(--glass-bg-raised);
+      border-color: rgba(255,255,255,0.18);
     }
 
-    .task-row.done {
+    .task-row.done-anim {
       opacity: 0;
-      transform: translateX(20px);
+      transform: translateX(16px);
       pointer-events: none;
     }
 
     .check-btn {
-      width: 20px;
-      height: 20px;
+      width: 22px;
+      height: 22px;
       border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.25);
+      border: 2px solid rgba(255,255,255,0.22);
       background: none;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      transition: border-color 120ms ease-out, background 120ms ease-out;
+      transition: border-color var(--transition-fast), background var(--transition-fast), transform var(--transition-fast);
       padding: 0;
     }
 
-    .check-btn:hover {
-      border-color: #10b981;
-    }
+    .check-btn:hover { border-color: var(--color-success); transform: scale(1.1); }
 
     .check-btn.completing {
-      border-color: #10b981;
-      background: rgba(16, 185, 129, 0.15);
-      animation: pulse 600ms ease-in-out;
+      border-color: var(--color-success);
+      background: rgba(16,185,129,0.15);
     }
 
-    .checkmark {
-      stroke-dasharray: 20;
-      stroke-dashoffset: 20;
-      transition: stroke-dashoffset 300ms ease-out;
+    .check-btn i {
+      font-size: 10px;
+      color: var(--color-success);
+      opacity: 0;
+      transition: opacity var(--transition-fast);
     }
 
-    .check-btn.completing .checkmark {
-      stroke-dashoffset: 0;
-    }
-
-    .task-title {
-      flex: 1;
-      font-size: 13px;
-      color: #e8eaf0;
-      line-height: 1.4;
-    }
-
-    .task-title.done-text {
-      text-decoration: line-through;
-      opacity: 0.4;
-    }
+    .check-btn.completing i { opacity: 1; }
 
     .priority-dot {
       width: 6px;
@@ -91,39 +75,53 @@ export class DoenTask extends LitElement {
       flex-shrink: 0;
     }
 
-    .priority-none { background: rgba(255,255,255,0.2); }
-    .priority-low  { background: #10b981; }
-    .priority-medium { background: #f59e0b; }
-    .priority-high { background: #ef4444; }
+    .p-none { background: var(--color-priority-none); }
+    .p-low  { background: var(--color-priority-low); }
+    .p-medium { background: var(--color-priority-medium); }
+    .p-high { background: var(--color-priority-high); box-shadow: 0 0 6px var(--color-priority-high); }
 
-    .due-date {
-      font-size: 11px;
-      color: rgba(232, 234, 240, 0.45);
+    .task-title {
+      flex: 1;
+      font-size: 13px;
+      color: var(--color-text);
+      line-height: 1.4;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
       white-space: nowrap;
     }
 
-    .due-date.overdue {
-      color: #ef4444;
+    .task-title.done-text {
+      text-decoration: line-through;
+      opacity: 0.38;
     }
 
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.2); }
+    .due-date {
+      font-size: 11px;
+      color: var(--color-text-muted);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
     }
+
+    .due-date.overdue {
+      color: var(--color-danger);
+    }
+
+    .due-date i { font-size: 9px; }
   `;
 
   private async _complete() {
     if (this._completing || this.task.status === 'done') return;
     this._completing = true;
-
-    // Optimistic
     const prevStatus = this.task.status;
     this.task = { ...this.task, status: 'done' };
-
     try {
       await api.post(`/tasks/${this.task.id}/complete`, {});
-      setTimeout(() => { this._done = true; }, 300);
-      toast.success('Gedaan! Henk zou trots zijn. 🧹');
+      setTimeout(() => { this._done = true; }, 280);
+      toast.success('Gedaan!');
     } catch (e) {
       this.task = { ...this.task, status: prevStatus };
       this._completing = false;
@@ -131,44 +129,32 @@ export class DoenTask extends LitElement {
     }
   }
 
-  private _formatDue(due?: string): { label: string; overdue: boolean } | null {
+  private _formatDue(due?: string | null): { label: string; overdue: boolean } | null {
     if (!due) return null;
     const d = new Date(due);
-    const now = new Date();
-    const overdue = d < now && this.task.status !== 'done';
-    const label = d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' });
-    return { label, overdue };
+    const overdue = d < new Date() && this.task.status !== 'done';
+    return { label: d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' }), overdue };
   }
 
   render() {
     const isDone = this.task.status === 'done';
     const due = this._formatDue(this.task.due_date);
-
     return html`
-      <div class="task-row ${this._done ? 'done' : ''}">
-        <button
-          class="check-btn ${this._completing ? 'completing' : ''}"
-          @click=${this._complete}
-          title="Markeer als klaar"
-        >
-          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-            <polyline
-              class="checkmark"
-              points="1,4 4,7 9,1"
-              stroke="#10b981"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
+      <div class="task-row ${this._done ? 'done-anim' : ''}">
+        <button class="check-btn ${this._completing ? 'completing' : ''}"
+          @click=${this._complete} title="Markeer als klaar">
+          <i class="fa-solid fa-check"></i>
         </button>
 
-        <span class="priority-dot priority-${this.task.priority}"></span>
+        <span class="priority-dot p-${this.task.priority}"></span>
 
         <span class="task-title ${isDone ? 'done-text' : ''}">${this.task.title}</span>
 
         ${due ? html`
-          <span class="due-date ${due.overdue ? 'overdue' : ''}">${due.label}</span>
+          <span class="due-date ${due.overdue ? 'overdue' : ''}">
+            <i class="fa-solid fa-${due.overdue ? 'triangle-exclamation' : 'clock'}"></i>
+            ${due.label}
+          </span>
         ` : ''}
       </div>
     `;
@@ -176,7 +162,5 @@ export class DoenTask extends LitElement {
 }
 
 declare global {
-  interface HTMLElementTagNameMap {
-    'doen-task': DoenTask;
-  }
+  interface HTMLElementTagNameMap { 'doen-task': DoenTask; }
 }

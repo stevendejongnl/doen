@@ -11,18 +11,24 @@ export class PageToday extends LitElement {
   @state() private _loading = true;
 
   static styles = css`
-    :host { display: block; padding: 28px 32px; overflow-y: auto; height: 100%; }
+    :host {
+      display: block;
+      padding: 28px 28px;
+      overflow-y: auto;
+      height: 100%;
+    }
 
     h1 {
-      font-size: 22px;
-      font-weight: 700;
-      color: #e8eaf0;
-      margin-bottom: 6px;
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--color-text);
+      margin-bottom: 4px;
+      letter-spacing: -0.5px;
     }
 
     .subtitle {
       font-size: 13px;
-      color: rgba(232,234,240,0.4);
+      color: var(--color-text-muted);
       margin-bottom: 28px;
     }
 
@@ -33,7 +39,7 @@ export class PageToday extends LitElement {
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.7px;
-      color: rgba(232,234,240,0.35);
+      color: var(--color-text-muted);
       margin-bottom: 8px;
       display: flex;
       align-items: center;
@@ -41,7 +47,7 @@ export class PageToday extends LitElement {
     }
 
     .badge {
-      background: #ef4444;
+      background: var(--color-danger);
       color: white;
       border-radius: 10px;
       padding: 1px 7px;
@@ -49,28 +55,58 @@ export class PageToday extends LitElement {
       font-weight: 700;
     }
 
-    .task-list { display: flex; flex-direction: column; gap: 4px; }
+    .task-list { display: flex; flex-direction: column; gap: 5px; }
 
-    .empty {
-      padding: 48px;
+    .empty-state {
+      margin-top: 60px;
       text-align: center;
-      color: rgba(232,234,240,0.3);
-      font-size: 14px;
+      color: var(--color-text-muted);
     }
 
+    .empty-state i {
+      font-size: 36px;
+      opacity: 0.25;
+      display: block;
+      margin-bottom: 14px;
+    }
+
+    .empty-state p { font-size: 14px; }
+    .empty-state small { font-size: 12px; opacity: 0.6; }
+
+    .hint {
+      margin-top: 32px;
+      padding: 16px 20px;
+      border-radius: 14px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      font-size: 13px;
+      color: var(--color-text-muted);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .hint i { font-size: 16px; color: var(--color-accent); flex-shrink: 0; }
+
+    /* Skeleton */
     .sk-task {
-      height: 42px;
-      border-radius: 10px;
-      margin-bottom: 4px;
-      background: rgba(255,255,255,0.05);
+      height: 44px;
+      border-radius: 12px;
+      margin-bottom: 5px;
+      background: var(--glass-bg);
       animation: shimmer 1.4s ease-in-out infinite;
-      background-image: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%);
+      background-image: var(--shimmer);
       background-size: 200% 100%;
     }
 
     @keyframes shimmer {
       0% { background-position: -200% 0; }
       100% { background-position: 200% 0; }
+    }
+
+    @media (max-width: 768px) {
+      :host { padding: 20px 16px; }
+      h1 { font-size: 20px; }
     }
   `;
 
@@ -82,8 +118,7 @@ export class PageToday extends LitElement {
   private async _load() {
     this._loading = true;
     try {
-      const tasks = await api.get<Task[]>('/tasks?due_today=true&overdue=true');
-      this._tasks = tasks;
+      this._tasks = await api.get<Task[]>('/tasks?due_today=true&overdue=true');
     } catch (e) {
       if (e instanceof ApiError) toast.error(`Laden mislukt: ${e.message}`);
     } finally {
@@ -92,10 +127,8 @@ export class PageToday extends LitElement {
   }
 
   private _today() {
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    const tom = new Date(now);
-    tom.setDate(tom.getDate() + 1);
+    const now = new Date(); now.setHours(0,0,0,0);
+    const tom = new Date(now); tom.setDate(tom.getDate() + 1);
     return this._tasks.filter(t => {
       if (!t.due_date || t.status === 'done') return false;
       const d = new Date(t.due_date);
@@ -104,19 +137,16 @@ export class PageToday extends LitElement {
   }
 
   private _overdue() {
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
+    const now = new Date(); now.setHours(0,0,0,0);
     return this._tasks.filter(t => {
       if (!t.due_date || t.status === 'done') return false;
       return new Date(t.due_date) < now;
     });
   }
 
-  private _todayLabel() {
-    return new Date().toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' });
-  }
-
   render() {
+    const label = new Date().toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' });
+
     if (this._loading) {
       return html`
         <h1>Vandaag</h1>
@@ -131,34 +161,40 @@ export class PageToday extends LitElement {
     if (today.length === 0 && overdue.length === 0) {
       return html`
         <h1>Vandaag</h1>
-        <p class="subtitle">${this._todayLabel()}</p>
-        <div class="empty">
-          Niets te doen vandaag. Dat is óf heel goed óf je hebt alles vergeten in te plannen. 🤷
+        <p class="subtitle">${label}</p>
+        <div class="empty-state">
+          <i class="fa-solid fa-circle-check"></i>
+          <p>Niets te doen vandaag.</p>
+          <small>Óf je bent super productief, óf je bent alles vergeten in te plannen.</small>
+        </div>
+        <div class="hint">
+          <i class="fa-solid fa-arrow-left"></i>
+          Maak een project aan in de zijbalk om taken toe te voegen.
         </div>
       `;
     }
 
     return html`
       <h1>Vandaag</h1>
-      <p class="subtitle">${this._todayLabel()}</p>
+      <p class="subtitle">${label}</p>
 
       ${overdue.length > 0 ? html`
         <div class="section">
           <div class="section-label">
+            <i class="fa-solid fa-triangle-exclamation" style="color:var(--color-danger)"></i>
             Achterstallig <span class="badge">${overdue.length}</span>
           </div>
-          <div class="task-list">
-            ${overdue.map(t => html`<doen-task .task=${t}></doen-task>`)}
-          </div>
+          <div class="task-list">${overdue.map(t => html`<doen-task .task=${t}></doen-task>`)}</div>
         </div>
       ` : ''}
 
       ${today.length > 0 ? html`
         <div class="section">
-          <div class="section-label">Voor vandaag</div>
-          <div class="task-list">
-            ${today.map(t => html`<doen-task .task=${t}></doen-task>`)}
+          <div class="section-label">
+            <i class="fa-solid fa-sun" style="color:var(--color-warning)"></i>
+            Voor vandaag
           </div>
+          <div class="task-list">${today.map(t => html`<doen-task .task=${t}></doen-task>`)}</div>
         </div>
       ` : ''}
     `;
@@ -166,7 +202,5 @@ export class PageToday extends LitElement {
 }
 
 declare global {
-  interface HTMLElementTagNameMap {
-    'page-today': PageToday;
-  }
+  interface HTMLElementTagNameMap { 'page-today': PageToday; }
 }

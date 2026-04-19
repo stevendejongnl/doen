@@ -1,8 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import type { Project, Group, User } from '../services/types';
-import { api } from '../services/api';
-import { logout } from '../services/api';
+import { api, logout } from '../services/api';
 
 @customElement('doen-sidebar')
 export class DoenSidebar extends LitElement {
@@ -11,6 +10,8 @@ export class DoenSidebar extends LitElement {
   @state() private _projects: Project[] = [];
   @state() private _groups: Group[] = [];
   @state() private _loading = true;
+  @state() private _creatingProject = false;
+  @state() private _newProjectName = '';
 
   static styles = css`
     :host {
@@ -18,35 +19,42 @@ export class DoenSidebar extends LitElement {
       flex-direction: column;
       width: var(--sidebar-width, 260px);
       height: 100%;
-      background: rgba(255,255,255,0.03);
-      border-right: 1px solid rgba(255,255,255,0.08);
-      backdrop-filter: blur(12px);
+      background: var(--glass-bg);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border-right: 1px solid var(--glass-border);
       overflow-y: auto;
       flex-shrink: 0;
     }
 
     .header {
-      padding: 20px 16px 12px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding: 20px 18px 14px;
+      border-bottom: 1px solid var(--glass-border);
     }
 
     .app-name {
-      font-size: 20px;
-      font-weight: 700;
-      color: #e8eaf0;
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--color-text);
       letter-spacing: -0.5px;
     }
 
     .app-tagline {
       font-size: 11px;
-      color: rgba(232,234,240,0.4);
+      color: var(--color-text-muted);
       margin-top: 2px;
     }
 
-    nav { padding: 12px 8px; flex: 1; }
+    nav { padding: 10px 8px; flex: 1; }
 
-    .nav-section {
-      margin-bottom: 20px;
+    .nav-section { margin-bottom: 18px; }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 8px;
+      margin-bottom: 4px;
     }
 
     .section-label {
@@ -54,54 +62,112 @@ export class DoenSidebar extends LitElement {
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.8px;
-      color: rgba(232,234,240,0.35);
-      padding: 0 8px;
-      margin-bottom: 4px;
+      color: var(--color-text-muted);
+    }
+
+    .add-project-btn {
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: var(--color-text-muted);
+      transition: background var(--transition-fast), color var(--transition-fast);
+    }
+
+    .add-project-btn:hover {
+      background: var(--glass-bg-raised);
+      color: var(--color-text);
     }
 
     .nav-item {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 9px;
       padding: 7px 10px;
-      border-radius: 8px;
+      border-radius: 9px;
       cursor: pointer;
       font-size: 13px;
       color: rgba(232,234,240,0.65);
-      transition: background 120ms ease-out, color 120ms ease-out;
-      border: none;
-      background: none;
+      transition: background var(--transition-fast), color var(--transition-fast);
       width: 100%;
       text-align: left;
     }
 
     .nav-item:hover {
-      background: rgba(255,255,255,0.06);
-      color: #e8eaf0;
+      background: var(--glass-bg-raised);
+      color: var(--color-text);
     }
 
     .nav-item.active {
-      background: rgba(99,102,241,0.15);
+      background: rgba(99,102,241,0.18);
       color: #a5b4fc;
     }
 
-    .nav-item .dot {
+    .nav-item i {
+      width: 14px;
+      text-align: center;
+      font-size: 12px;
+      flex-shrink: 0;
+      opacity: 0.7;
+    }
+
+    .nav-item.active i { opacity: 1; }
+
+    .dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
       flex-shrink: 0;
     }
 
-    .skeleton {
-      background: rgba(255,255,255,0.06);
-      border-radius: 6px;
-      margin: 4px 8px;
-      animation: shimmer 1.4s ease-in-out infinite;
-      background-image: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%);
-      background-size: 200% 100%;
+    /* Inline new project form */
+    .new-project-form {
+      display: flex;
+      gap: 6px;
+      padding: 4px 8px;
+      align-items: center;
     }
 
-    .skeleton-item { height: 30px; }
+    .new-project-form input {
+      flex: 1;
+      padding: 5px 10px;
+      font-size: 12px;
+      border-radius: 7px;
+    }
+
+    .new-project-form button {
+      padding: 5px 10px;
+      border-radius: 7px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .btn-confirm {
+      background: var(--color-accent);
+      color: white;
+    }
+
+    .btn-confirm:hover { background: var(--color-accent-hover); }
+
+    .btn-cancel {
+      background: var(--glass-bg-raised);
+      color: var(--color-text-muted);
+      border: 1px solid var(--glass-border);
+    }
+
+    /* Skeleton */
+    .skeleton {
+      height: 28px;
+      border-radius: 8px;
+      margin: 3px 8px;
+      background: var(--glass-bg);
+      animation: shimmer 1.4s ease-in-out infinite;
+      background-image: var(--shimmer);
+      background-size: 200% 100%;
+    }
 
     @keyframes shimmer {
       0% { background-position: -200% 0; }
@@ -110,17 +176,17 @@ export class DoenSidebar extends LitElement {
 
     .user-footer {
       padding: 12px 16px;
-      border-top: 1px solid rgba(255,255,255,0.06);
+      border-top: 1px solid var(--glass-border);
       display: flex;
       align-items: center;
       gap: 10px;
     }
 
     .avatar {
-      width: 28px;
-      height: 28px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
-      background: #6366f1;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -134,24 +200,21 @@ export class DoenSidebar extends LitElement {
       flex: 1;
       font-size: 12px;
       font-weight: 500;
-      color: rgba(232,234,240,0.7);
+      color: var(--color-text-muted);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
     .logout-btn {
-      font-size: 11px;
-      color: rgba(232,234,240,0.35);
-      cursor: pointer;
-      padding: 4px;
-      border-radius: 4px;
-      transition: color 120ms;
-      background: none;
-      border: none;
+      font-size: 13px;
+      color: var(--color-text-muted);
+      padding: 5px 7px;
+      border-radius: 7px;
+      transition: color var(--transition-fast), background var(--transition-fast);
     }
 
-    .logout-btn:hover { color: #ef4444; }
+    .logout-btn:hover { color: var(--color-danger); background: rgba(239,68,68,0.1); }
   `;
 
   async connectedCallback() {
@@ -173,19 +236,26 @@ export class DoenSidebar extends LitElement {
   }
 
   private _navigate(projectId: string) {
-    this.dispatchEvent(new CustomEvent('navigate', {
-      detail: { projectId },
-      bubbles: true,
-      composed: true,
-    }));
+    this.dispatchEvent(new CustomEvent('navigate', { detail: { projectId }, bubbles: true, composed: true }));
   }
 
   private _navigatePage(page: string) {
-    this.dispatchEvent(new CustomEvent('navigate', {
-      detail: { page },
-      bubbles: true,
-      composed: true,
-    }));
+    this.dispatchEvent(new CustomEvent('navigate', { detail: { page }, bubbles: true, composed: true }));
+  }
+
+  private async _createProject(e: Event) {
+    e.preventDefault();
+    const name = this._newProjectName.trim();
+    if (!name) return;
+    try {
+      const colors = ['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899'];
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      const p = await api.post<Project>('/projects', { name, color });
+      this._projects = [...this._projects, p];
+      this._newProjectName = '';
+      this._creatingProject = false;
+      this._navigate(p.id);
+    } catch { /* toast handled by api */ }
   }
 
   private _personalProjects() {
@@ -208,27 +278,47 @@ export class DoenSidebar extends LitElement {
       <nav>
         <div class="nav-section">
           <button class="nav-item" @click=${() => this._navigatePage('today')}>
-            <span>📅</span> Vandaag
+            <i class="fa-solid fa-sun"></i> Vandaag
           </button>
           <button class="nav-item" @click=${() => this._navigatePage('inbox')}>
-            <span>📥</span> Inbox
+            <i class="fa-solid fa-inbox"></i> Inbox
           </button>
         </div>
 
         ${this._loading ? html`
-          <div class="nav-section">
-            <div class="skeleton skeleton-item" style="width:70%"></div>
-            <div class="skeleton skeleton-item" style="width:55%"></div>
-            <div class="skeleton skeleton-item" style="width:80%"></div>
-          </div>
+          <div class="skeleton" style="width:70%"></div>
+          <div class="skeleton" style="width:55%"></div>
+          <div class="skeleton" style="width:80%"></div>
         ` : html`
           <div class="nav-section">
-            <div class="section-label">Persoonlijk</div>
+            <div class="section-header">
+              <span class="section-label">Persoonlijk</span>
+              <button class="add-project-btn" title="Nieuw project"
+                @click=${() => this._creatingProject = !this._creatingProject}>
+                <i class="fa-solid fa-plus"></i>
+              </button>
+            </div>
+
+            ${this._creatingProject ? html`
+              <form class="new-project-form" @submit=${this._createProject}>
+                <input
+                  type="text"
+                  placeholder="Projectnaam..."
+                  .value=${this._newProjectName}
+                  @input=${(e: Event) => this._newProjectName = (e.target as HTMLInputElement).value}
+                  autofocus
+                />
+                <button type="submit" class="btn-confirm"><i class="fa-solid fa-check"></i></button>
+                <button type="button" class="btn-cancel"
+                  @click=${() => { this._creatingProject = false; this._newProjectName = ''; }}>
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </form>
+            ` : ''}
+
             ${this._personalProjects().map(p => html`
-              <button
-                class="nav-item ${this.activeProjectId === p.id ? 'active' : ''}"
-                @click=${() => this._navigate(p.id)}
-              >
+              <button class="nav-item ${this.activeProjectId === p.id ? 'active' : ''}"
+                @click=${() => this._navigate(p.id)}>
                 <span class="dot" style="background:${p.color}"></span>
                 ${p.name}
               </button>
@@ -237,12 +327,12 @@ export class DoenSidebar extends LitElement {
 
           ${this._groups.map(g => html`
             <div class="nav-section">
-              <div class="section-label">${g.name}</div>
+              <div class="section-header">
+                <span class="section-label">${g.name}</span>
+              </div>
               ${this._groupProjects(g.id).map(p => html`
-                <button
-                  class="nav-item ${this.activeProjectId === p.id ? 'active' : ''}"
-                  @click=${() => this._navigate(p.id)}
-                >
+                <button class="nav-item ${this.activeProjectId === p.id ? 'active' : ''}"
+                  @click=${() => this._navigate(p.id)}>
                   <span class="dot" style="background:${p.color}"></span>
                   ${p.name}
                 </button>
@@ -255,14 +345,14 @@ export class DoenSidebar extends LitElement {
       <div class="user-footer">
         <div class="avatar">${initials}</div>
         <span class="user-name">${this.user?.name ?? '...'}</span>
-        <button class="logout-btn" @click=${logout} title="Uitloggen">↩</button>
+        <button class="logout-btn" @click=${logout} title="Uitloggen">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
       </div>
     `;
   }
 }
 
 declare global {
-  interface HTMLElementTagNameMap {
-    'doen-sidebar': DoenSidebar;
-  }
+  interface HTMLElementTagNameMap { 'doen-sidebar': DoenSidebar; }
 }

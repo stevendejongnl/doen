@@ -81,10 +81,10 @@ export class DoenToast extends LitElement {
   }
 
   render() {
-    const icons = { success: '✓', error: '✗', info: 'ℹ' };
+    const icons = { success: 'circle-check', error: 'circle-xmark', info: 'circle-info' };
     return html`${this.toasts.map(t => html`
       <div class="toast ${t.type}" @click=${() => this._remove(t.id)}>
-        <span class="icon">${icons[t.type]}</span>
+        <i class="fa-solid fa-${icons[t.type]} icon"></i>
         <span>${t.message}</span>
       </div>
     `)}`;
