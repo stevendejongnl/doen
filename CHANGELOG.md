@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/stevendejongnl/doen/compare/v1.1.0...v1.1.1) (2026-04-19)
+
+
+### Bug Fixes
+
+* spread sharedStyles correctly into Lit static styles + version from git tag ([c99dc18](https://github.com/stevendejongnl/doen/commit/c99dc184a53f1bf04adfa110b576eaa7c42b7ef6))
+
 # [1.1.0](https://github.com/stevendejongnl/doen/compare/v1.0.2...v1.1.0) (2026-04-19)
 
 
