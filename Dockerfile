@@ -1,5 +1,5 @@
 # Stage 1: build frontend
-FROM node:22-alpine AS frontend-builder
+FROM node:lts-alpine AS frontend-builder
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm ci
@@ -7,7 +7,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # Stage 2: build ha-card
-FROM node:22-alpine AS card-builder
+FROM node:lts-alpine AS card-builder
 WORKDIR /app/ha-card
 COPY ha-card/package*.json ./
 RUN npm ci
