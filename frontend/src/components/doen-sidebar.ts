@@ -136,7 +136,14 @@ export class DoenSidebar extends LitElement {
       padding: 5px 10px;
       font-size: 12px;
       border-radius: 7px;
+      font: inherit;
+      color: #e8eaf0;
+      background: rgba(255,255,255,0.09);
+      border: 1px solid rgba(255,255,255,0.16);
+      outline: none;
     }
+
+    .new-project-form input:focus { border-color: #6366f1; }
 
     .new-project-form button {
       padding: 5px 10px;
@@ -282,6 +289,12 @@ export class DoenSidebar extends LitElement {
           </button>
           <button class="nav-item" @click=${() => this._navigatePage('inbox')}>
             <i class="fa-solid fa-inbox"></i> Inbox
+          </button>
+          <button class="nav-item" @click=${() => this._navigatePage('groups')}>
+            <i class="fa-solid fa-people-group"></i> Groepen
+          </button>
+          <button class="nav-item" @click=${() => this._navigatePage('admin')}>
+            <i class="fa-solid fa-users-gear"></i> Gebruikers
           </button>
         </div>
 

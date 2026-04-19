@@ -19,26 +19,26 @@ export class DoenTaskForm extends LitElement {
 
     .row { display: flex; gap: 8px; flex-wrap: wrap; }
 
-    input[type="text"] {
-      flex: 1;
-      min-width: 140px;
+    input, select {
+      font: inherit;
+      color: #e8eaf0;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 10px;
       padding: 10px 14px;
-      font-size: 13px;
-      border-radius: 10px;
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+      transition: border-color 120ms, background 120ms;
     }
 
-    input[type="date"] {
-      padding: 10px 12px;
-      font-size: 12px;
-      border-radius: 10px;
-      min-width: 0;
+    input:focus, select:focus {
+      border-color: #6366f1;
+      background: rgba(255,255,255,0.1);
     }
 
-    select {
-      padding: 10px 12px;
-      font-size: 12px;
-      border-radius: 10px;
-    }
+    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
+    select option { background: #1e2436; color: #e8eaf0; }
 
     .btn-add {
       background: var(--color-accent);

@@ -8,11 +8,15 @@ import './doen-toast';
 import '../pages/page-login';
 import '../pages/page-today';
 import '../pages/page-project';
+import '../pages/page-groups';
+import '../pages/page-admin';
 
 type Route =
   | { type: 'today' }
   | { type: 'inbox' }
-  | { type: 'project'; projectId: string };
+  | { type: 'project'; projectId: string }
+  | { type: 'groups' }
+  | { type: 'admin' };
 
 @customElement('doen-app')
 export class DoenApp extends LitElement {
@@ -166,6 +170,8 @@ export class DoenApp extends LitElement {
     if (projectId) this._route = { type: 'project', projectId };
     else if (page === 'today') this._route = { type: 'today' };
     else if (page === 'inbox') this._route = { type: 'inbox' };
+    else if (page === 'groups') this._route = { type: 'groups' };
+    else if (page === 'admin') this._route = { type: 'admin' };
     this._sidebarOpen = false;
   }
 
@@ -176,6 +182,10 @@ export class DoenApp extends LitElement {
         return html`<page-today></page-today>`;
       case 'project':
         return html`<page-project .projectId=${this._route.projectId}></page-project>`;
+      case 'groups':
+        return html`<page-groups></page-groups>`;
+      case 'admin':
+        return html`<page-admin></page-admin>`;
     }
   }
 

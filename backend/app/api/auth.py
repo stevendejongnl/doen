@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_auth_service, get_current_user, raise_http
+from app.api.deps import get_auth_service, get_current_user, get_db, raise_http
 from app.api.schemas import LoginRequest, RefreshRequest, RegisterRequest, TokenResponse, UserOut
 from app.exceptions import DoenError
 from app.models.user import User
+from app.repositories.user_repo import UserRepository
 from app.services.auth import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -48,6 +50,14 @@ async def refresh(
 @router.get("/me", response_model=UserOut)
 async def me(current_user: User = Depends(get_current_user)) -> User:
     return current_user
+
+
+@router.get("/users", response_model=list[UserOut])
+async def list_users(
+    _current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[User]:
+    return await UserRepository(db).list_all()
 
 
 @router.get("/ha/login")

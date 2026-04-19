@@ -9,6 +9,10 @@ class UserRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
+    async def list_all(self) -> list[User]:
+        result = await self._session.execute(select(User).order_by(User.name))
+        return list(result.scalars().all())
+
     async def get_by_id(self, user_id: str) -> User | None:
         result = await self._session.execute(select(User).where(User.id == user_id))
         return result.scalar_one_or_none()
