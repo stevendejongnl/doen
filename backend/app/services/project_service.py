@@ -1,0 +1,77 @@
+from app.exceptions import AccessDeniedError, NotFoundError
+from app.models.project import Project
+from app.repositories.group_repo import GroupRepository
+from app.repositories.project_repo import ProjectRepository
+
+
+class ProjectService:
+    def __init__(self, project_repo: ProjectRepository, group_repo: GroupRepository) -> None:
+        self._projects = project_repo
+        self._groups = group_repo
+
+    async def list_projects(self, user_id: str) -> list[Project]:
+        group_ids = await self._groups.list_group_ids_for_user(user_id)
+        return await self._projects.list_for_user(user_id, group_ids)
+
+    async def create_project(
+        self,
+        name: str,
+        description: str | None,
+        color: str,
+        group_id: str | None,
+        owner_id: str,
+    ) -> Project:
+        return await self._projects.create(
+            name=name,
+            description=description,
+            color=color,
+            group_id=group_id,
+            owner_id=owner_id,
+        )
+
+    async def get_project(self, project_id: str, requesting_user_id: str) -> Project:
+        project = await self._projects.get_by_id(project_id)
+        if not project:
+            raise NotFoundError("Project", project_id)
+        await self.assert_access(project, requesting_user_id)
+        return project
+
+    async def get_project_raw(self, project_id: str) -> Project:
+        """Fetch without access check — used internally by TaskService."""
+        project = await self._projects.get_by_id(project_id)
+        if not project:
+            raise NotFoundError("Project", project_id)
+        return project
+
+    async def assert_access(self, project: Project, user_id: str) -> None:
+        """Raises AccessDeniedError if user has no access to this project."""
+        if project.owner_id == user_id:
+            return
+        if project.group_id:
+            membership = await self._groups.get_membership(project.group_id, user_id)
+            if membership:
+                return
+        raise AccessDeniedError()
+
+    async def update_project(
+        self,
+        project_id: str,
+        requesting_user_id: str,
+        name: str | None,
+        description: str | None,
+        color: str | None,
+    ) -> Project:
+        project = await self.get_project(project_id, requesting_user_id)
+        return await self._projects.update(project, name=name, description=description, color=color)
+
+    async def archive_project(self, project_id: str, requesting_user_id: str) -> Project:
+        project = await self.get_project(project_id, requesting_user_id)
+        return await self._projects.archive(project)
+
+    async def delete_project(self, project_id: str, requesting_user_id: str) -> None:
+        project = await self._projects.get_by_id(project_id)
+        if not project:
+            raise NotFoundError("Project", project_id)
+        if project.owner_id != requesting_user_id:
+            raise AccessDeniedError("Only the owner can delete a project")
+        await self._projects.delete(project)

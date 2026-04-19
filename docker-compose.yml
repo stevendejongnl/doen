@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: doen
+      POSTGRES_USER: doen
+      POSTGRES_PASSWORD: doen
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./backend:/app
+    working_dir: /app
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://doen:doen@postgres:5432/doen
+      DB_MODE: postgres
+      SECRET_KEY: dev-secret-change-in-production
+      DEBUG: "true"
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:
