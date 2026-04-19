@@ -1,4 +1,5 @@
-const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
+// Empty string = same origin (production). Set VITE_API_URL for a separate backend in dev.
+const BASE = import.meta.env.VITE_API_URL ?? '';
 
 export class ApiError extends Error {
   status: number;
