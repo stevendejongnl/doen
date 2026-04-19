@@ -31,7 +31,7 @@ jobs:
           python-version: "3.13"
       - run: uv sync
       - run: uv run ruff check app/
-      - run: uv run mypy app/ || true  # informational — not a hard gate yet
+      - run: uv run mypy app/ || true
 
   frontend-build:
     runs-on: ubuntu-latest
@@ -63,8 +63,38 @@ jobs:
       - run: npm ci
       - run: npm run build
 
-  docker-publish:
+  release:
     needs: [backend-test, frontend-build, ha-card-build]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+      packages: write
+      issues: write
+      pull-requests: write
+    outputs:
+      new_release_published: ${{ steps.semantic.outputs.new_release_published }}
+      new_release_version: ${{ steps.semantic.outputs.new_release_version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+      - name: semantic-release
+        id: semantic
+        uses: cycjimmy/semantic-release-action@v4
+        with:
+          extra_plugins: |
+            @semantic-release/changelog
+            @semantic-release/git
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  docker-publish:
+    needs: release
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     permissions:
@@ -78,11 +108,22 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Determine tags
+        id: tags
+        run: |
+          TAGS="ghcr.io/stevendejongnl/doen:latest"
+          if [ "${{ needs.release.outputs.new_release_published }}" = "true" ]; then
+            VERSION="${{ needs.release.outputs.new_release_version }}"
+            TAGS="$TAGS,ghcr.io/stevendejongnl/doen:v${VERSION}"
+            MAJOR=$(echo $VERSION | cut -d. -f1)
+            MINOR=$(echo $VERSION | cut -d. -f1-2)
+            TAGS="$TAGS,ghcr.io/stevendejongnl/doen:v${MAJOR},ghcr.io/stevendejongnl/doen:v${MINOR}"
+          fi
+          echo "tags=$TAGS" >> $GITHUB_OUTPUT
       - uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ghcr.io/stevendejongnl/doen:latest
+          tags: ${{ steps.tags.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      # Keel polls ghcr.io/stevendejongnl/doen:latest every 5m and redeploys automatically
