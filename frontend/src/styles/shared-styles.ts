@@ -1,7 +1,7 @@
-import { css } from 'lit';
+import { css, unsafeCSS } from 'lit';
+import faStyles from '@fortawesome/fontawesome-free/css/all.min.css?inline';
 
-export const sharedStyles = css`
-  @import url('https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css');
+export const sharedStyles = [unsafeCSS(faStyles), css`
 
   :host {
     --glass-bg: rgba(255, 255, 255, 0.07);
@@ -29,4 +29,4 @@ export const sharedStyles = css`
     --sidebar-width: 260px;
     --topbar-height: 56px;
   }
-`;
+`];
