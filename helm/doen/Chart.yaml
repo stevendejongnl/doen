@@ -1,0 +1,6 @@
+apiVersion: v2
+name: doen
+description: Doen — personal & household planning app
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
