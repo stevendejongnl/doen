@@ -1,3 +1,15 @@
+# [1.1.0](https://github.com/stevendejongnl/doen/compare/v1.0.2...v1.1.0) (2026-04-19)
+
+
+### Bug Fixes
+
+* prevent iOS auto-zoom on input focus ([c602cad](https://github.com/stevendejongnl/doen/commit/c602cad3cb72b20e911b8de351664d563993da5a))
+
+
+### Features
+
+* show app version in sidebar footer and login page ([4a24faf](https://github.com/stevendejongnl/doen/commit/4a24faf60869c29c57047e88d7cdcfe37d80bcd2))
+
 ## [1.0.2](https://github.com/stevendejongnl/doen/compare/v1.0.1...v1.0.2) (2026-04-19)
 
 
