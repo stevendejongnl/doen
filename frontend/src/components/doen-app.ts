@@ -27,7 +27,7 @@ export class DoenApp extends LitElement {
   @state() private _sidebarOpen = false;
   private _sse: EventSource | null = null;
 
-  static styles = [sharedStyles, css`
+  static styles = [...sharedStyles, css`
     :host { display: flex; height: 100vh; overflow: hidden; position: relative; }
 
     .layout { display: flex; width: 100%; height: 100%; }

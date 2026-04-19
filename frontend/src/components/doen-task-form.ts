@@ -13,7 +13,7 @@ export class DoenTaskForm extends LitElement {
   @state() private _dueDate = '';
   @state() private _submitting = false;
 
-  static styles = [sharedStyles, css`
+  static styles = [...sharedStyles, css`
     :host { display: block; }
 
     form { display: flex; flex-direction: column; gap: 10px; }

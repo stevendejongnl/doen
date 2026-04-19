@@ -16,7 +16,7 @@ export class DoenTask extends LitElement {
   @state() private _editDue = '';
   @state() private _saving = false;
 
-  static styles = [sharedStyles, css`
+  static styles = [...sharedStyles, css`
     :host { display: block; }
 
     .task-row {

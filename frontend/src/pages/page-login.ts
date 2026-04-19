@@ -12,7 +12,7 @@ export class PageLogin extends LitElement {
   @state() private _loading = false;
   @state() private _error = '';
 
-  static styles = [sharedStyles, css`
+  static styles = [...sharedStyles, css`
     :host {
       display: flex;
       align-items: center;

@@ -11,7 +11,7 @@ export class PageToday extends LitElement {
   @state() private _tasks: Task[] = [];
   @state() private _loading = true;
 
-  static styles = [sharedStyles, css`
+  static styles = [...sharedStyles, css`
     :host {
       display: block;
       padding: 28px 28px;

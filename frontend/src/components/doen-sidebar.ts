@@ -14,7 +14,7 @@ export class DoenSidebar extends LitElement {
   @state() private _creatingProject = false;
   @state() private _newProjectName = '';
 
-  static styles = [sharedStyles, css`
+  static styles = [...sharedStyles, css`
     :host {
       display: flex;
       flex-direction: column;

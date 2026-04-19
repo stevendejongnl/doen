@@ -14,7 +14,7 @@ export class PageAdmin extends LitElement {
   @state() private _email = '';
   @state() private _password = '';
 
-  static styles = [sharedStyles, css`
+  static styles = [...sharedStyles, css`
     :host { display: block; padding: 28px; overflow-y: auto; height: 100%; }
 
     h1 { font-size: 24px; font-weight: 800; color: #e8eaf0; margin-bottom: 4px; letter-spacing: -0.5px; }

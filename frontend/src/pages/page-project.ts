@@ -15,7 +15,7 @@ export class PageProject extends LitElement {
   @state() private _loading = true;
   @state() private _showDone = false;
 
-  static styles = [sharedStyles, css`
+  static styles = [...sharedStyles, css`
     :host { display: block; padding: 28px 28px; overflow-y: auto; height: 100%; }
 
     .header {

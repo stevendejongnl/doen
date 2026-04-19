@@ -16,7 +16,7 @@ let _seq = 0;
 export class DoenToast extends LitElement {
   @state() private toasts: Toast[] = [];
 
-  static styles = [sharedStyles, css`
+  static styles = [...sharedStyles, css`
     :host {
       position: fixed;
       bottom: 24px;

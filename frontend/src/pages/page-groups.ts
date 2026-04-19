@@ -16,7 +16,7 @@ export class PageGroups extends LitElement {
   @state() private _inviteEmail = '';
   @state() private _inviting = false;
 
-  static styles = [sharedStyles, css`
+  static styles = [...sharedStyles, css`
     :host { display: block; padding: 28px; overflow-y: auto; height: 100%; }
 
     h1 {
