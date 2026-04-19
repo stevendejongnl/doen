@@ -1,9 +1,13 @@
 replicaCount: 1
 
 image:
-  repository: registry.local/doen
+  repository: ghcr.io/stevendejongnl/doen
   tag: latest
   pullPolicy: Always
+
+keel:
+  policy: force
+  pollSchedule: "@every 5m"
 
 service:
   port: 8000
@@ -32,6 +36,9 @@ persistence:
   storageClass: local-storage-default
   size: 1Gi
   mountPath: /app/data
+
+nodeSelector:
+  kubernetes.io/hostname: worker-01
 
 resources:
   requests:

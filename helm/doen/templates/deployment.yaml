@@ -3,6 +3,10 @@ kind: Deployment
 metadata:
   name: {{ include "doen.fullname" . }}
   labels: {{- include "doen.labels" . | nindent 4 }}
+  annotations:
+    keel.sh/policy: {{ .Values.keel.policy | quote }}
+    keel.sh/trigger: poll
+    keel.sh/pollSchedule: {{ .Values.keel.pollSchedule | quote }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
@@ -11,6 +15,9 @@ spec:
     metadata:
       labels: {{- include "doen.selectorLabels" . | nindent 8 }}
     spec:
+      {{- with .Values.nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: doen
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
