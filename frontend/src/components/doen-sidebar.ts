@@ -186,8 +186,21 @@ export class DoenSidebar extends LitElement {
       padding: 12px 16px;
       border-top: 1px solid var(--glass-border);
       display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .user-row {
+      display: flex;
       align-items: center;
       gap: 10px;
+      width: 100%;
+    }
+
+    .version {
+      font-size: 10px;
+      color: var(--color-text-muted);
+      opacity: 0.5;
     }
 
     .avatar {
@@ -357,11 +370,14 @@ export class DoenSidebar extends LitElement {
       </nav>
 
       <div class="user-footer">
-        <div class="avatar">${initials}</div>
-        <span class="user-name">${this.user?.name ?? '...'}</span>
-        <button class="logout-btn" @click=${logout} title="Uitloggen">
-          <i class="fa-solid fa-right-from-bracket"></i>
-        </button>
+        <div class="user-row">
+          <div class="avatar">${initials}</div>
+          <span class="user-name">${this.user?.name ?? '...'}</span>
+          <button class="logout-btn" @click=${logout} title="Uitloggen">
+            <i class="fa-solid fa-right-from-bracket"></i>
+          </button>
+        </div>
+        <span class="version">v${__APP_VERSION__}</span>
       </div>
     `;
   }

@@ -121,6 +121,12 @@ export class PageLogin extends LitElement {
       align-items: center;
       gap: 8px;
     }
+
+    .version {
+      font-size: 11px;
+      color: rgba(232,234,240,0.25);
+      margin-top: 12px;
+    }
   `];
 
   private async _submit(e: Event) {
@@ -178,6 +184,7 @@ export class PageLogin extends LitElement {
           </button>
         </form>
       </div>
+      <span class="version">v${__APP_VERSION__}</span>
     `;
   }
 }
