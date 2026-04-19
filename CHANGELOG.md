@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/stevendejongnl/doen/compare/v1.0.0...v1.0.1) (2026-04-19)
+
+
+### Bug Fixes
+
+* inject CSS tokens and Font Awesome 7 into every Lit shadow root ([a69f231](https://github.com/stevendejongnl/doen/commit/a69f2318ef5f6d32a9a9446cdf9edcf75e9d0810))
+
 # 1.0.0 (2026-04-19)
 
 
