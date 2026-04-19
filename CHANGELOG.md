@@ -1,3 +1,11 @@
+## [1.0.2](https://github.com/stevendejongnl/doen/compare/v1.0.1...v1.0.2) (2026-04-19)
+
+
+### Bug Fixes
+
+* load Font Awesome 7 via npm package bundled by Vite ([859bb0c](https://github.com/stevendejongnl/doen/commit/859bb0c837addf8f9c2ebd9c56f004266b604542))
+* regenerate package-lock.json with Node 24 (matches CI lts/*) ([cadef07](https://github.com/stevendejongnl/doen/commit/cadef074d11e00e741db7b6f5fefd549b9a9431f))
+
 ## [1.0.1](https://github.com/stevendejongnl/doen/compare/v1.0.0...v1.0.1) (2026-04-19)
 
 
