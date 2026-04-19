@@ -1,0 +1,4 @@
+DOMAIN = "doen"
+CONF_URL = "url"
+CONF_TOKEN = "token"
+SCAN_INTERVAL_SECONDS = 60

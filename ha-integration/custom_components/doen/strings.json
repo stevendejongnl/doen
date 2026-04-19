@@ -1,0 +1,22 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Doen instellen",
+        "description": "Voer de URL van je Doen installatie in en een API token.",
+        "data": {
+          "url": "Doen URL",
+          "token": "API Token"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Kan geen verbinding maken met Doen. Controleer de URL.",
+      "invalid_auth": "Ongeldig API token.",
+      "unknown": "Onverwachte fout."
+    },
+    "abort": {
+      "already_configured": "Doen is al geconfigureerd."
+    }
+  }
+}

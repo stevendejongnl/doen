@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from app.api import auth, groups, projects, sse, tasks
+from app.api import auth, groups, ha, projects, sse, tasks
 from app.config import settings
 from app.db.session import engine
 from app.models import *  # noqa: F401, F403 — register all models with metadata
@@ -48,6 +48,7 @@ app.include_router(groups.router)
 app.include_router(projects.router)
 app.include_router(tasks.router)
 app.include_router(sse.router)
+app.include_router(ha.router)
 
 
 @app.get("/health")
