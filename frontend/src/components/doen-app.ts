@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
+import { sharedStyles } from '../styles/shared-styles';
 import { isLoggedIn, getMe } from '../services/auth';
 import { sseConnect } from '../services/api';
 import type { User, Task } from '../services/types';
@@ -26,7 +27,7 @@ export class DoenApp extends LitElement {
   @state() private _sidebarOpen = false;
   private _sse: EventSource | null = null;
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     :host { display: flex; height: 100vh; overflow: hidden; position: relative; }
 
     .layout { display: flex; width: 100%; height: 100%; }
@@ -117,7 +118,7 @@ export class DoenApp extends LitElement {
         transform: translateX(0);
       }
     }
-  `;
+  `];
 
   async connectedCallback() {
     super.connectedCallback();

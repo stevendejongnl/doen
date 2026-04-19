@@ -3,6 +3,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import type { Task, TaskPriority } from '../services/types';
 import { api, ApiError } from '../services/api';
 import { toast } from './doen-toast';
+import { sharedStyles } from '../styles/shared-styles';
 
 @customElement('doen-task')
 export class DoenTask extends LitElement {
@@ -15,7 +16,7 @@ export class DoenTask extends LitElement {
   @state() private _editDue = '';
   @state() private _saving = false;
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     :host { display: block; }
 
     .task-row {
@@ -159,7 +160,7 @@ export class DoenTask extends LitElement {
       display: flex; align-items: center; gap: 6px;
     }
     .btn-delete:hover { background: rgba(239,68,68,0.2); }
-  `;
+  `];
 
   private async _complete() {
     if (this._completing || this.task.status === 'done') return;

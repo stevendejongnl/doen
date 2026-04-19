@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
+import { sharedStyles } from '../styles/shared-styles';
 
 type ToastType = 'success' | 'error' | 'info';
 
@@ -15,7 +16,7 @@ let _seq = 0;
 export class DoenToast extends LitElement {
   @state() private toasts: Toast[] = [];
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     :host {
       position: fixed;
       bottom: 24px;
@@ -68,7 +69,7 @@ export class DoenToast extends LitElement {
       from { transform: translateX(100%); opacity: 0; }
       to { transform: translateX(0); opacity: 1; }
     }
-  `;
+  `];
 
   show(message: string, type: ToastType = 'info') {
     const toast: Toast = { id: ++_seq, message, type };

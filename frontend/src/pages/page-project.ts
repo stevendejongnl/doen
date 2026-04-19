@@ -3,6 +3,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import type { Project, Task } from '../services/types';
 import { api, ApiError } from '../services/api';
 import { toast } from '../components/doen-toast';
+import { sharedStyles } from '../styles/shared-styles';
 import '../components/doen-task';
 import '../components/doen-task-form';
 
@@ -14,7 +15,7 @@ export class PageProject extends LitElement {
   @state() private _loading = true;
   @state() private _showDone = false;
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     :host { display: block; padding: 28px 28px; overflow-y: auto; height: 100%; }
 
     .header {
@@ -128,7 +129,7 @@ export class PageProject extends LitElement {
       :host { padding: 16px 14px; }
       h1 { font-size: 20px; }
     }
-  `;
+  `];
 
   updated(changed: Map<string, unknown>) {
     if (changed.has('projectId') && this.projectId) this._load();

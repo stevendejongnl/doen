@@ -3,6 +3,7 @@ import { customElement, state } from 'lit/decorators.js';
 import type { Group } from '../services/types';
 import { api, ApiError } from '../services/api';
 import { toast } from '../components/doen-toast';
+import { sharedStyles } from '../styles/shared-styles';
 
 @customElement('page-groups')
 export class PageGroups extends LitElement {
@@ -15,7 +16,7 @@ export class PageGroups extends LitElement {
   @state() private _inviteEmail = '';
   @state() private _inviting = false;
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     :host { display: block; padding: 28px; overflow-y: auto; height: 100%; }
 
     h1 {
@@ -113,7 +114,7 @@ export class PageGroups extends LitElement {
     @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 
     @media (max-width: 768px) { :host { padding: 16px; } h1 { font-size: 20px; } }
-  `;
+  `];
 
   connectedCallback() {
     super.connectedCallback();

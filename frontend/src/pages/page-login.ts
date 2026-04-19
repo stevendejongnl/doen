@@ -3,6 +3,7 @@ import { customElement, state } from 'lit/decorators.js';
 import { login } from '../services/auth';
 import { ApiError } from '../services/api';
 import type { User } from '../services/types';
+import { sharedStyles } from '../styles/shared-styles';
 
 @customElement('page-login')
 export class PageLogin extends LitElement {
@@ -11,7 +12,7 @@ export class PageLogin extends LitElement {
   @state() private _loading = false;
   @state() private _error = '';
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     :host {
       display: flex;
       align-items: center;
@@ -120,7 +121,7 @@ export class PageLogin extends LitElement {
       align-items: center;
       gap: 8px;
     }
-  `;
+  `];
 
   private async _submit(e: Event) {
     e.preventDefault();

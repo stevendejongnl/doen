@@ -3,6 +3,7 @@ import { customElement, state } from 'lit/decorators.js';
 import type { User } from '../services/types';
 import { api, ApiError } from '../services/api';
 import { toast } from '../components/doen-toast';
+import { sharedStyles } from '../styles/shared-styles';
 
 @customElement('page-admin')
 export class PageAdmin extends LitElement {
@@ -13,7 +14,7 @@ export class PageAdmin extends LitElement {
   @state() private _email = '';
   @state() private _password = '';
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     :host { display: block; padding: 28px; overflow-y: auto; height: 100%; }
 
     h1 { font-size: 24px; font-weight: 800; color: #e8eaf0; margin-bottom: 4px; letter-spacing: -0.5px; }
@@ -86,7 +87,7 @@ export class PageAdmin extends LitElement {
     @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 
     @media (max-width: 768px) { :host { padding: 16px; } h1 { font-size: 20px; } }
-  `;
+  `];
 
   connectedCallback() {
     super.connectedCallback();

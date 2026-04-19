@@ -3,6 +3,7 @@ import { customElement, state } from 'lit/decorators.js';
 import type { Task } from '../services/types';
 import { api, ApiError } from '../services/api';
 import { toast } from '../components/doen-toast';
+import { sharedStyles } from '../styles/shared-styles';
 import '../components/doen-task';
 
 @customElement('page-today')
@@ -10,7 +11,7 @@ export class PageToday extends LitElement {
   @state() private _tasks: Task[] = [];
   @state() private _loading = true;
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     :host {
       display: block;
       padding: 28px 28px;
@@ -108,7 +109,7 @@ export class PageToday extends LitElement {
       :host { padding: 20px 16px; }
       h1 { font-size: 20px; }
     }
-  `;
+  `];
 
   connectedCallback() {
     super.connectedCallback();

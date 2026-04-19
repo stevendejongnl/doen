@@ -3,6 +3,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import type { Project, Task, TaskPriority } from '../services/types';
 import { api, ApiError } from '../services/api';
 import { toast } from './doen-toast';
+import { sharedStyles } from '../styles/shared-styles';
 
 @customElement('doen-task-form')
 export class DoenTaskForm extends LitElement {
@@ -12,7 +13,7 @@ export class DoenTaskForm extends LitElement {
   @state() private _dueDate = '';
   @state() private _submitting = false;
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     :host { display: block; }
 
     form { display: flex; flex-direction: column; gap: 10px; }
@@ -60,7 +61,7 @@ export class DoenTaskForm extends LitElement {
     .btn-add:hover:not(:disabled) { background: var(--color-accent-hover); }
     .btn-add:active:not(:disabled) { transform: scale(0.97); }
     .btn-add:disabled { opacity: 0.45; cursor: not-allowed; }
-  `;
+  `];
 
   private async _submit(e: Event) {
     e.preventDefault();

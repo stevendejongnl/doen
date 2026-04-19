@@ -2,6 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import type { Project, Group, User } from '../services/types';
 import { api, logout } from '../services/api';
+import { sharedStyles } from '../styles/shared-styles';
 
 @customElement('doen-sidebar')
 export class DoenSidebar extends LitElement {
@@ -13,7 +14,7 @@ export class DoenSidebar extends LitElement {
   @state() private _creatingProject = false;
   @state() private _newProjectName = '';
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     :host {
       display: flex;
       flex-direction: column;
@@ -222,7 +223,7 @@ export class DoenSidebar extends LitElement {
     }
 
     .logout-btn:hover { color: var(--color-danger); background: rgba(239,68,68,0.1); }
-  `;
+  `];
 
   async connectedCallback() {
     super.connectedCallback();
