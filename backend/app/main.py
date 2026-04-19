@@ -3,11 +3,13 @@ from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from app.api import auth, groups, projects, sse, tasks
 from app.config import settings
 from app.db.session import engine
 from app.models import *  # noqa: F401, F403 — register all models with metadata
+from app.scheduler.setup import create_scheduler, set_scheduler
 
 
 @asynccontextmanager
@@ -16,7 +18,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     from app.db.session import Base
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    Session = async_sessionmaker(engine, expire_on_commit=False)
+    scheduler = create_scheduler(Session)
+    set_scheduler(scheduler)
+    scheduler.start()
+
     yield
+
+    scheduler.shutdown(wait=False)
 
 
 app = FastAPI(
