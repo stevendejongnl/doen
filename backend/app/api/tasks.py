@@ -4,8 +4,8 @@ from app.api.deps import get_current_user, get_task_service, raise_http
 from app.api.schemas import RecurringRuleCreate, RecurringRuleOut, TaskCreate, TaskOut, TaskUpdate
 from app.exceptions import DoenError
 from app.models.user import User
-from app.services.task_service import TaskService
 from app.services.sse_bus import sse_bus
+from app.services.task_service import TaskService
 
 router = APIRouter(tags=["tasks"])
 
@@ -45,7 +45,9 @@ async def create_task(
         )
     except DoenError as exc:
         raise_http(exc)
-    await sse_bus.publish_to_group(member_ids, "task_created", {"id": task.id, "project_id": project_id})
+    await sse_bus.publish_to_group(
+        member_ids, "task_created", {"id": task.id, "project_id": project_id}
+    )
     return task
 
 

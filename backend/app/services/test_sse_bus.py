@@ -1,7 +1,7 @@
-import asyncio
 import json
 
 import pytest
+
 from app.services.sse_bus import SSEBus
 
 
@@ -83,6 +83,6 @@ async def test_message_is_valid_sse_format(bus):
     # SSE format: "event: ...\ndata: ...\n\n"
     assert raw.startswith("event: task_updated\n")
     assert "data: " in raw
-    data_line = [l for l in raw.split("\n") if l.startswith("data: ")][0]
+    data_line = [line for line in raw.split("\n") if line.startswith("data: ")][0]
     payload = json.loads(data_line[len("data: "):])
     assert payload["id"] == "xyz"

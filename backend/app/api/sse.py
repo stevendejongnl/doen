@@ -1,5 +1,5 @@
 import asyncio
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from fastapi import APIRouter, Depends
 from sse_starlette.sse import EventSourceResponse
@@ -13,7 +13,7 @@ router = APIRouter(tags=["sse"])
 
 @router.get("/events")
 async def events(current_user: User = Depends(get_current_user)) -> EventSourceResponse:
-    async def generator() -> AsyncGenerator[str, None]:
+    async def generator() -> AsyncGenerator[str]:
         q = sse_bus.subscribe(current_user.id)
         try:
             yield "data: connected\n\n"
@@ -23,7 +23,7 @@ async def events(current_user: User = Depends(get_current_user)) -> EventSourceR
                     if message is None:
                         break
                     yield message
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     # keepalive ping
                     yield ": ping\n\n"
         finally:

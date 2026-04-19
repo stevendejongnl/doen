@@ -38,9 +38,6 @@ class TaskService:
         overdue: bool = False,
         assignee_id: str | None = None,
     ) -> list[Task]:
-        group_ids = await self._groups.list_group_ids_for_user(requesting_user_id)
-        from app.repositories.project_repo import ProjectRepository
-        # We need project IDs — delegate to project service's repo
         projects = await self._projects.list_projects(requesting_user_id)
         project_ids = [p.id for p in projects]
         return await self._tasks.list_accessible(

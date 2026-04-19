@@ -1,4 +1,4 @@
-from app.exceptions import AccessDeniedError, AlreadyExistsError, ConflictError, NotFoundError
+from app.exceptions import AccessDeniedError, ConflictError, NotFoundError
 from app.models.group import Group
 from app.repositories.group_repo import GroupRepository
 from app.repositories.user_repo import UserRepository

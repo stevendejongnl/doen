@@ -1,6 +1,7 @@
 import pytest
-from app.repositories.project_repo import ProjectRepository
+
 from app.repositories.group_repo import GroupRepository
+from app.repositories.project_repo import ProjectRepository
 
 
 @pytest.mark.asyncio

@@ -1,6 +1,6 @@
-from datetime import datetime, timedelta, timezone
 
 import pytest
+
 from app.repositories.task_repo import TaskRepository
 
 
@@ -111,7 +111,7 @@ async def test_create_recurring_rule(db_session, seed_data):
     assert existing is None
 
     # When a recurring rule is created
-    rule = await repo.create_recurring_rule(
+    await repo.create_recurring_rule(
         task_id=seed_data["todo_task"].id,
         schedule_cron="0 9 * * 1",
         notify_on_spawn=True,

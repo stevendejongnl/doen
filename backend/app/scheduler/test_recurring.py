@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 import pytest_asyncio
@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from app.models.task import RecurringRule, Task
 from app.scheduler.recurring import _is_due, spawn_due_tasks
-
 
 # ── _is_due unit tests — use a plain dataclass, not a SQLAlchemy instance ─────
 
@@ -20,23 +19,23 @@ class _FakeRule:
 
 def test_is_due_when_never_spawned():
     rule = _FakeRule("* * * * *", None)
-    assert _is_due(rule, datetime.now(timezone.utc)) is True  # type: ignore[arg-type]
+    assert _is_due(rule, datetime.now(UTC)) is True  # type: ignore[arg-type]
 
 
 def test_is_due_when_last_spawn_before_last_expected_tick():
-    now = datetime.now(timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(UTC).replace(second=0, microsecond=0)
     rule = _FakeRule("* * * * *", now - timedelta(minutes=2))
     assert _is_due(rule, now) is True  # type: ignore[arg-type]
 
 
 def test_not_due_when_recently_spawned():
-    now = datetime.now(timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(UTC).replace(second=0, microsecond=0)
     rule = _FakeRule("* * * * *", now)
     assert _is_due(rule, now) is False  # type: ignore[arg-type]
 
 
 def test_is_due_handles_naive_last_spawned_at():
-    now = datetime.now(timezone.utc).replace(second=0, microsecond=0)
+    now = datetime.now(UTC).replace(second=0, microsecond=0)
     naive = (now - timedelta(minutes=5)).replace(tzinfo=None)
     rule = _FakeRule("* * * * *", naive)
     assert _is_due(rule, now) is True  # type: ignore[arg-type]
@@ -44,7 +43,7 @@ def test_is_due_handles_naive_last_spawned_at():
 
 def test_is_due_returns_false_on_invalid_cron():
     rule = _FakeRule("not a cron expression at all", None)
-    assert _is_due(rule, datetime.now(timezone.utc)) is False  # type: ignore[arg-type]
+    assert _is_due(rule, datetime.now(UTC)) is False  # type: ignore[arg-type]
 
 
 # ── spawn_due_tasks integration tests ─────────────────────────────────────────
@@ -110,7 +109,7 @@ async def test_spawn_updates_last_spawned_at(
     rule: RecurringRule = seed_data["recurring_rule"]
     rule.last_spawned_at = None
     await db_session.commit()
-    before = datetime.now(timezone.utc).replace(tzinfo=None)
+    before = datetime.now(UTC).replace(tzinfo=None)
 
     await spawn_due_tasks(session_factory)
 
@@ -129,7 +128,7 @@ async def test_spawn_skips_when_not_due(
     seed_data: dict, db_session: AsyncSession, session_factory
 ):
     rule: RecurringRule = seed_data["recurring_rule"]
-    rule.last_spawned_at = datetime.now(timezone.utc)
+    rule.last_spawned_at = datetime.now(UTC)
     await db_session.commit()
 
     count = await spawn_due_tasks(session_factory)

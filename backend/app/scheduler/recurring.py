@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from croniter import croniter
 from sqlalchemy import select
@@ -13,7 +13,7 @@ from app.services.sse_bus import sse_bus
 
 async def spawn_due_tasks(Session: async_sessionmaker[AsyncSession]) -> int:
     """Query all active recurring rules and spawn tasks that are due. Returns spawn count."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     spawned = 0
 
     async with Session() as session:
@@ -95,7 +95,7 @@ def _is_due(rule: RecurringRule, now: datetime) -> bool:
             return True
         last_aware = rule.last_spawned_at
         if last_aware.tzinfo is None:
-            last_aware = last_aware.replace(tzinfo=timezone.utc)
+            last_aware = last_aware.replace(tzinfo=UTC)
         return last_expected > last_aware
     except Exception:
         return False

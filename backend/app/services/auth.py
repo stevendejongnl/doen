@@ -1,11 +1,16 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from jose import JWTError, jwt
 
 from app.config import settings
-from app.exceptions import AlreadyExistsError, InvalidCredentialsError, InvalidTokenError, NotFoundError
+from app.exceptions import (
+    AlreadyExistsError,
+    InvalidCredentialsError,
+    InvalidTokenError,
+    NotFoundError,
+)
 from app.models.user import User
 from app.repositories.user_repo import UserRepository
 
@@ -27,7 +32,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 def _create_token(data: dict, expires_delta: timedelta) -> str:
     payload = data.copy()
-    payload["exp"] = datetime.now(timezone.utc) + expires_delta
+    payload["exp"] = datetime.now(UTC) + expires_delta
     return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
 
 

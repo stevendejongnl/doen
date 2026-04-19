@@ -1,10 +1,10 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.task import RecurringRule, Task
 from app.models.base import new_uuid
+from app.models.task import RecurringRule, Task
 
 
 class TaskRepository:
@@ -31,7 +31,7 @@ class TaskRepository:
         if not project_ids:
             return []
         stmt = select(Task).where(Task.project_id.in_(project_ids))
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if due_today:
             stmt = stmt.where(func.date(Task.due_date) == func.date(now))
         if overdue:
@@ -73,7 +73,7 @@ class TaskRepository:
 
     async def complete(self, task: Task) -> Task:
         task.status = "done"
-        task.completed_at = datetime.now(timezone.utc)
+        task.completed_at = datetime.now(UTC)
         await self._session.commit()
         await self._session.refresh(task)
         return task

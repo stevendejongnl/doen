@@ -3,7 +3,15 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
-from app.exceptions import DoenError, AccessDeniedError, AlreadyExistsError, ConflictError, InvalidCredentialsError, InvalidTokenError, NotFoundError
+from app.exceptions import (
+    AccessDeniedError,
+    AlreadyExistsError,
+    ConflictError,
+    DoenError,
+    InvalidCredentialsError,
+    InvalidTokenError,
+    NotFoundError,
+)
 from app.models.user import User
 from app.repositories.group_repo import GroupRepository
 from app.repositories.project_repo import ProjectRepository

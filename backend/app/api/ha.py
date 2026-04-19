@@ -1,6 +1,6 @@
 import hashlib
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
@@ -74,7 +74,7 @@ async def ha_sensors(
     task_repo: TaskRepository = Depends(get_task_repo),
 ) -> dict:
     """Sensor payload for HA custom integration entities."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     session = task_repo._session
 
     group_repo = GroupRepository(session)
@@ -124,7 +124,7 @@ async def ha_card_data(
     group_id: str | None = Query(default=None),
 ) -> dict:
     """Compact task payload for the HACS Lovelace card."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     session = task_repo._session
 
     group_repo = GroupRepository(session)
@@ -216,7 +216,7 @@ async def ha_webhook(
         return {"result": "completed"}
 
     if body.action == "snooze":
-        new_due = datetime.now(timezone.utc) + timedelta(hours=body.snooze_hours)
+        new_due = datetime.now(UTC) + timedelta(hours=body.snooze_hours)
         await task_repo.update(task, {"due_date": new_due})
         return {"result": "snoozed", "new_due": new_due.isoformat()}
 

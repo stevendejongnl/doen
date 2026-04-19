@@ -1,8 +1,8 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.user import LocalCredential, User
 from app.models.base import new_uuid
+from app.models.user import LocalCredential, User
 
 
 class UserRepository:

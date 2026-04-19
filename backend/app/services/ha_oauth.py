@@ -9,7 +9,6 @@ from app.models.user import User
 from app.repositories.user_repo import UserRepository
 from app.services.auth import create_access_token, create_refresh_token
 
-
 _HA_AUTH_PATH = "/auth/authorize"
 _HA_TOKEN_PATH = "/auth/token"
 

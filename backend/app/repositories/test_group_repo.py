@@ -1,4 +1,5 @@
 import pytest
+
 from app.repositories.group_repo import GroupRepository
 
 

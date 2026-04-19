@@ -1,6 +1,5 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
-import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -38,7 +37,7 @@ async def db_session(db_engine) -> AsyncSession:
 @pytest_asyncio.fixture(loop_scope="function")
 async def seed_data(db_session: AsyncSession) -> dict:
     """Canonical dataset shared by all tests. Returns domain objects by name."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     # ── Users ─────────────────────────────────────────────────────────────────
     alice = User(id=new_uuid(), email="henk@example.com", name="Henk")

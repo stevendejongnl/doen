@@ -1,10 +1,10 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.project import Project
 from app.models.base import new_uuid
+from app.models.project import Project
 
 
 class ProjectRepository:
@@ -67,7 +67,7 @@ class ProjectRepository:
         return project
 
     async def archive(self, project: Project) -> Project:
-        project.archived_at = datetime.now(timezone.utc)
+        project.archived_at = datetime.now(UTC)
         await self._session.commit()
         await self._session.refresh(project)
         return project

@@ -1,8 +1,8 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.group import Group, GroupMember
 from app.models.base import new_uuid
+from app.models.group import Group, GroupMember
 
 
 class GroupRepository:
