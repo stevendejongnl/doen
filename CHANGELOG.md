@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/stevendejongnl/doen/compare/v1.7.0...v1.8.0) (2026-04-20)
+
+
+### Features
+
+* **frontend:** add recurrence builder to task creation form ([8bd2291](https://github.com/stevendejongnl/doen/commit/8bd229183e03c837757310c2ab7a5e15ca21816c))
+
 # [1.7.0](https://github.com/stevendejongnl/doen/compare/v1.6.0...v1.7.0) (2026-04-20)
 
 
