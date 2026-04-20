@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/stevendejongnl/doen/compare/v1.6.0...v1.7.0) (2026-04-20)
+
+
+### Features
+
+* **ha-card:** proxy requests via HA websocket, add visual card editor with project picker ([f35f3fd](https://github.com/stevendejongnl/doen/commit/f35f3fd0722b471cb3255aa9e527cc5f7dae42bb))
+
 # [1.6.0](https://github.com/stevendejongnl/doen/compare/v1.5.0...v1.6.0) (2026-04-20)
 
 
