@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/stevendejongnl/doen/compare/v1.4.1...v1.5.0) (2026-04-20)
+
+
+### Features
+
+* API keys, password change, and an account page ([db23d6a](https://github.com/stevendejongnl/doen/commit/db23d6a72c2ba417187e85ce07f53edb12f8f725))
+
 ## [1.4.1](https://github.com/stevendejongnl/doen/compare/v1.4.0...v1.4.1) (2026-04-20)
 
 
