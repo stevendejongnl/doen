@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.base import new_uuid
 from app.models.group import Group, GroupMember
+from app.models.user import User
 
 
 class GroupRepository:
@@ -74,3 +75,11 @@ class GroupRepository:
             select(GroupMember.user_id).where(GroupMember.group_id == group_id)
         )
         return list(result.scalars().all())
+
+    async def list_members(self, group_id: str) -> list[tuple[User, str]]:
+        result = await self._session.execute(
+            select(User, GroupMember.role)
+            .join(GroupMember, GroupMember.user_id == User.id)
+            .where(GroupMember.group_id == group_id)
+        )
+        return [(user, role) for user, role in result.all()]

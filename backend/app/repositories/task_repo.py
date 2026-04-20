@@ -7,6 +7,8 @@ from sqlalchemy.orm import selectinload
 from app.models.base import new_uuid
 from app.models.task import RecurringRule, Task
 
+_TASK_LOAD_OPTS = (selectinload(Task.recurring_rule), selectinload(Task.assignee))
+
 
 class TaskRepository:
     def __init__(self, session: AsyncSession) -> None:
@@ -14,14 +16,14 @@ class TaskRepository:
 
     async def get_by_id(self, task_id: str) -> Task | None:
         result = await self._session.execute(
-            select(Task).options(selectinload(Task.recurring_rule)).where(Task.id == task_id)
+            select(Task).options(*_TASK_LOAD_OPTS).where(Task.id == task_id)
         )
         return result.scalar_one_or_none()
 
     async def list_for_project(self, project_id: str) -> list[Task]:
         result = await self._session.execute(
             select(Task)
-            .options(selectinload(Task.recurring_rule))
+            .options(*_TASK_LOAD_OPTS)
             .where(Task.project_id == project_id)
         )
         return list(result.scalars().all())
@@ -37,7 +39,7 @@ class TaskRepository:
             return []
         stmt = (
             select(Task)
-            .options(selectinload(Task.recurring_rule))
+            .options(*_TASK_LOAD_OPTS)
             .where(Task.project_id.in_(project_ids))
         )
         now = datetime.now(UTC)
@@ -70,18 +72,17 @@ class TaskRepository:
         )
         self._session.add(task)
         await self._session.commit()
-        await self._session.refresh(task)
-        await self._session.execute(
-            select(Task).options(selectinload(Task.recurring_rule)).where(Task.id == task.id)
+        result = await self._session.execute(
+            select(Task).options(*_TASK_LOAD_OPTS).where(Task.id == task.id)
         )
-        return task
+        return result.scalar_one()
 
     async def update(self, task: Task, fields: dict[str, object]) -> Task:
         for key, value in fields.items():
             setattr(task, key, value)
         await self._session.commit()
         result = await self._session.execute(
-            select(Task).options(selectinload(Task.recurring_rule)).where(Task.id == task.id)
+            select(Task).options(*_TASK_LOAD_OPTS).where(Task.id == task.id)
         )
         return result.scalar_one()
 
@@ -90,7 +91,7 @@ class TaskRepository:
         task.completed_at = datetime.now(UTC)
         await self._session.commit()
         result = await self._session.execute(
-            select(Task).options(selectinload(Task.recurring_rule)).where(Task.id == task.id)
+            select(Task).options(*_TASK_LOAD_OPTS).where(Task.id == task.id)
         )
         return result.scalar_one()
 

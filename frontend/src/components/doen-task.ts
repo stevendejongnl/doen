@@ -1,6 +1,8 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import type {
+  GroupMember,
+  Project,
   Task,
   TaskPriority,
   RecurringRule,
@@ -59,6 +61,8 @@ export class DoenTask extends LitElement {
   @state() private _editMonthDay = 1;
   @state() private _editTimeOfDay = '08:00';
   @state() private _editParity: RecurrenceParity = 'any';
+  @state() private _editAssignee = '';
+  @state() private _members: GroupMember[] = [];
   @state() private _saving = false;
 
   static styles = [...sharedStyles, css`
@@ -128,6 +132,18 @@ export class DoenTask extends LitElement {
 
     .meta-icon {
       font-size: 10px; color: rgba(232,234,240,0.35);
+    }
+
+    .assignee-chip {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: rgba(99,102,241,0.3);
+      border: 1px solid rgba(99,102,241,0.5);
+      color: #e8eaf0;
+      font-size: 10px; font-weight: 600;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      text-transform: uppercase;
     }
 
     .edit-btn {
@@ -319,11 +335,12 @@ export class DoenTask extends LitElement {
     }
   }
 
-  private _startEdit() {
+  private async _startEdit() {
     this._editTitle = this.task.title;
     this._editPriority = this.task.priority as TaskPriority;
     this._editDue = this.task.due_date ? this.task.due_date.substring(0, 10) : '';
     this._editNotes = this.task.notes ?? '';
+    this._editAssignee = this.task.assignee_id ?? '';
 
     const rr = this.task.recurring_rule;
     this._editRecurring = !!rr;
@@ -334,6 +351,17 @@ export class DoenTask extends LitElement {
     this._editTimeOfDay = rr?.time_of_day ?? '08:00';
     this._editParity = rr?.parity ?? 'any';
     this._editing = true;
+
+    try {
+      const project = await api.get<Project>(`/projects/${this.task.project_id}`);
+      if (project.group_id) {
+        this._members = await api.get<GroupMember[]>(`/groups/${project.group_id}/members`);
+      } else {
+        this._members = [];
+      }
+    } catch {
+      this._members = [];
+    }
   }
 
   private _toggleWeekday(n: number) {
@@ -375,6 +403,7 @@ export class DoenTask extends LitElement {
         notes: this._editNotes.trim() || null,
         priority: this._editPriority,
         due_date: this._editDue ? new Date(this._editDue).toISOString() : null,
+        assignee_id: this._members.length > 1 ? (this._editAssignee || null) : undefined,
       });
 
       const hadRule = !!this.task.recurring_rule;
@@ -449,6 +478,15 @@ export class DoenTask extends LitElement {
               .value=${this._editDue}
               @input=${(e: Event) => this._editDue = (e.target as HTMLInputElement).value}
             />
+            ${this._members.length > 1 ? html`
+              <select .value=${this._editAssignee}
+                @change=${(e: Event) => this._editAssignee = (e.target as HTMLSelectElement).value}>
+                <option value="">Niemand toegewezen</option>
+                ${this._members.map(m => html`
+                  <option value=${m.user_id}>${m.name}</option>
+                `)}
+              </select>
+            ` : ''}
           </div>
           <textarea
             placeholder="Notities, context, links..."
@@ -554,6 +592,11 @@ export class DoenTask extends LitElement {
         <span class="task-title ${isDone ? 'done-text' : ''}">${this.task.title}</span>
 
         <span class="task-meta">
+          ${this.task.assignee_name ? html`
+            <span class="assignee-chip" title=${`Toegewezen aan ${this.task.assignee_name}`}>
+              ${this.task.assignee_name.slice(0, 1)}
+            </span>
+          ` : ''}
           ${this.task.notes ? html`<i class="fa-solid fa-align-left meta-icon" title="Heeft notities"></i>` : ''}
           ${this.task.recurring_rule ? html`<i class="fa-solid fa-repeat meta-icon" title=${describeRule(this.task.recurring_rule)}></i>` : ''}
           ${due ? html`

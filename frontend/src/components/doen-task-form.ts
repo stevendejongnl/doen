@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import type {
+  GroupMember,
   Project,
   Task,
   TaskPriority,
@@ -52,6 +53,10 @@ export class DoenTaskForm extends LitElement {
   @state() private _notes = '';
   @state() private _showNotes = false;
   @state() private _submitting = false;
+  @state() private _assigneeId = '';
+  @state() private _members: GroupMember[] = [];
+
+  private _loadedForGroup: string | null = null;
 
   @state() private _recurring = false;
   @state() private _unit: RecurrenceUnit = 'week';
@@ -197,6 +202,22 @@ export class DoenTaskForm extends LitElement {
     }
   `];
 
+  updated(changed: Map<string, unknown>) {
+    if (changed.has('project')) this._maybeLoadMembers();
+  }
+
+  private async _maybeLoadMembers() {
+    const groupId = this.project?.group_id ?? null;
+    if (!groupId) { this._members = []; this._loadedForGroup = null; return; }
+    if (this._loadedForGroup === groupId) return;
+    this._loadedForGroup = groupId;
+    try {
+      this._members = await api.get<GroupMember[]>(`/groups/${groupId}/members`);
+    } catch {
+      this._members = [];
+    }
+  }
+
   private _toggleWeekday(n: number) {
     const next = new Set(this._weekdays);
     if (next.has(n)) next.delete(n);
@@ -214,6 +235,7 @@ export class DoenTaskForm extends LitElement {
         priority: this._priority,
         due_date: this._dueDate || undefined,
         notes: this._notes.trim() || undefined,
+        assignee_id: this._assigneeId || undefined,
       });
 
       let finalTask = task;
@@ -235,6 +257,7 @@ export class DoenTaskForm extends LitElement {
       this._dueDate = '';
       this._notes = '';
       this._showNotes = false;
+      this._assigneeId = '';
       this._recurring = false;
       this._unit = 'week';
       this._interval = 1;
@@ -280,6 +303,15 @@ export class DoenTaskForm extends LitElement {
             .value=${this._dueDate}
             @input=${(e: Event) => this._dueDate = (e.target as HTMLInputElement).value}
           />
+          ${this._members.length > 1 ? html`
+            <select .value=${this._assigneeId}
+              @change=${(e: Event) => this._assigneeId = (e.target as HTMLSelectElement).value}>
+              <option value="">Niemand toegewezen</option>
+              ${this._members.map(m => html`
+                <option value=${m.user_id}>${m.name}</option>
+              `)}
+            </select>
+          ` : ''}
           <button type="button" class="btn-notes-toggle" @click=${() => this._showNotes = !this._showNotes}>
             <i class="fa-solid fa-${this._showNotes ? 'chevron-up' : 'plus'}"></i>
             ${this._showNotes ? 'Notitie verbergen' : 'Notitie toevoegen'}

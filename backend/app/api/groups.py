@@ -1,7 +1,13 @@
 from fastapi import APIRouter, Depends, status
 
 from app.api.deps import get_current_user, get_group_service, raise_http
-from app.api.schemas import GroupCreate, GroupOut, GroupUpdate, MemberInvite
+from app.api.schemas import (
+    GroupCreate,
+    GroupMemberOut,
+    GroupOut,
+    GroupUpdate,
+    MemberInvite,
+)
 from app.exceptions import DoenError
 from app.models.user import User
 from app.services.group_service import GroupService
@@ -61,6 +67,22 @@ async def delete_group(
         await svc.delete_group(group_id, current_user.id)
     except DoenError as exc:
         raise_http(exc)
+
+
+@router.get("/{group_id}/members", response_model=list[GroupMemberOut])
+async def list_members(
+    group_id: str,
+    current_user: User = Depends(get_current_user),
+    svc: GroupService = Depends(get_group_service),
+) -> list[GroupMemberOut]:
+    try:
+        members = await svc.list_members(group_id, current_user.id)
+    except DoenError as exc:
+        raise_http(exc)
+    return [
+        GroupMemberOut(user_id=user.id, name=user.name, email=user.email, role=role)
+        for user, role in members
+    ]
 
 
 @router.post("/{group_id}/members", status_code=status.HTTP_201_CREATED)

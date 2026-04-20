@@ -37,6 +37,15 @@ class GroupService:
     async def list_groups(self, user_id: str) -> list[Group]:
         return await self._groups.list_for_user(user_id)
 
+    async def list_members(
+        self, group_id: str, requesting_user_id: str
+    ) -> list[tuple[object, str]]:
+        group = await self.get_group(group_id)
+        membership = await self._groups.get_membership(group.id, requesting_user_id)
+        if not membership:
+            raise AccessDeniedError("You are not a member of this group")
+        return await self._groups.list_members(group_id)
+
     async def create_group(self, name: str, type: str, owner_id: str) -> Group:
         return await self._groups.create(name=name, type=type, owner_id=owner_id)
 

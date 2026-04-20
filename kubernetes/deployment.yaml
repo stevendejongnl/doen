@@ -6,9 +6,10 @@ metadata:
   labels:
     app: doen
   annotations:
-    keel.sh/policy: force
+    keel.sh/policy: major
     keel.sh/trigger: poll
     keel.sh/pollSchedule: "@every 5m"
+    keel.sh/match-tag: "true"
 spec:
   replicas: 1
   # PVC is ReadWriteOnce — only one pod can mount it at a time.
@@ -26,10 +27,11 @@ spec:
     spec:
       containers:
         - name: doen
-          # :latest + keel policy: force means Keel rolls on new digest pushes from CI.
+          # Semver tag + keel policy: major + match-tag means Keel rolls whenever
+          # CI pushes a newer semver tag (`semantic-release` tags every merge to main).
           # Replace <owner> with your GitHub username/org.
-          image: ghcr.io/<owner>/doen:latest
-          imagePullPolicy: Always
+          image: ghcr.io/<owner>/doen:v1.0.0
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
           envFrom:

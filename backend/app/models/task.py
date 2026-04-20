@@ -42,6 +42,10 @@ class Task(Base, TimestampMixin):
         "RecurringRule", back_populates="template_task", uselist=False, cascade="all, delete-orphan"
     )
 
+    @property
+    def assignee_name(self) -> str | None:
+        return self.assignee.name if self.assignee else None
+
 
 class Label(Base):
     __tablename__ = "labels"

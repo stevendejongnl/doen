@@ -24,12 +24,20 @@ export interface Project {
 export type TaskStatus = 'todo' | 'in_progress' | 'done';
 export type TaskPriority = 'none' | 'low' | 'medium' | 'high';
 
+export interface GroupMember {
+  user_id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
 export interface Task {
   id: string;
   title: string;
   notes?: string;
   project_id: string;
   assignee_id?: string;
+  assignee_name?: string;
   status: TaskStatus;
   priority: TaskPriority;
   due_date?: string;

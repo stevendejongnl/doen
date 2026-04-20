@@ -91,6 +91,13 @@ class MemberInvite(BaseModel):
     role: str = "member"
 
 
+class GroupMemberOut(BaseModel):
+    user_id: str
+    name: str
+    email: str
+    role: str
+
+
 # ── Invitations ───────────────────────────────────────────────────────────────
 
 class InvitationDetailsOut(BaseModel):
@@ -166,6 +173,7 @@ class TaskOut(BaseModel):
     notes: str | None
     project_id: str
     assignee_id: str | None
+    assignee_name: str | None = None
     status: str
     priority: str
     due_date: datetime | None
