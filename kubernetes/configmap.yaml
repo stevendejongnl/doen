@@ -6,26 +6,24 @@ metadata:
 data:
   # Pod TZ — affects log timestamps and APScheduler cron interpretation.
   # Domain timestamps remain UTC in the database regardless.
-  TZ: "Europe/Amsterdam"
+  TZ: "UTC"  # set to your preferred timezone, e.g. "Europe/London"
 
   # Database
   DB_MODE: "postgres"
   DEBUG: "false"
 
-  # App
-  APP_BASE_URL: "https://doen.madebysteven.nl"
+  # App — replace with your public domain
+  APP_BASE_URL: "https://doen.example.com"
 
   # Home Assistant OAuth (client id advertised to HA)
   HA_BASE_URL: ""
-  HA_CLIENT_ID: "https://doen.madebysteven.nl/"
+  HA_CLIENT_ID: "https://doen.example.com/"
 
-  # Mail (SMTP relay via mailcow at mail.steven-dejong.nl)
-  # Sender identity is noreply@madebysteven.nl; SPF/DKIM/DMARC configured on that zone.
-  # Flip MAIL_ENABLED to "false" to disable outgoing mail without rebuilding.
-  MAIL_ENABLED: "true"
-  SMTP_HOST: "mail.steven-dejong.nl"
+  # Mail — flip MAIL_ENABLED to "false" to disable outgoing mail without rebuilding.
+  MAIL_ENABLED: "false"
+  SMTP_HOST: ""  # your SMTP relay host
   SMTP_PORT: "587"
-  SMTP_FROM: "noreply@madebysteven.nl"
+  SMTP_FROM: "noreply@example.com"  # your sender address
   SMTP_FROM_NAME: "Doen"
   SMTP_USE_STARTTLS: "true"
   SMTP_USE_TLS: "false"

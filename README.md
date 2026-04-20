@@ -2,8 +2,6 @@
 
 Personal and household task planning app. Dutch for "to do / do it".
 
-**Live**: [doen.madebysteven.nl](https://doen.madebysteven.nl)
-
 ## Stack
 
 | Layer | Tech |
@@ -14,7 +12,7 @@ Personal and household task planning app. Dutch for "to do / do it".
 | Real-time | Server-Sent Events (`/events`) |
 | Auth | JWT (standalone) · HA OAuth2 (planned) |
 | HA card | Lit custom element, served at `/ha-card/doen-card.js` |
-| Deploy | K8s + Helm, auto-updated by Keel on every push to `main` |
+| Deploy | K8s manifests, auto-updated by Keel on every push to `main` |
 
 ## Local development
 
@@ -42,6 +40,12 @@ API docs at `http://localhost:8000/docs`.
 | `DB_MODE` | `sqlite` | `sqlite` or `postgres` |
 | `HA_BASE_URL` | `` | Home Assistant instance URL for OAuth |
 | `CORS_ORIGINS` | `["http://localhost:5173"]` | Allowed CORS origins |
+| `MAIL_ENABLED` | `false` | Enable outgoing email |
+| `SMTP_HOST` | `` | SMTP relay host |
+| `SMTP_PORT` | `587` | SMTP port |
+| `SMTP_FROM` | `noreply@doen.local` | Sender address |
+| `SMTP_USER` | `` | SMTP username |
+| `SMTP_PASSWORD` | `` | SMTP password |
 
 Copy `backend/.env.example` (or create `backend/.env`) to set these locally.
 
@@ -61,20 +65,23 @@ kubernetes/     K8s manifests — namespace, deployment, service, ingress, confi
 Every push to `main`:
 1. CI runs tests + lint
 2. `semantic-release` cuts a semver tag from Conventional Commits
-3. Docker image pushed to `ghcr.io/stevendejongnl/doen` (`:latest` + `:vX.Y.Z`)
+3. Docker image pushed to `ghcr.io/<owner>/doen` (`:latest` + semver tags)
 4. Keel detects the new `:latest` and redeploys within 5 minutes
 
 Manual deploy:
 ```bash
-# First-time: create the secret from values in 1Password
+# First-time: create the secret (keep these out of version control)
 kubectl create secret generic doen-secret -n doen \
   --from-literal=SECRET_KEY='<jwt-secret>' \
   --from-literal=DATABASE_URL='<pg-url>' \
-  --from-literal=SMTP_USER='noreply@madebysteven.nl' \
-  --from-literal=SMTP_PASSWORD='<mailcow-password>'
+  --from-literal=SMTP_USER='<smtp-user>' \
+  --from-literal=SMTP_PASSWORD='<smtp-password>'
 
 kubectl apply -f kubernetes/
 ```
+
+Update `kubernetes/ingress.yaml` and `kubernetes/configmap.yaml` with your own domain and SMTP
+settings before applying.
 
 ## Commit conventions
 

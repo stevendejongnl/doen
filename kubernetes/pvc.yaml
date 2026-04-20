@@ -1,4 +1,4 @@
-# Binds to the existing hostPath PV doen-data-pv on worker-01:/var/lib/doen.
+# Binds to a hostPath PV doen-data-pv. Adjust storageClassName and volumeName for your cluster.
 # PV has Retain reclaim policy — SQLite file survives PVC recreation.
 apiVersion: v1
 kind: PersistentVolumeClaim

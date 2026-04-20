@@ -38,17 +38,17 @@ docker-compose up -d             # postgres + backend + frontend on :8000/:5173
 
 ### K8s deploy (handled by Keel automatically after CI push, but manual):
 ```bash
-# First time: create the secret out-of-band (values in 1Password)
+# First time: create the secret out-of-band
 kubectl create secret generic doen-secret -n doen \
   --from-literal=SECRET_KEY='...' \
   --from-literal=DATABASE_URL='postgresql://...' \
-  --from-literal=SMTP_USER='noreply@madebysteven.nl' \
+  --from-literal=SMTP_USER='...' \
   --from-literal=SMTP_PASSWORD='...'
 
 # Apply everything else
 kubectl apply -f kubernetes/
 ```
-Namespace, ConfigMap, Deployment, Service, and Ingress are plain YAML under `kubernetes/`. Follows the same pattern as the other personal K8s projects (dude-wheres-my-package, homelab-dashboard, stash). No Helm, no Kustomize.
+Namespace, ConfigMap, Deployment, Service, and Ingress are plain YAML under `kubernetes/`. No Helm, no Kustomize. Update `kubernetes/ingress.yaml` and `kubernetes/configmap.yaml` with your own domain/SMTP settings before applying.
 
 ## Architecture
 
@@ -82,7 +82,7 @@ Single-file Lit web components. The entry shell `doen-app.ts` manages routing (`
 ### Production deployment
 Multi-stage Dockerfile: node → frontend build, node → ha-card build, python:3.13-slim runtime. Frontend `dist/` is copied to `backend/static/`, then FastAPI serves it via `StaticFiles` mounted **after** all API routers (SPA fallback). The `static/` dir only exists inside the Docker image, not in the repo.
 
-CI pushes `:latest` + `:vX.Y.Z` semver tags to `ghcr.io/stevendejongnl/doen`. Keel polls `:latest` every 5 minutes and rolls the K8s deployment automatically. Semver tags are cut by `semantic-release` on every merge to `main` using Conventional Commits (`feat:` → minor, `fix:` → patch, `feat!:` → major).
+CI pushes `:latest` + semver tags to `ghcr.io/<owner>/doen`. Keel polls `:latest` every 5 minutes and rolls the K8s deployment automatically. Semver tags are cut by `semantic-release` on every merge to `main` using Conventional Commits (`feat:` → minor, `fix:` → patch, `feat!:` → major).
 
 ### Database
 Dev default: SQLite (`doen.db` in `backend/`). Prod: PostgreSQL via `DATABASE_URL` env var. The session module swaps `postgresql://` → `postgresql+asyncpg://` automatically. Alembic migrations live in `app/db/migrations/`; `create_all` at startup is a dev convenience only.

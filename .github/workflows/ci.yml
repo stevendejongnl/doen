@@ -114,16 +114,17 @@ jobs:
       - name: Determine tags and version
         id: tags
         run: |
-          TAGS="ghcr.io/stevendejongnl/doen:latest"
+          IMAGE="ghcr.io/${{ github.repository_owner }}/doen"
+          TAGS="${IMAGE}:latest"
           if [ "${{ needs.release.outputs.new_release_published }}" = "true" ]; then
             VERSION="${{ needs.release.outputs.new_release_version }}"
           else
             VERSION=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo "0.0.0")
           fi
-          TAGS="$TAGS,ghcr.io/stevendejongnl/doen:v${VERSION}"
+          TAGS="$TAGS,${IMAGE}:v${VERSION}"
           MAJOR=$(echo $VERSION | cut -d. -f1)
           MINOR=$(echo $VERSION | cut -d. -f1-2)
-          TAGS="$TAGS,ghcr.io/stevendejongnl/doen:v${MAJOR},ghcr.io/stevendejongnl/doen:v${MINOR}"
+          TAGS="$TAGS,${IMAGE}:v${MAJOR},${IMAGE}:v${MINOR}"
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
           echo "version=v${VERSION}" >> $GITHUB_OUTPUT
       - uses: docker/build-push-action@v5

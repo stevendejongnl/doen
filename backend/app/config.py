@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://localhost:5173", "http://localhost:8000"]
     app_base_url: str = "http://localhost:5173"  # used to build invite / reset links
 
-    # Mail (SMTP relay — e.g. mailcow at mail.steven-dejong.nl)
+    # Mail (SMTP relay — configure via env vars or .env)
     mail_enabled: bool = False  # master switch; off in dev/tests → logs instead of sending
     smtp_host: str = ""
     smtp_port: int = 587

@@ -24,13 +24,11 @@ spec:
       labels:
         app: doen
     spec:
-      nodeSelector:
-        kubernetes.io/hostname: worker-01
       containers:
         - name: doen
-          # :latest + keel policy: force means Keel rolls on new digest pushes
-          # from the CI (ghcr.io/stevendejongnl/doen:latest).
-          image: ghcr.io/stevendejongnl/doen:latest
+          # :latest + keel policy: force means Keel rolls on new digest pushes from CI.
+          # Replace <owner> with your GitHub username/org.
+          image: ghcr.io/<owner>/doen:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
