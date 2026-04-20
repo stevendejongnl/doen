@@ -1,3 +1,10 @@
+## [1.1.7](https://github.com/stevendejongnl/doen/compare/v1.1.6...v1.1.7) (2026-04-20)
+
+
+### Bug Fixes
+
+* add button/input resets to shared-styles so shadow DOM inherits them ([e4335db](https://github.com/stevendejongnl/doen/commit/e4335db6d7c67c9eda47d9a89b9a3d167efae624))
+
 ## [1.1.6](https://github.com/stevendejongnl/doen/compare/v1.1.5...v1.1.6) (2026-04-20)
 
 
