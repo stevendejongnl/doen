@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/stevendejongnl/doen/compare/v1.2.3...v1.3.0) (2026-04-20)
+
+
+### Features
+
+* email invitations for group members ([f003d38](https://github.com/stevendejongnl/doen/commit/f003d38489be8b61d0f8c177c579043e3bc3dd2c))
+
 ## [1.2.3](https://github.com/stevendejongnl/doen/compare/v1.2.2...v1.2.3) (2026-04-20)
 
 
