@@ -1,3 +1,10 @@
+## [1.8.1](https://github.com/stevendejongnl/doen/compare/v1.8.0...v1.8.1) (2026-04-20)
+
+
+### Bug Fixes
+
+* **frontend:** use PUT for task edits to match backend route ([4e851b0](https://github.com/stevendejongnl/doen/commit/4e851b0da97506503007dcaf70f33faaa9495991))
+
 # [1.8.0](https://github.com/stevendejongnl/doen/compare/v1.7.0...v1.8.0) (2026-04-20)
 
 
