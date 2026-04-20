@@ -61,6 +61,19 @@ export class DoenApp extends LitElement {
       display: flex;
       flex-direction: column;
       min-width: 0;
+      padding: 16px 24px 16px 16px;
+    }
+
+    .page-wrap {
+      flex: 1;
+      overflow: hidden;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
     }
 
     /* Mobile topbar */
@@ -231,7 +244,9 @@ export class DoenApp extends LitElement {
             </button>
             <span class="topbar-title">Doen</span>
           </div>
-          ${this._renderMain()}
+          <div class="page-wrap">
+            ${this._renderMain()}
+          </div>
         </div>
       </div>
       <doen-toast></doen-toast>
