@@ -99,3 +99,20 @@ class AuthService:
         if not user:
             raise NotFoundError("User", payload["sub"])
         return user
+
+    async def change_password(
+        self, user_id: str, current_password: str, new_password: str
+    ) -> None:
+        """Verify the caller's current password then swap the stored hash.
+
+        Raises InvalidCredentialsError if the current password is wrong, or
+        NotFoundError if the user/credential is missing.
+        """
+        user = await self._users.get_by_id(user_id)
+        if not user:
+            raise NotFoundError("User", user_id)
+        cred = await self._users.get_credential(user_id)
+        if not cred or not verify_password(current_password, cred.password_hash):
+            raise InvalidCredentialsError()
+        cred.password_hash = hash_password(new_password)
+        await self._users.commit()

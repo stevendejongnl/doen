@@ -1,3 +1,4 @@
+from app.models.api_key import ApiKey
 from app.models.group import Group, GroupMember
 from app.models.group_invitation import GroupInvitation
 from app.models.project import Project
@@ -7,6 +8,7 @@ from app.models.user import LocalCredential, User
 __all__ = [
     "User",
     "LocalCredential",
+    "ApiKey",
     "Group",
     "GroupMember",
     "GroupInvitation",

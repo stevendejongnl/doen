@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from app.api import auth, groups, ha, invitations, projects, sse, tasks
+from app.api import api_keys, auth, groups, ha, invitations, projects, sse, tasks
 from app.config import settings
 from app.db.session import engine
 from app.models import *  # noqa: F401, F403 — register all models with metadata
@@ -47,6 +47,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
+app.include_router(api_keys.router)
 app.include_router(groups.router)
 app.include_router(invitations.router)
 app.include_router(projects.router)

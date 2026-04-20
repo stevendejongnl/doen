@@ -2,8 +2,15 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_auth_service, get_current_user, get_db, raise_http
-from app.api.schemas import LoginRequest, RefreshRequest, RegisterRequest, TokenResponse, UserOut
-from app.exceptions import DoenError
+from app.api.schemas import (
+    ChangePasswordRequest,
+    LoginRequest,
+    RefreshRequest,
+    RegisterRequest,
+    TokenResponse,
+    UserOut,
+)
+from app.exceptions import DoenError, InvalidCredentialsError
 from app.models.user import User
 from app.repositories.user_repo import UserRepository
 from app.services.auth import AuthService
@@ -50,6 +57,22 @@ async def refresh(
 @router.get("/me", response_model=UserOut)
 async def me(current_user: User = Depends(get_current_user)) -> User:
     return current_user
+
+
+@router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT)
+async def change_password(
+    body: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    auth_service: AuthService = Depends(get_auth_service),
+) -> None:
+    if len(body.new_password) < 6:
+        raise_http(InvalidCredentialsError())
+    try:
+        await auth_service.change_password(
+            current_user.id, body.current_password, body.new_password
+        )
+    except DoenError as exc:
+        raise_http(exc)
 
 
 @router.get("/users", response_model=list[UserOut])

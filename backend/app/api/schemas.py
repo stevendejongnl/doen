@@ -25,6 +25,34 @@ class RefreshRequest(BaseModel):
     refresh_token: str
 
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
+# ── API keys ──────────────────────────────────────────────────────────────────
+
+class ApiKeyCreateRequest(BaseModel):
+    name: str
+    expires_at: datetime | None = None
+
+
+class ApiKeyOut(BaseModel):
+    id: str
+    name: str
+    token_prefix: str
+    created_at: datetime
+    expires_at: datetime | None
+    last_used_at: datetime | None
+
+    model_config = {"from_attributes": True}
+
+
+class ApiKeyCreateResponse(BaseModel):
+    key: ApiKeyOut
+    token: str  # plaintext; returned exactly once
+
+
 # ── User ─────────────────────────────────────────────────────────────────────
 
 class UserOut(BaseModel):

@@ -11,6 +11,7 @@ import '../pages/page-today';
 import '../pages/page-project';
 import '../pages/page-groups';
 import '../pages/page-admin';
+import '../pages/page-account';
 import '../pages/page-invite';
 
 type Route =
@@ -18,7 +19,8 @@ type Route =
   | { type: 'inbox' }
   | { type: 'project'; projectId: string }
   | { type: 'groups' }
-  | { type: 'admin' };
+  | { type: 'admin' }
+  | { type: 'account' };
 
 @customElement('doen-app')
 export class DoenApp extends LitElement {
@@ -220,6 +222,7 @@ export class DoenApp extends LitElement {
     else if (page === 'inbox') this._route = { type: 'inbox' };
     else if (page === 'groups') this._route = { type: 'groups' };
     else if (page === 'admin') this._route = { type: 'admin' };
+    else if (page === 'account') this._route = { type: 'account' };
     this._sidebarOpen = false;
   }
 
@@ -234,6 +237,8 @@ export class DoenApp extends LitElement {
         return html`<page-groups></page-groups>`;
       case 'admin':
         return html`<page-admin></page-admin>`;
+      case 'account':
+        return html`<page-account></page-account>`;
     }
   }
 

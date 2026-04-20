@@ -16,11 +16,14 @@ from app.exceptions import (
     NotFoundError,
 )
 from app.models.user import User
+from app.repositories.api_key_repo import ApiKeyRepository
 from app.repositories.group_invitation_repo import GroupInvitationRepository
 from app.repositories.group_repo import GroupRepository
 from app.repositories.project_repo import ProjectRepository
 from app.repositories.task_repo import TaskRepository
 from app.repositories.user_repo import UserRepository
+from app.services.api_key_service import TOKEN_PREFIX as API_KEY_PREFIX
+from app.services.api_key_service import ApiKeyService
 from app.services.auth import AuthService
 from app.services.group_invitation_service import GroupInvitationService
 from app.services.group_service import GroupService
@@ -73,12 +76,23 @@ def get_group_invitation_repo(
     return GroupInvitationRepository(db)
 
 
+def get_api_key_repo(db: AsyncSession = Depends(get_db)) -> ApiKeyRepository:
+    return ApiKeyRepository(db)
+
+
 # ── Service providers ─────────────────────────────────────────────────────────
 
 def get_auth_service(
     user_repo: UserRepository = Depends(get_user_repo),
 ) -> AuthService:
     return AuthService(user_repo)
+
+
+def get_api_key_service(
+    api_key_repo: ApiKeyRepository = Depends(get_api_key_repo),
+    user_repo: UserRepository = Depends(get_user_repo),
+) -> ApiKeyService:
+    return ApiKeyService(api_key_repo, user_repo)
 
 
 def get_group_service(
@@ -119,9 +133,13 @@ def get_task_service(
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(bearer),
     auth_service: AuthService = Depends(get_auth_service),
+    api_key_service: ApiKeyService = Depends(get_api_key_service),
 ) -> User:
+    token = credentials.credentials
     try:
-        return await auth_service.get_user_by_token(credentials.credentials)
+        if token.startswith(API_KEY_PREFIX):
+            return await api_key_service.authenticate(token)
+        return await auth_service.get_user_by_token(token)
     except DoenError as exc:
         raise_http(exc)
         raise  # unreachable, satisfies type checker
@@ -130,11 +148,15 @@ async def get_current_user(
 async def get_current_user_optional(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_optional),
     auth_service: AuthService = Depends(get_auth_service),
+    api_key_service: ApiKeyService = Depends(get_api_key_service),
 ) -> User | None:
-    """Return the authenticated user if a valid token is present, else None."""
+    """Return the authenticated user if a valid token (JWT or API key) is present, else None."""
     if credentials is None:
         return None
+    token = credentials.credentials
     try:
-        return await auth_service.get_user_by_token(credentials.credentials)
+        if token.startswith(API_KEY_PREFIX):
+            return await api_key_service.authenticate(token)
+        return await auth_service.get_user_by_token(token)
     except DoenError:
         return None
