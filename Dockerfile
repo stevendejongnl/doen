@@ -1,10 +1,11 @@
 # Stage 1: build frontend
 FROM node:lts-alpine AS frontend-builder
+ARG APP_VERSION=0.0.0
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm ci
 COPY frontend/ ./
-RUN npm run build
+RUN VITE_APP_VERSION=$APP_VERSION npm run build
 
 # Stage 2: build ha-card
 FROM node:lts-alpine AS card-builder

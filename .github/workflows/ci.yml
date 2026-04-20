@@ -102,28 +102,34 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Determine tags
+      - name: Determine tags and version
         id: tags
         run: |
           TAGS="ghcr.io/stevendejongnl/doen:latest"
           if [ "${{ needs.release.outputs.new_release_published }}" = "true" ]; then
             VERSION="${{ needs.release.outputs.new_release_version }}"
-            TAGS="$TAGS,ghcr.io/stevendejongnl/doen:v${VERSION}"
-            MAJOR=$(echo $VERSION | cut -d. -f1)
-            MINOR=$(echo $VERSION | cut -d. -f1-2)
-            TAGS="$TAGS,ghcr.io/stevendejongnl/doen:v${MAJOR},ghcr.io/stevendejongnl/doen:v${MINOR}"
+          else
+            VERSION=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo "0.0.0")
           fi
+          TAGS="$TAGS,ghcr.io/stevendejongnl/doen:v${VERSION}"
+          MAJOR=$(echo $VERSION | cut -d. -f1)
+          MINOR=$(echo $VERSION | cut -d. -f1-2)
+          TAGS="$TAGS,ghcr.io/stevendejongnl/doen:v${MAJOR},ghcr.io/stevendejongnl/doen:v${MINOR}"
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
+          echo "version=v${VERSION}" >> $GITHUB_OUTPUT
       - uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: ${{ steps.tags.outputs.tags }}
+          build-args: APP_VERSION=${{ steps.tags.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

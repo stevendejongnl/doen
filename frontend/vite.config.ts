@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import { execSync } from 'child_process';
 
 function getVersion(): string {
+  if (process.env.VITE_APP_VERSION) return process.env.VITE_APP_VERSION;
   try {
     return execSync('git describe --tags --abbrev=0 2>/dev/null', { encoding: 'utf-8' }).trim() || '0.0.0';
   } catch {

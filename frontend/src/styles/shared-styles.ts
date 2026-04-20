@@ -1,7 +1,8 @@
-import { css, unsafeCSS } from 'lit';
-import faStyles from '@fortawesome/fontawesome-free/css/all.min.css?inline';
+import { css } from 'lit';
 
-export const sharedStyles = [unsafeCSS(faStyles), css`
+export const sharedStyles = [css`
+  @import url('https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css');
+`, css`
 
   :host {
     --glass-bg: rgba(255, 255, 255, 0.07);
