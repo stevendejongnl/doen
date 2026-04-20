@@ -175,10 +175,17 @@ export class DoenApp extends LitElement {
   }
 
   private _handleSSE(event: string, task: Task) {
-    if (event === 'task_updated' || event === 'task_completed') {
-      (this.shadowRoot?.querySelector('page-project') as any)?.updateTask(task);
+    const project = (this.shadowRoot?.querySelector('page-project') as any);
+    const today = (this.shadowRoot?.querySelector('page-today') as any);
+    if (event === 'task_created') {
+      project?.addTask?.(task);
+      today?.addTask?.(task);
+    } else if (event === 'task_updated' || event === 'task_completed') {
+      project?.updateTask(task);
+      today?.updateTask?.(task);
     } else if (event === 'task_deleted') {
-      (this.shadowRoot?.querySelector('page-project') as any)?.removeTask((task as any).id);
+      project?.removeTask((task as any).id);
+      today?.removeTask?.((task as any).id);
     }
   }
 
@@ -192,6 +199,10 @@ export class DoenApp extends LitElement {
     this._user = e.detail;
     this._route = { type: 'today' };
     this._connectSSE();
+  }
+
+  private _onProjectCreated() {
+    (this.shadowRoot?.querySelector('doen-sidebar') as any)?.reload();
   }
 
   private _onNavigate(e: CustomEvent<{ projectId?: string; page?: string }>) {
@@ -231,7 +242,7 @@ export class DoenApp extends LitElement {
     const activeId = this._route.type === 'project' ? this._route.projectId : '';
 
     return html`
-      <div class="layout" @navigate=${this._onNavigate}>
+      <div class="layout" @navigate=${this._onNavigate} @project-created=${this._onProjectCreated}>
         <div class="backdrop ${this._sidebarOpen ? 'open' : ''}"
              @click=${() => this._sidebarOpen = false}></div>
 

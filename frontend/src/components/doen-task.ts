@@ -197,6 +197,7 @@ export class DoenTask extends LitElement {
       });
       this.task = updated;
       this._editing = false;
+      this.dispatchEvent(new CustomEvent('task-updated', { detail: updated, bubbles: true, composed: true }));
       toast.success('Opgeslagen!');
     } catch (e) {
       if (e instanceof ApiError) toast.error(`Opslaan mislukt: ${e.message}`);

@@ -165,6 +165,12 @@ export class PageProject extends LitElement {
     this._tasks = [e.detail, ...this._tasks];
   };
 
+  addTask(task: Task) {
+    if (task.project_id === this.projectId && !this._tasks.find(t => t.id === task.id)) {
+      this._tasks = [task, ...this._tasks];
+    }
+  }
+
   updateTask(updated: Task) {
     this._tasks = this._tasks.map(t => t.id === updated.id ? updated : t);
   }

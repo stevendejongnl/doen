@@ -178,6 +178,7 @@ export class PageGroups extends LitElement {
       await api.post<Project>('/projects', { name, color, group_id: groupId });
       this._newProjectName = '';
       this._newProjectGroupId = '';
+      this.dispatchEvent(new CustomEvent('project-created', { bubbles: true, composed: true }));
       toast.success(`Project "${name}" aangemaakt!`);
     } catch (e) {
       if (e instanceof ApiError) toast.error(`Aanmaken mislukt: ${e.message}`);

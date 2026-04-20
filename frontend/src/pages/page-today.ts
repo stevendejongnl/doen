@@ -125,6 +125,26 @@ export class PageToday extends LitElement {
     }
   }
 
+  addTask(task: Task) {
+    if (!task.due_date || task.status === 'done') return;
+    const now = new Date(); now.setHours(0,0,0,0);
+    if (new Date(task.due_date) >= now && !this._tasks.find(t => t.id === task.id)) {
+      this._tasks = [...this._tasks, task];
+    }
+  }
+
+  updateTask(task: Task) {
+    if (this._tasks.find(t => t.id === task.id)) {
+      this._tasks = this._tasks.map(t => t.id === task.id ? task : t);
+    } else {
+      this.addTask(task);
+    }
+  }
+
+  removeTask(id: string) {
+    this._tasks = this._tasks.filter(t => t.id !== id);
+  }
+
   private _today() {
     const now = new Date(); now.setHours(0,0,0,0);
     const tom = new Date(now); tom.setDate(tom.getDate() + 1);
@@ -183,7 +203,10 @@ export class PageToday extends LitElement {
             <i class="fa-solid fa-triangle-exclamation" style="color:var(--color-danger)"></i>
             Achterstallig <span class="badge">${overdue.length}</span>
           </div>
-          <div class="task-list">${overdue.map(t => html`<doen-task .task=${t}></doen-task>`)}</div>
+          <div class="task-list"
+            @task-deleted=${(e: CustomEvent<string>) => this.removeTask(e.detail)}
+            @task-updated=${(e: CustomEvent<Task>) => this.updateTask(e.detail)}
+          >${overdue.map(t => html`<doen-task .task=${t}></doen-task>`)}</div>
         </div>
       ` : ''}
 
@@ -193,7 +216,10 @@ export class PageToday extends LitElement {
             <i class="fa-solid fa-sun" style="color:var(--color-warning)"></i>
             Voor vandaag
           </div>
-          <div class="task-list">${today.map(t => html`<doen-task .task=${t}></doen-task>`)}</div>
+          <div class="task-list"
+            @task-deleted=${(e: CustomEvent<string>) => this.removeTask(e.detail)}
+            @task-updated=${(e: CustomEvent<Task>) => this.updateTask(e.detail)}
+          >${today.map(t => html`<doen-task .task=${t}></doen-task>`)}</div>
         </div>
       ` : ''}
     `;

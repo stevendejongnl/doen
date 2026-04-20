@@ -243,6 +243,10 @@ export class DoenSidebar extends LitElement {
     await this._load();
   }
 
+  async reload() {
+    await this._load();
+  }
+
   private async _load() {
     try {
       const [projects, groups] = await Promise.all([
