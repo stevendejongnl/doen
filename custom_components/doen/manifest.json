@@ -1,11 +1,13 @@
 {
   "domain": "doen",
   "name": "Doen",
-  "version": "0.1.0",
+  "version": "1.4.1",
   "documentation": "https://github.com/stevendejong/doen",
   "issue_tracker": "https://github.com/stevendejong/doen/issues",
   "dependencies": [],
-  "codeowners": ["@stevendejong"],
+  "codeowners": [
+    "@stevendejong"
+  ],
   "requirements": [],
   "iot_class": "local_polling",
   "config_flow": true
