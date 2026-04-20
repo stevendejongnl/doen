@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/stevendejongnl/doen/compare/v1.3.0...v1.3.1) (2026-04-20)
+
+
+### Bug Fixes
+
+* **k8s:** mount PVC, drop blocked ingress snippet, rename example ([fcc264d](https://github.com/stevendejongnl/doen/commit/fcc264d58af1785a16c6a8af46c7c1d46f8a59b9))
+
 # [1.3.0](https://github.com/stevendejongnl/doen/compare/v1.2.3...v1.3.0) (2026-04-20)
 
 
