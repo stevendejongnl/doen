@@ -1,3 +1,10 @@
+## [1.3.2](https://github.com/stevendejongnl/doen/compare/v1.3.1...v1.3.2) (2026-04-20)
+
+
+### Bug Fixes
+
+* **email:** add check-double logo icon and color-scheme meta ([143f33d](https://github.com/stevendejongnl/doen/commit/143f33db1871aaf08d2605c98238471573d581f0))
+
 ## [1.3.1](https://github.com/stevendejongnl/doen/compare/v1.3.0...v1.3.1) (2026-04-20)
 
 
