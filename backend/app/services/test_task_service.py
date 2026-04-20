@@ -150,12 +150,18 @@ async def test_create_recurring_rule(db_session, seed_data):
     # When creating a rule
     rule = await svc.create_recurring_rule(
         task_id=seed_data["todo_task"].id,
-        schedule_cron="0 8 * * 1",
+        unit="week",
+        interval=1,
+        weekdays="0",
+        month_day=None,
+        time_of_day="08:00",
+        parity="any",
         notify_on_spawn=True,
     )
 
     # Then the rule is returned with correct fields
-    assert rule.schedule_cron == "0 8 * * 1"
+    assert rule.unit == "week"
+    assert rule.weekdays == "0"
     assert rule.notify_on_spawn is True
     assert rule.active is True
 
@@ -168,7 +174,12 @@ async def test_create_recurring_rule_raises_conflict_if_already_exists(db_sessio
     with pytest.raises(ConflictError):
         await svc.create_recurring_rule(
             task_id=seed_data["recurring_template"].id,
-            schedule_cron="0 9 * * 2",
+            unit="week",
+            interval=1,
+            weekdays="1",
+            month_day=None,
+            time_of_day="09:00",
+            parity="any",
             notify_on_spawn=False,
         )
 
@@ -181,10 +192,16 @@ async def test_delete_recurring_rule(db_session, seed_data):
     # Then it is gone — creating a new rule on the template should now succeed
     rule = await svc.create_recurring_rule(
         task_id=seed_data["recurring_template"].id,
-        schedule_cron="0 10 * * 3",
+        unit="week",
+        interval=1,
+        weekdays="2",
+        month_day=None,
+        time_of_day="10:00",
+        parity="any",
         notify_on_spawn=False,
     )
-    assert rule.schedule_cron == "0 10 * * 3"
+    assert rule.weekdays == "2"
+    assert rule.time_of_day == "10:00"
 
 
 @pytest.mark.asyncio

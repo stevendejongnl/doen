@@ -99,7 +99,12 @@ class TaskService:
     async def create_recurring_rule(
         self,
         task_id: str,
-        schedule_cron: str,
+        unit: str,
+        interval: int,
+        weekdays: str | None,
+        month_day: int | None,
+        time_of_day: str,
+        parity: str,
         notify_on_spawn: bool,
     ) -> RecurringRule:
         task = await self.get_task(task_id)
@@ -108,9 +113,22 @@ class TaskService:
             raise ConflictError("Recurring rule already exists for this task")
         return await self._tasks.create_recurring_rule(
             task_id=task_id,
-            schedule_cron=schedule_cron,
+            unit=unit,
+            interval=interval,
+            weekdays=weekdays,
+            month_day=month_day,
+            time_of_day=time_of_day,
+            parity=parity,
             notify_on_spawn=notify_on_spawn,
         )
+
+    async def update_recurring_rule(
+        self, rule_id: str, fields: dict[str, object]
+    ) -> RecurringRule:
+        rule = await self._tasks.get_recurring_rule_by_id(rule_id)
+        if not rule:
+            raise NotFoundError("RecurringRule", rule_id)
+        return await self._tasks.update_recurring_rule(rule, fields)
 
     async def delete_recurring_rule(self, rule_id: str) -> None:
         rule = await self._tasks.get_recurring_rule_by_id(rule_id)

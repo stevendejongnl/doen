@@ -18,9 +18,11 @@ from app.scheduler.setup import create_scheduler, set_scheduler
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     # Create tables if they don't exist (dev convenience; prod uses Alembic)
+    from app.db.migrate import migrate_recurring_rules_to_structured
     from app.db.session import Base
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    await migrate_recurring_rules_to_structured(engine)
 
     Session = async_sessionmaker(engine, expire_on_commit=False)
     scheduler = create_scheduler(Session)

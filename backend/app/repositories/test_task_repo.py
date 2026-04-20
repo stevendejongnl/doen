@@ -113,14 +113,22 @@ async def test_create_recurring_rule(db_session, seed_data):
     # When a recurring rule is created
     await repo.create_recurring_rule(
         task_id=seed_data["todo_task"].id,
-        schedule_cron="0 9 * * 1",
+        unit="week",
+        interval=2,
+        weekdays="0,2,4",
+        month_day=None,
+        time_of_day="09:00",
+        parity="any",
         notify_on_spawn=True,
     )
 
     # Then it is retrievable
     fetched = await repo.get_recurring_rule(seed_data["todo_task"].id)
     assert fetched is not None
-    assert fetched.schedule_cron == "0 9 * * 1"
+    assert fetched.unit == "week"
+    assert fetched.interval == 2
+    assert fetched.weekdays == "0,2,4"
+    assert fetched.time_of_day == "09:00"
     assert fetched.active is True
 
 

@@ -1,22 +1,45 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import type { Task, TaskPriority, RecurringRule } from '../services/types';
+import type {
+  Task,
+  TaskPriority,
+  RecurringRule,
+  RecurrenceUnit,
+  RecurrenceParity,
+} from '../services/types';
 import { api, ApiError } from '../services/api';
 import { toast } from './doen-toast';
 import { sharedStyles } from '../styles/shared-styles';
 
-type RecurringFreq = 'daily' | 'weekly' | 'monthly';
+const DAY_LABELS = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
 
-const FREQ_CRON: Record<RecurringFreq, string> = {
-  daily: '0 8 * * *',
-  weekly: '0 8 * * 1',
-  monthly: '0 8 1 * *',
-};
+function parseWeekdays(csv: string | null | undefined): Set<number> {
+  if (!csv) return new Set();
+  return new Set(csv.split(',').map(s => parseInt(s, 10)).filter(n => !isNaN(n) && n >= 0 && n <= 6));
+}
 
-function cronToFreq(cron: string): RecurringFreq {
-  if (cron === FREQ_CRON.daily) return 'daily';
-  if (cron === FREQ_CRON.monthly) return 'monthly';
-  return 'weekly';
+function weekdaysToCsv(s: Set<number>): string | null {
+  if (s.size === 0) return null;
+  return [...s].sort((a, b) => a - b).join(',');
+}
+
+export function describeRule(rule: RecurringRule): string {
+  const interval = Math.max(1, rule.interval ?? 1);
+  let base = '';
+  if (rule.unit === 'day') {
+    base = interval > 1 ? `Elke ${interval} dagen` : 'Dagelijks';
+  } else if (rule.unit === 'week') {
+    const days = [...parseWeekdays(rule.weekdays)].sort((a, b) => a - b).map(n => DAY_LABELS[n]).join(', ');
+    const prefix = interval > 1 ? `Elke ${interval} weken` : 'Wekelijks';
+    base = days ? `${prefix} op ${days}` : prefix;
+  } else if (rule.unit === 'month') {
+    const dayBit = rule.month_day ? ` op dag ${rule.month_day}` : '';
+    base = interval > 1 ? `Elke ${interval} maanden${dayBit}` : `Maandelijks${dayBit}`;
+  }
+  let suffix = '';
+  if (rule.parity === 'odd') suffix = rule.unit === 'week' ? ' · oneven weken' : ' · oneven';
+  if (rule.parity === 'even') suffix = rule.unit === 'week' ? ' · even weken' : ' · even';
+  return `${base}${suffix} · ${rule.time_of_day ?? '08:00'}`;
 }
 
 @customElement('doen-task')
@@ -30,7 +53,12 @@ export class DoenTask extends LitElement {
   @state() private _editDue = '';
   @state() private _editNotes = '';
   @state() private _editRecurring = false;
-  @state() private _editRecurringFreq: RecurringFreq = 'weekly';
+  @state() private _editUnit: RecurrenceUnit = 'week';
+  @state() private _editInterval = 1;
+  @state() private _editWeekdays: Set<number> = new Set([0]);
+  @state() private _editMonthDay = 1;
+  @state() private _editTimeOfDay = '08:00';
+  @state() private _editParity: RecurrenceParity = 'any';
   @state() private _saving = false;
 
   static styles = [...sharedStyles, css`
@@ -228,6 +256,51 @@ export class DoenTask extends LitElement {
     .toggle input:checked ~ .toggle-thumb { transform: translateX(14px); }
 
     .freq-select { font-size: 12px; padding: 5px 10px; }
+
+    /* Recurrence builder */
+    .recurrence-builder {
+      width: 100%;
+      display: flex; flex-direction: column; gap: 10px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+    }
+    .rb-row {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      font-size: 12px; color: rgba(232,234,240,0.7);
+    }
+    .rb-row select, .rb-row input {
+      font-size: 12px; padding: 5px 8px;
+    }
+    .rb-row input[type="number"] { width: 56px; }
+    .rb-row input[type="time"] { width: 90px; }
+
+    .weekday-picker {
+      display: flex; gap: 4px; flex-wrap: wrap;
+    }
+    .weekday-chip {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.14);
+      color: rgba(232,234,240,0.6);
+      cursor: pointer;
+      user-select: none;
+      transition: background 120ms, border-color 120ms, color 120ms;
+    }
+    .weekday-chip.active {
+      background: rgba(99,102,241,0.28);
+      border-color: #6366f1;
+      color: #e8eaf0;
+    }
+    .weekday-chip:hover { border-color: rgba(255,255,255,0.28); }
+
+    .rb-preview {
+      font-size: 11px; color: rgba(232,234,240,0.55);
+      font-style: italic;
+    }
   `];
 
   private async _complete() {
@@ -251,11 +324,45 @@ export class DoenTask extends LitElement {
     this._editPriority = this.task.priority as TaskPriority;
     this._editDue = this.task.due_date ? this.task.due_date.substring(0, 10) : '';
     this._editNotes = this.task.notes ?? '';
-    this._editRecurring = !!this.task.recurring_rule;
-    this._editRecurringFreq = this.task.recurring_rule
-      ? cronToFreq(this.task.recurring_rule.schedule_cron)
-      : 'weekly';
+
+    const rr = this.task.recurring_rule;
+    this._editRecurring = !!rr;
+    this._editUnit = rr?.unit ?? 'week';
+    this._editInterval = rr?.interval ?? 1;
+    this._editWeekdays = rr ? parseWeekdays(rr.weekdays) : new Set([0]);
+    this._editMonthDay = rr?.month_day ?? 1;
+    this._editTimeOfDay = rr?.time_of_day ?? '08:00';
+    this._editParity = rr?.parity ?? 'any';
     this._editing = true;
+  }
+
+  private _toggleWeekday(n: number) {
+    const next = new Set(this._editWeekdays);
+    if (next.has(n)) next.delete(n);
+    else next.add(n);
+    this._editWeekdays = next;
+  }
+
+  private _recurrencePayload() {
+    return {
+      unit: this._editUnit,
+      interval: Math.max(1, this._editInterval),
+      weekdays: this._editUnit === 'week' ? weekdaysToCsv(this._editWeekdays) : null,
+      month_day: this._editUnit === 'month' ? this._editMonthDay : null,
+      time_of_day: this._editTimeOfDay,
+      parity: this._editParity,
+      notify_on_spawn: false,
+    };
+  }
+
+  private _previewDescription(): string {
+    const rr: RecurringRule = {
+      id: '', template_task_id: '', active: true,
+      ...this._recurrencePayload(),
+      weekdays: this._editUnit === 'week' ? weekdaysToCsv(this._editWeekdays) : null,
+      month_day: this._editUnit === 'month' ? this._editMonthDay : null,
+    };
+    return describeRule(rr);
   }
 
   private async _saveEdit(e: Event) {
@@ -274,11 +381,14 @@ export class DoenTask extends LitElement {
       const wantsRule = this._editRecurring;
 
       if (wantsRule && !hadRule) {
-        await api.post<RecurringRule>(`/tasks/${this.task.id}/recurring`, {
-          schedule_cron: FREQ_CRON[this._editRecurringFreq],
-          notify_on_spawn: false,
-        });
-        // Re-fetch to get the embedded recurring_rule
+        await api.post<RecurringRule>(`/tasks/${this.task.id}/recurring`, this._recurrencePayload());
+        const fresh = await api.get<Task>(`/tasks/${this.task.id}`);
+        this.task = fresh;
+      } else if (wantsRule && hadRule && this.task.recurring_rule) {
+        await api.patch<RecurringRule>(
+          `/recurring/${this.task.recurring_rule.id}`,
+          this._recurrencePayload(),
+        );
         const fresh = await api.get<Task>(`/tasks/${this.task.id}`);
         this.task = fresh;
       } else if (!wantsRule && hadRule && this.task.recurring_rule) {
@@ -359,15 +469,60 @@ export class DoenTask extends LitElement {
               <i class="fa-solid fa-repeat" style="font-size:11px;opacity:0.6"></i>
               Herhalen
             </label>
-            ${this._editRecurring ? html`
-              <select class="freq-select" .value=${this._editRecurringFreq}
-                @change=${(e: Event) => this._editRecurringFreq = (e.target as HTMLSelectElement).value as RecurringFreq}>
-                <option value="daily">Dagelijks</option>
-                <option value="weekly">Wekelijks (ma)</option>
-                <option value="monthly">Maandelijks</option>
-              </select>
-            ` : ''}
           </div>
+          ${this._editRecurring ? html`
+            <div class="recurrence-builder">
+              <div class="rb-row">
+                <span>Elke</span>
+                <input type="number" min="1" max="365"
+                  .value=${String(this._editInterval)}
+                  @input=${(e: Event) => this._editInterval = Math.max(1, parseInt((e.target as HTMLInputElement).value, 10) || 1)}
+                />
+                <select .value=${this._editUnit}
+                  @change=${(e: Event) => this._editUnit = (e.target as HTMLSelectElement).value as RecurrenceUnit}>
+                  <option value="day">dag(en)</option>
+                  <option value="week">we(e)k(en)</option>
+                  <option value="month">maand(en)</option>
+                </select>
+              </div>
+              ${this._editUnit === 'week' ? html`
+                <div class="rb-row">
+                  <span>Op:</span>
+                  <div class="weekday-picker">
+                    ${DAY_LABELS.map((label, i) => html`
+                      <span class="weekday-chip ${this._editWeekdays.has(i) ? 'active' : ''}"
+                        @click=${() => this._toggleWeekday(i)}>${label}</span>
+                    `)}
+                  </div>
+                </div>
+              ` : ''}
+              ${this._editUnit === 'month' ? html`
+                <div class="rb-row">
+                  <span>Dag van de maand:</span>
+                  <input type="number" min="1" max="31"
+                    .value=${String(this._editMonthDay)}
+                    @input=${(e: Event) => this._editMonthDay = Math.max(1, Math.min(31, parseInt((e.target as HTMLInputElement).value, 10) || 1))}
+                  />
+                </div>
+              ` : ''}
+              <div class="rb-row">
+                <span>Om:</span>
+                <input type="time"
+                  .value=${this._editTimeOfDay}
+                  @input=${(e: Event) => this._editTimeOfDay = (e.target as HTMLInputElement).value || '08:00'}
+                />
+                <span style="margin-left:8px">Alleen</span>
+                <select .value=${this._editParity}
+                  @change=${(e: Event) => this._editParity = (e.target as HTMLSelectElement).value as RecurrenceParity}>
+                  <option value="any">alle</option>
+                  <option value="odd">oneven</option>
+                  <option value="even">even</option>
+                </select>
+                <span>${this._editUnit === 'week' ? 'weken' : this._editUnit === 'month' ? 'maanden' : 'dagen'}</span>
+              </div>
+              <div class="rb-preview">${this._previewDescription()}</div>
+            </div>
+          ` : ''}
           <div class="edit-actions">
             <button type="button" class="btn-delete" @click=${this._delete}>
               <i class="fa-solid fa-trash"></i> Verwijderen
@@ -400,7 +555,7 @@ export class DoenTask extends LitElement {
 
         <span class="task-meta">
           ${this.task.notes ? html`<i class="fa-solid fa-align-left meta-icon" title="Heeft notities"></i>` : ''}
-          ${this.task.recurring_rule ? html`<i class="fa-solid fa-repeat meta-icon" title="Herhalende taak"></i>` : ''}
+          ${this.task.recurring_rule ? html`<i class="fa-solid fa-repeat meta-icon" title=${describeRule(this.task.recurring_rule)}></i>` : ''}
           ${due ? html`
             <span class="due-date ${due.overdue ? 'overdue' : ''}">
               <i class="fa-solid fa-${due.overdue ? 'triangle-exclamation' : 'clock'}"></i>

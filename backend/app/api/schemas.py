@@ -180,14 +180,35 @@ class TaskOut(BaseModel):
 # ── Recurring ─────────────────────────────────────────────────────────────────
 
 class RecurringRuleCreate(BaseModel):
-    schedule_cron: str
+    unit: str = "week"            # day | week | month
+    interval: int = 1
+    weekdays: str | None = None   # CSV of 0..6 (Mon..Sun), used when unit='week'
+    month_day: int | None = None  # 1..31, used when unit='month'
+    time_of_day: str = "08:00"
+    parity: str = "any"           # any | odd | even
     notify_on_spawn: bool = False
+
+
+class RecurringRuleUpdate(BaseModel):
+    unit: str | None = None
+    interval: int | None = None
+    weekdays: str | None = None
+    month_day: int | None = None
+    time_of_day: str | None = None
+    parity: str | None = None
+    notify_on_spawn: bool | None = None
+    active: bool | None = None
 
 
 class RecurringRuleOut(BaseModel):
     id: str
     template_task_id: str
-    schedule_cron: str
+    unit: str
+    interval: int
+    weekdays: str | None
+    month_day: int | None
+    time_of_day: str
+    parity: str
     last_spawned_at: datetime | None
     notify_on_spawn: bool
     active: bool

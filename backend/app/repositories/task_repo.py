@@ -113,16 +113,35 @@ class TaskRepository:
     async def create_recurring_rule(
         self,
         task_id: str,
-        schedule_cron: str,
+        unit: str,
+        interval: int,
+        weekdays: str | None,
+        month_day: int | None,
+        time_of_day: str,
+        parity: str,
         notify_on_spawn: bool,
     ) -> RecurringRule:
         rule = RecurringRule(
             id=new_uuid(),
             template_task_id=task_id,
-            schedule_cron=schedule_cron,
+            unit=unit,
+            interval=interval,
+            weekdays=weekdays,
+            month_day=month_day,
+            time_of_day=time_of_day,
+            parity=parity,
             notify_on_spawn=notify_on_spawn,
         )
         self._session.add(rule)
+        await self._session.commit()
+        await self._session.refresh(rule)
+        return rule
+
+    async def update_recurring_rule(
+        self, rule: RecurringRule, fields: dict[str, object]
+    ) -> RecurringRule:
+        for key, value in fields.items():
+            setattr(rule, key, value)
         await self._session.commit()
         await self._session.refresh(rule)
         return rule

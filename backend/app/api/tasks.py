@@ -1,7 +1,14 @@
 from fastapi import APIRouter, Depends, Query, status
 
 from app.api.deps import get_current_user, get_task_service, raise_http
-from app.api.schemas import RecurringRuleCreate, RecurringRuleOut, TaskCreate, TaskOut, TaskUpdate
+from app.api.schemas import (
+    RecurringRuleCreate,
+    RecurringRuleOut,
+    RecurringRuleUpdate,
+    TaskCreate,
+    TaskOut,
+    TaskUpdate,
+)
 from app.exceptions import DoenError
 from app.models.user import User
 from app.services.sse_bus import sse_bus
@@ -133,7 +140,30 @@ async def create_recurring_rule(
     svc: TaskService = Depends(get_task_service),
 ):
     try:
-        return await svc.create_recurring_rule(task_id, body.schedule_cron, body.notify_on_spawn)
+        return await svc.create_recurring_rule(
+            task_id=task_id,
+            unit=body.unit,
+            interval=body.interval,
+            weekdays=body.weekdays,
+            month_day=body.month_day,
+            time_of_day=body.time_of_day,
+            parity=body.parity,
+            notify_on_spawn=body.notify_on_spawn,
+        )
+    except DoenError as exc:
+        raise_http(exc)
+
+
+@router.patch("/recurring/{rule_id}", response_model=RecurringRuleOut)
+async def update_recurring_rule(
+    rule_id: str,
+    body: RecurringRuleUpdate,
+    current_user: User = Depends(get_current_user),
+    svc: TaskService = Depends(get_task_service),
+):
+    fields = body.model_dump(exclude_unset=True)
+    try:
+        return await svc.update_recurring_rule(rule_id, fields)
     except DoenError as exc:
         raise_http(exc)
 

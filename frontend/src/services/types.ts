@@ -39,10 +39,18 @@ export interface Task {
   recurring_rule?: RecurringRule;
 }
 
+export type RecurrenceUnit = 'day' | 'week' | 'month';
+export type RecurrenceParity = 'any' | 'odd' | 'even';
+
 export interface RecurringRule {
   id: string;
   template_task_id: string;
-  schedule_cron: string;
+  unit: RecurrenceUnit;
+  interval: number;
+  weekdays?: string | null;   // CSV of 0..6 (Mon..Sun)
+  month_day?: number | null;  // 1..31
+  time_of_day: string;        // "HH:MM"
+  parity: RecurrenceParity;
   last_spawned_at?: string;
   notify_on_spawn: boolean;
   active: boolean;

@@ -98,12 +98,20 @@ async def test_get_task_not_found_returns_404(seeded_client, seed_data):
 async def test_create_recurring_rule(seeded_client, seed_data):
     resp = await seeded_client.post(
         f"/tasks/{seed_data['todo_task'].id}/recurring",
-        json={"schedule_cron": "0 8 * * 1", "notify_on_spawn": True},
+        json={
+            "unit": "week",
+            "interval": 1,
+            "weekdays": "0",
+            "time_of_day": "08:00",
+            "parity": "any",
+            "notify_on_spawn": True,
+        },
         headers=_headers(seed_data["henk"]),
     )
     assert resp.status_code == 201
     data = resp.json()
-    assert data["schedule_cron"] == "0 8 * * 1"
+    assert data["unit"] == "week"
+    assert data["weekdays"] == "0"
     assert data["active"] is True
 
 
@@ -112,10 +120,58 @@ async def test_create_recurring_rule_conflict_returns_409(seeded_client, seed_da
     # Given the recurring_template already has a rule
     resp = await seeded_client.post(
         f"/tasks/{seed_data['recurring_template'].id}/recurring",
-        json={"schedule_cron": "0 9 * * 2", "notify_on_spawn": False},
+        json={
+            "unit": "week",
+            "interval": 1,
+            "weekdays": "1",
+            "time_of_day": "09:00",
+            "parity": "any",
+            "notify_on_spawn": False,
+        },
         headers=_headers(seed_data["henk"]),
     )
     assert resp.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_patch_recurring_rule_updates_fields(seeded_client, seed_data):
+    rule_id = seed_data["recurring_rule"].id
+    resp = await seeded_client.patch(
+        f"/recurring/{rule_id}",
+        json={"unit": "week", "interval": 2, "weekdays": "0,2,4", "time_of_day": "07:30"},
+        headers=_headers(seed_data["henk"]),
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["id"] == rule_id
+    assert data["unit"] == "week"
+    assert data["interval"] == 2
+    assert data["weekdays"] == "0,2,4"
+    assert data["time_of_day"] == "07:30"
+
+
+@pytest.mark.asyncio
+async def test_patch_recurring_rule_partial_update(seeded_client, seed_data):
+    rule_id = seed_data["recurring_rule"].id
+    resp = await seeded_client.patch(
+        f"/recurring/{rule_id}",
+        json={"active": False},
+        headers=_headers(seed_data["henk"]),
+    )
+    assert resp.status_code == 200
+    assert resp.json()["active"] is False
+    # Other fields untouched
+    assert resp.json()["unit"] == "day"  # from seed
+
+
+@pytest.mark.asyncio
+async def test_patch_recurring_rule_not_found_returns_404(seeded_client, seed_data):
+    resp = await seeded_client.patch(
+        "/recurring/does-not-exist",
+        json={"active": False},
+        headers=_headers(seed_data["henk"]),
+    )
+    assert resp.status_code == 404
 
 
 @pytest.mark.asyncio

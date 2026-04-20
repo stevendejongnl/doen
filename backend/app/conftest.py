@@ -145,7 +145,13 @@ async def seed_data(db_session: AsyncSession) -> dict:
     recurring_rule = RecurringRule(
         id=new_uuid(),
         template_task_id=recurring_template.id,
-        schedule_cron="0 8 * * 1",
+        unit="day",
+        interval=1,
+        weekdays=None,
+        time_of_day="00:00",
+        parity="any",
+        # Anchor in the past so the rule is always due when spawn tests run.
+        created_at=datetime(2020, 1, 1, tzinfo=UTC),
         notify_on_spawn=True,
         active=True,
     )

@@ -1,9 +1,9 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String, Text
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models.base import Base, TimestampMixin, new_uuid
+from app.models.base import Base, TimestampMixin, new_uuid, utcnow
 
 
 class Task(Base, TimestampMixin):
@@ -73,7 +73,27 @@ class RecurringRule(Base):
     template_task_id: Mapped[str] = mapped_column(
         String, ForeignKey("tasks.id"), unique=True, nullable=False
     )
-    schedule_cron: Mapped[str] = mapped_column(String, nullable=False)
+    unit: Mapped[str] = mapped_column(
+        Enum("day", "week", "month", name="recurring_unit"),
+        nullable=False,
+        default="week",
+    )
+    interval: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    # CSV of weekdays (0=Mon..6=Sun) — only meaningful when unit='week'
+    weekdays: Mapped[str | None] = mapped_column(String, nullable=True)
+    # Day of month (1-31) — only meaningful when unit='month'
+    month_day: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    time_of_day: Mapped[str] = mapped_column(String, nullable=False, default="08:00")
+    # Overlay filter: only fire when the week/day number matches parity
+    parity: Mapped[str] = mapped_column(
+        Enum("any", "odd", "even", name="recurring_parity"),
+        nullable=False,
+        default="any",
+    )
+    # Anchor for interval math (e.g. every 2 weeks from here)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, nullable=False
+    )
     last_spawned_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
