@@ -9,17 +9,26 @@ interface DoenTask {
   due_date: string | null;
 }
 
+interface DoenProject {
+  id: string;
+  name: string;
+}
+
 interface CardConfig {
-  url: string;
-  token: string;
-  group?: string;
+  project_id?: string;
   show?: Array<'today' | 'overdue' | 'quick_add'>;
   title?: string;
 }
 
+interface Hass {
+  callWS<T = unknown>(msg: Record<string, unknown>): Promise<T>;
+}
+
+// ── Card ──────────────────────────────────────────────────────────────────────
+
 @customElement('doen-card')
 export class DoenCard extends LitElement {
-  @property({ attribute: false }) public hass: unknown = null;
+  @property({ attribute: false }) public hass!: Hass;
   @state() private _config: CardConfig | null = null;
   @state() private _today: DoenTask[] = [];
   @state() private _overdue: DoenTask[] = [];
@@ -165,7 +174,6 @@ export class DoenCard extends LitElement {
   `;
 
   setConfig(config: CardConfig) {
-    if (!config.url || !config.token) throw new Error('Doen: url en token zijn vereist');
     this._config = config;
   }
 
@@ -185,15 +193,14 @@ export class DoenCard extends LitElement {
   }
 
   private async _load() {
-    if (!this._config) return;
-    const { url, token, group } = this._config;
-    const qs = group ? `?group_id=${group}` : '';
+    const projectId = this._config?.project_id;
+    const path = projectId ? `/ha/card-data?group_id=${projectId}` : '/ha/card-data';
     try {
-      const resp = await fetch(`${url}/ha/card-data${qs}`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const data = await this.hass.callWS<{ today: DoenTask[]; overdue: DoenTask[] }>({
+        type: 'doen/api_proxy',
+        method: 'GET',
+        path,
       });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const data = await resp.json();
       this._today = data.today ?? [];
       this._overdue = data.overdue ?? [];
       this._error = '';
@@ -205,15 +212,29 @@ export class DoenCard extends LitElement {
   }
 
   private async _quickAdd() {
-    if (!this._newTitle.trim() || this._adding || !this._config) return;
+    const title = this._newTitle.trim();
+    if (!title || this._adding) return;
+    const projectId = this._config?.project_id;
+    if (!projectId) {
+      this._error = 'Stel een project in via de kaarteditor om taken toe te voegen';
+      return;
+    }
     this._adding = true;
-    // Quick-add needs a project — without one we'd need a project picker.
-    // For now: fire a custom event that HA can catch, or show a toast.
-    // This is intentionally minimal — full add is in the web app.
-    this._newTitle = '';
-    this._adding = false;
-    // Reload to refresh counts
-    await this._load();
+    try {
+      await this.hass.callWS({
+        type: 'doen/api_proxy',
+        method: 'POST',
+        path: `/projects/${projectId}/tasks`,
+        body: { title },
+      });
+      this._newTitle = '';
+      this._error = '';
+      await this._load();
+    } catch (e) {
+      this._error = `Toevoegen mislukt: ${(e as Error).message}`;
+    } finally {
+      this._adding = false;
+    }
   }
 
   private _formatDue(due: string | null): { label: string; late: boolean } | null {
@@ -290,10 +311,89 @@ export class DoenCard extends LitElement {
   }
 }
 
-// Register with HA Lovelace custom card registry
+// ── Config editor ─────────────────────────────────────────────────────────────
+
+@customElement('doen-card-editor')
+export class DoenCardEditor extends LitElement {
+  @property({ attribute: false }) public hass!: Hass;
+  @state() private _config: CardConfig = {};
+  @state() private _projects: DoenProject[] = [];
+  @state() private _projectsLoading = true;
+
+  static styles = css`
+    .form { display: grid; gap: 12px; padding: 16px; }
+    label { font-size: 12px; color: var(--secondary-text-color); display: block; margin-bottom: 4px; }
+    select, input[type="text"] {
+      width: 100%;
+      background: var(--card-background-color);
+      border: 1px solid var(--divider-color);
+      border-radius: 6px;
+      padding: 8px 10px;
+      color: var(--primary-text-color);
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+  `;
+
+  setConfig(config: CardConfig) {
+    this._config = { ...config };
+  }
+
+  async firstUpdated() {
+    try {
+      const projects = await this.hass.callWS<DoenProject[]>({ type: 'doen/list_projects' });
+      this._projects = projects;
+    } catch {
+      this._projects = [];
+    } finally {
+      this._projectsLoading = false;
+    }
+  }
+
+  private _changed(key: keyof CardConfig, value: string) {
+    this._config = { ...this._config, [key]: value || undefined };
+    this.dispatchEvent(new CustomEvent('config-changed', { detail: { config: this._config } }));
+  }
+
+  render() {
+    return html`
+      <div class="form">
+        <div>
+          <label>Project (voor vandaag/achterstallig filter + snel toevoegen)</label>
+          ${this._projectsLoading
+            ? html`<select disabled><option>Laden...</option></select>`
+            : html`
+              <select
+                .value=${this._config.project_id ?? ''}
+                @change=${(e: Event) => this._changed('project_id', (e.target as HTMLSelectElement).value)}
+              >
+                <option value="">Alle projecten</option>
+                ${this._projects.map(p => html`
+                  <option value=${p.id} ?selected=${p.id === this._config.project_id}>${p.name}</option>
+                `)}
+              </select>
+            `
+          }
+        </div>
+        <div>
+          <label>Titel (optioneel)</label>
+          <input
+            type="text"
+            placeholder="Doen"
+            .value=${this._config.title ?? ''}
+            @input=${(e: Event) => this._changed('title', (e.target as HTMLInputElement).value)}
+          />
+        </div>
+      </div>
+    `;
+  }
+}
+
+// ── Registration ──────────────────────────────────────────────────────────────
+
 declare global {
   interface Window {
-    customCards?: Array<{ type: string; name: string; description: string }>;
+    customCards?: Array<{ type: string; name: string; description: string; configElementType?: string }>;
   }
 }
 
@@ -302,4 +402,5 @@ window.customCards.push({
   type: 'doen-card',
   name: 'Doen',
   description: 'Toon taken uit Doen op je dashboard',
+  configElementType: 'doen-card-editor',
 });
