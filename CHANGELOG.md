@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/stevendejongnl/doen/compare/v1.4.0...v1.4.1) (2026-04-20)
+
+
+### Bug Fixes
+
+* **lint:** wrap long selectinload chains to stay under 100 chars ([079fb1e](https://github.com/stevendejongnl/doen/commit/079fb1e3e91506ba548bb70e4d8743af0e4e4c5b))
+
 # [1.4.0](https://github.com/stevendejongnl/doen/compare/v1.3.2...v1.4.0) (2026-04-20)
 
 
