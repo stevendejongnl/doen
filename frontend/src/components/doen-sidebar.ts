@@ -46,16 +46,16 @@ export class DoenSidebar extends LitElement {
       margin-top: 2px;
     }
 
-    nav { padding: 10px 8px; flex: 1; }
+    nav { padding: 12px 10px; flex: 1; }
 
-    .nav-section { margin-bottom: 18px; }
+    .nav-section { margin-bottom: 24px; }
 
     .section-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0 8px;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
 
     .section-label {
@@ -86,8 +86,8 @@ export class DoenSidebar extends LitElement {
     .nav-item {
       display: flex;
       align-items: center;
-      gap: 9px;
-      padding: 7px 10px;
+      gap: 10px;
+      padding: 9px 12px;
       border-radius: 9px;
       cursor: pointer;
       font-size: 13px;

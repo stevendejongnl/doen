@@ -33,7 +33,11 @@ export class DoenApp extends LitElement {
       height: 100vh;
       overflow: hidden;
       position: relative;
-      background: linear-gradient(135deg, #0d0f1a 0%, #0f172a 40%, #111827 70%, #1a1035 100%);
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(6, 182, 212, 0.12) 0%, transparent 55%),
+        radial-gradient(ellipse at 80% 20%, rgba(99, 102, 241, 0.14) 0%, transparent 50%),
+        radial-gradient(ellipse at 60% 80%, rgba(16, 185, 129, 0.08) 0%, transparent 45%),
+        linear-gradient(160deg, #060d1a 0%, #081020 40%, #0a1628 70%, #0d0f1f 100%);
       background-attachment: fixed;
     }
 
