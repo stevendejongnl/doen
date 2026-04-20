@@ -40,3 +40,6 @@ doen-*.jpg
 
 # K8s local secret copies (never commit real values; use secret.example.yaml as template)
 kubernetes/secret.yaml
+
+# Claude Code local session state
+.claude/
