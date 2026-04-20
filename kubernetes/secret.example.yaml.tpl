@@ -2,12 +2,12 @@
 #
 # Apply options:
 #
-#  1) kubectl, out-of-band (simplest; matches stash / homelab-dashboard pattern):
+#  1) kubectl, out-of-band:
 #       kubectl create secret generic doen-secret -n doen \
 #         --from-literal=SECRET_KEY='...' \
 #         --from-literal=DATABASE_URL='postgresql://...' \
-#         --from-literal=SMTP_USER='noreply@madebysteven.nl' \
-#         --from-literal=SMTP_PASSWORD='...from 1Password...'
+#         --from-literal=SMTP_USER='...' \
+#         --from-literal=SMTP_PASSWORD='...'
 #
 #  2) Copy this file to secret.yaml, fill in values, and `kubectl apply -f secret.yaml`.
 #     secret.yaml is gitignored — do not commit real values.
@@ -22,5 +22,5 @@ type: Opaque
 stringData:
   SECRET_KEY: "change-me-in-production"
   DATABASE_URL: "postgresql://doen:change-me@postgres:5432/doen"
-  SMTP_USER: "noreply@madebysteven.nl"
-  SMTP_PASSWORD: "change-me"
+  SMTP_USER: ""
+  SMTP_PASSWORD: ""

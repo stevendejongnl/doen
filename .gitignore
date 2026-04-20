@@ -43,3 +43,6 @@ kubernetes/secret.yaml
 
 # Claude Code local session state
 .claude/
+
+# Personal deployment overrides (domain, image registry, node selectors, SMTP)
+kubernetes/local/
