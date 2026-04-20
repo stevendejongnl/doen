@@ -4,10 +4,11 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from app.api import auth, groups, ha, projects, sse, tasks
+from app.api import auth, groups, ha, invitations, projects, sse, tasks
 from app.config import settings
 from app.db.session import engine
 from app.models import *  # noqa: F401, F403 — register all models with metadata
@@ -47,6 +48,7 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(groups.router)
+app.include_router(invitations.router)
 app.include_router(projects.router)
 app.include_router(tasks.router)
 app.include_router(sse.router)
@@ -62,4 +64,9 @@ async def health() -> dict:
 # Falls back gracefully if static/ doesn't exist (dev without a build).
 _static = Path(__file__).parent.parent / "static"
 if _static.exists():
+    # SPA deep-links (like email invite URLs) need to serve index.html — StaticFiles would 404.
+    @app.get("/invite/{token}", include_in_schema=False)
+    async def _spa_invite_fallback(token: str) -> FileResponse:
+        return FileResponse(str(_static / "index.html"))
+
     app.mount("/", StaticFiles(directory=str(_static), html=True), name="static")

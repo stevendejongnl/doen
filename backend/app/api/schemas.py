@@ -63,6 +63,28 @@ class MemberInvite(BaseModel):
     role: str = "member"
 
 
+# ── Invitations ───────────────────────────────────────────────────────────────
+
+class InvitationDetailsOut(BaseModel):
+    group_id: str
+    group_name: str
+    inviter_name: str
+    email: str
+    existing_user: bool
+
+
+class InvitationAcceptRequest(BaseModel):
+    """For new-user signup via invite. Omit to accept as the currently-logged-in user."""
+    name: str | None = None
+    password: str | None = None
+
+
+class InvitationAcceptResponse(BaseModel):
+    group_id: str
+    user_id: str
+    tokens: TokenResponse | None = None
+
+
 # ── Project ───────────────────────────────────────────────────────────────────
 
 class ProjectCreate(BaseModel):

@@ -32,3 +32,18 @@ class InvalidTokenError(DoenError):
 class ConflictError(DoenError):
     def __init__(self, detail: str) -> None:
         super().__init__(detail)
+
+
+class InvitationExpiredError(DoenError):
+    def __init__(self) -> None:
+        super().__init__("Invitation has expired")
+
+
+class InvitationAlreadyAcceptedError(DoenError):
+    def __init__(self) -> None:
+        super().__init__("Invitation has already been accepted")
+
+
+class InvitationEmailMismatchError(DoenError):
+    def __init__(self) -> None:
+        super().__init__("Invitation email does not match the authenticated user")

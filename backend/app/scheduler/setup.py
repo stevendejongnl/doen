@@ -4,6 +4,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.repositories.group_invitation_repo import GroupInvitationRepository
 from app.scheduler.recurring import spawn_due_tasks
 
 logger = logging.getLogger(__name__)
@@ -21,6 +22,14 @@ def create_scheduler(Session: async_sessionmaker[AsyncSession]) -> AsyncIOSchedu
         replace_existing=True,
         max_instances=1,
     )
+    scheduler.add_job(
+        _run_expire_invitations,
+        trigger=IntervalTrigger(hours=24),
+        args=[Session],
+        id="expire_group_invitations",
+        replace_existing=True,
+        max_instances=1,
+    )
     return scheduler
 
 
@@ -31,6 +40,16 @@ async def _run_spawn(Session: async_sessionmaker[AsyncSession]) -> None:
             logger.info("Spawned %d recurring task(s)", count)
     except Exception:
         logger.exception("Error in recurring task spawner")
+
+
+async def _run_expire_invitations(Session: async_sessionmaker[AsyncSession]) -> None:
+    try:
+        async with Session() as session:
+            count = await GroupInvitationRepository(session).delete_expired()
+            if count:
+                logger.info("Deleted %d expired/accepted invitation(s)", count)
+    except Exception:
+        logger.exception("Error in invitation expiry sweep")
 
 
 def get_scheduler() -> AsyncIOScheduler | None:

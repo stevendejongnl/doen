@@ -71,10 +71,10 @@ async def invite_member(
     svc: GroupService = Depends(get_group_service),
 ) -> dict:
     try:
-        await svc.invite_member(group_id, current_user.id, body.email, body.role)
+        result = await svc.invite_member(group_id, current_user.id, body.email, body.role)
     except DoenError as exc:
         raise_http(exc)
-    return {"detail": "Member added"}
+    return {"status": result.status, "email": result.email, "user_id": result.user_id}
 
 
 @router.delete("/{group_id}/members/{user_id}", status_code=status.HTTP_204_NO_CONTENT)

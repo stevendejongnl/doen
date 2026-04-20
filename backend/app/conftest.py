@@ -1,5 +1,8 @@
+from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
+import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -12,6 +15,29 @@ from app.models.project import Project
 from app.models.task import RecurringRule, Task
 from app.models.user import LocalCredential, User
 from app.services.auth import hash_password
+
+
+@dataclass
+class SpyMailService:
+    """Records send_background / send calls instead of talking to SMTP."""
+    sent: list[dict[str, Any]] = field(default_factory=list)
+
+    async def send(self, to: str, subject: str, template_name: str, context: dict) -> None:
+        self.sent.append(
+            {"to": to, "subject": subject, "template_name": template_name, "context": context}
+        )
+
+    def send_background(
+        self, to: str, subject: str, template_name: str, context: dict
+    ) -> None:
+        self.sent.append(
+            {"to": to, "subject": subject, "template_name": template_name, "context": context}
+        )
+
+
+@pytest.fixture
+def spy_mail() -> SpyMailService:
+    return SpyMailService()
 
 TEST_DB_URL = "sqlite+aiosqlite:///:memory:"
 

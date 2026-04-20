@@ -153,13 +153,21 @@ export class PageGroups extends LitElement {
 
   private async _invite(groupId: string, e: Event) {
     e.preventDefault();
-    if (!this._inviteEmail.trim() || this._inviting) return;
+    const email = this._inviteEmail.trim();
+    if (!email || this._inviting) return;
     this._inviting = true;
     try {
-      await api.post(`/groups/${groupId}/members`, { email: this._inviteEmail.trim() });
+      const res = await api.post<{ status: 'added' | 'invited'; email: string }>(
+        `/groups/${groupId}/members`,
+        { email },
+      );
       this._inviteEmail = '';
       this._inviteGroupId = '';
-      toast.success('Uitnodiging verstuurd!');
+      toast.success(
+        res.status === 'added'
+          ? `${res.email} toegevoegd aan de groep`
+          : `Uitnodiging verstuurd naar ${res.email}`,
+      );
     } catch (e) {
       if (e instanceof ApiError) toast.error(`Uitnodigen mislukt: ${e.message}`);
     } finally {

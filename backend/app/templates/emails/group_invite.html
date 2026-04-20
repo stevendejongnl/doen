@@ -1,0 +1,31 @@
+{% extends "_base.html" %}
+{% block title %}Je bent uitgenodigd voor {{ group_name }}{% endblock %}
+{% block content %}
+  <h1 style="margin:0 0 14px 0;font-size:22px;font-weight:700;letter-spacing:-0.3px;">
+    Je bent uitgenodigd
+  </h1>
+  <p style="margin:0 0 18px 0;">
+    {{ inviter_name }} heeft je uitgenodigd om lid te worden van
+    <strong>{{ group_name }}</strong> op Doen.
+  </p>
+  {% if existing_user %}
+    <p style="margin:0 0 22px 0;">
+      Je hebt al een account — klik op de knop om de groep meteen te openen.
+    </p>
+  {% else %}
+    <p style="margin:0 0 22px 0;">
+      Klik op de knop om een account aan te maken en direct toe te treden.
+      Deze uitnodiging is {{ expires_days }} dagen geldig.
+    </p>
+  {% endif %}
+  <p style="margin:0 0 22px 0;">
+    <a href="{{ accept_url }}"
+       style="display:inline-block;padding:12px 22px;border-radius:10px;background:#6366f1;color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;">
+      {% if existing_user %}Open groep{% else %}Uitnodiging accepteren{% endif %}
+    </a>
+  </p>
+  <p style="margin:0;font-size:12px;color:#8a90a6;">
+    Werkt de knop niet? Plak deze link in je browser:<br />
+    <span style="color:#4a4f66;word-break:break-all;">{{ accept_url }}</span>
+  </p>
+{% endblock %}

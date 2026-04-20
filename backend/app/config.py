@@ -23,6 +23,19 @@ class Settings(BaseSettings):
     app_name: str = "Doen"
     debug: bool = False
     cors_origins: list[str] = ["http://localhost:5173", "http://localhost:8000"]
+    app_base_url: str = "http://localhost:5173"  # used to build invite / reset links
+
+    # Mail (SMTP relay — e.g. mailcow at mail.steven-dejong.nl)
+    mail_enabled: bool = False  # master switch; off in dev/tests → logs instead of sending
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from: str = "noreply@doen.local"
+    smtp_from_name: str = "Doen"
+    smtp_use_starttls: bool = True
+    smtp_use_tls: bool = False
+    mail_invite_expires_days: int = 7
 
 
 settings = Settings()

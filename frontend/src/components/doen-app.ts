@@ -11,6 +11,7 @@ import '../pages/page-today';
 import '../pages/page-project';
 import '../pages/page-groups';
 import '../pages/page-admin';
+import '../pages/page-invite';
 
 type Route =
   | { type: 'today' }
@@ -25,7 +26,13 @@ export class DoenApp extends LitElement {
   @state() private _route: Route = { type: 'today' };
   @state() private _booting = true;
   @state() private _sidebarOpen = false;
+  @state() private _inviteToken: string | null = null;
   private _sse: EventSource | null = null;
+
+  private _readInviteTokenFromUrl(): string | null {
+    const match = window.location.pathname.match(/^\/invite\/([^/]+)/);
+    return match ? decodeURIComponent(match[1]) : null;
+  }
 
   static styles = [...sharedStyles, css`
     :host {
@@ -151,6 +158,7 @@ export class DoenApp extends LitElement {
   async connectedCallback() {
     super.connectedCallback();
     window.addEventListener('doen:logout', this._onLogout);
+    this._inviteToken = this._readInviteTokenFromUrl();
 
     if (isLoggedIn()) {
       try {
@@ -231,6 +239,13 @@ export class DoenApp extends LitElement {
 
   render() {
     if (this._booting) return html`<div class="boot-screen">laden...</div>`;
+
+    if (this._inviteToken) {
+      return html`
+        <page-invite .token=${this._inviteToken}></page-invite>
+        <doen-toast></doen-toast>
+      `;
+    }
 
     if (!this._user) {
       return html`
