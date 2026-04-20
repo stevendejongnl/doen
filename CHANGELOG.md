@@ -1,3 +1,10 @@
+## [1.1.5](https://github.com/stevendejongnl/doen/compare/v1.1.4...v1.1.5) (2026-04-20)
+
+
+### Bug Fixes
+
+* preload Font Awesome fonts so they render inside shadow roots ([081cf8c](https://github.com/stevendejongnl/doen/commit/081cf8cff2b7b80813e4529a9c3c437833e0c2c5))
+
 ## [1.1.4](https://github.com/stevendejongnl/doen/compare/v1.1.3...v1.1.4) (2026-04-20)
 
 
