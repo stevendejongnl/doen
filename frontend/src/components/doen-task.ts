@@ -370,7 +370,7 @@ export class DoenTask extends LitElement {
     if (!this._editTitle.trim() || this._saving) return;
     this._saving = true;
     try {
-      const updated = await api.patch<Task>(`/tasks/${this.task.id}`, {
+      const updated = await api.put<Task>(`/tasks/${this.task.id}`, {
         title: this._editTitle.trim(),
         notes: this._editNotes.trim() || null,
         priority: this._editPriority,
