@@ -74,6 +74,7 @@ export class DoenApp extends LitElement {
       -webkit-backdrop-filter: blur(8px);
       display: flex;
       flex-direction: column;
+      padding: 28px;
     }
 
     /* Mobile topbar */
@@ -141,6 +142,9 @@ export class DoenApp extends LitElement {
       doen-sidebar.open {
         transform: translateX(0);
       }
+
+      .main { padding: 8px; }
+      .page-wrap { padding: 16px; border-radius: 12px; }
     }
   `];
 

@@ -15,7 +15,7 @@ export class PageAdmin extends LitElement {
   @state() private _password = '';
 
   static styles = [...sharedStyles, css`
-    :host { display: block; padding: 28px; overflow-y: auto; height: 100%; }
+    :host { display: block; overflow-y: auto; height: 100%; }
 
     h1 { font-size: 24px; font-weight: 800; color: #e8eaf0; margin-bottom: 4px; letter-spacing: -0.5px; }
     .subtitle { font-size: 13px; color: rgba(232,234,240,0.45); margin-bottom: 28px; }
@@ -86,7 +86,7 @@ export class PageAdmin extends LitElement {
 
     @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 
-    @media (max-width: 768px) { :host { padding: 16px; } h1 { font-size: 20px; } }
+    @media (max-width: 768px) { h1 { font-size: 20px; } }
   `];
 
   connectedCallback() {

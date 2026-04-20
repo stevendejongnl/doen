@@ -16,7 +16,7 @@ export class PageProject extends LitElement {
   @state() private _showDone = false;
 
   static styles = [...sharedStyles, css`
-    :host { display: block; padding: 28px 28px; overflow-y: auto; height: 100%; }
+    :host { display: block; overflow-y: auto; height: 100%; }
 
     .header {
       display: flex;
@@ -126,7 +126,6 @@ export class PageProject extends LitElement {
     }
 
     @media (max-width: 768px) {
-      :host { padding: 16px 14px; }
       h1 { font-size: 20px; }
     }
   `];
