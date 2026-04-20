@@ -1,6 +1,12 @@
-import { css } from 'lit';
+import { css, unsafeCSS } from 'lit';
+import faRaw from '@fortawesome/fontawesome-free/css/all.min.css?inline';
 
-export const sharedStyles = [css`
+// Strip @font-face blocks — fonts are loaded in the light DOM via main.ts.
+// Only the selector rules (.fa-solid, .fa-brands etc.) need to be in each
+// shadow root so that FA class names resolve correctly inside shadow DOM.
+const faSelectors = unsafeCSS(faRaw.replace(/@font-face\s*\{[^}]*\}/g, ''));
+
+export const sharedStyles = [faSelectors, css`
   :host {
     --glass-bg: rgba(255, 255, 255, 0.07);
     --glass-bg-raised: rgba(255, 255, 255, 0.11);
