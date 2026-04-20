@@ -1,3 +1,10 @@
+## [1.1.4](https://github.com/stevendejongnl/doen/compare/v1.1.3...v1.1.4) (2026-04-20)
+
+
+### Bug Fixes
+
+* load FA fonts in main document so [@font-face](https://github.com/font-face) works across shadow roots ([02061a8](https://github.com/stevendejongnl/doen/commit/02061a858bca7d8486fd32feeb61f47b7550de11))
+
 ## [1.1.3](https://github.com/stevendejongnl/doen/compare/v1.1.2...v1.1.3) (2026-04-20)
 
 
