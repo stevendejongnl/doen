@@ -51,7 +51,7 @@ Copy `backend/.env.example` (or create `backend/.env`) to set these locally.
 backend/        FastAPI app, services, repositories, scheduler
 frontend/       Lit PWA (Vite build → backend/static/ in Docker image)
 ha-card/        Lovelace card (Lit, bundled to doen-card.js)
-ha-integration/ Custom HA integration (sensors, config_flow)
+custom_components/ Custom HA integration (sensors, config_flow) — HACS-discoverable
 addon/          HA addon packaging (config.yaml, Dockerfile)
 kubernetes/     K8s manifests — namespace, deployment, service, ingress, configmap
 ```
