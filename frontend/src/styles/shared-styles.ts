@@ -7,6 +7,29 @@ import faRaw from '@fortawesome/fontawesome-free/css/all.min.css?inline';
 const faSelectors = unsafeCSS(faRaw.replace(/@font-face\s*\{[^}]*\}/g, ''));
 
 export const sharedStyles = [faSelectors, css`
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  button {
+    cursor: pointer;
+    border: none;
+    background: none;
+    font: inherit;
+    color: inherit;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  input, textarea, select {
+    font: inherit;
+    color: var(--color-text);
+    background: rgba(255,255,255,0.07);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
   :host {
     --glass-bg: rgba(255, 255, 255, 0.07);
     --glass-bg-raised: rgba(255, 255, 255, 0.11);
