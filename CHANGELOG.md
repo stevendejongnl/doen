@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/stevendejongnl/doen/compare/v1.8.1...v1.9.0) (2026-04-20)
+
+
+### Features
+
+* **tasks:** add assignee picker for group projects ([dfb82c2](https://github.com/stevendejongnl/doen/commit/dfb82c2d4fa953914e4b795ff19f5cf76306b4ce))
+
 ## [1.8.1](https://github.com/stevendejongnl/doen/compare/v1.8.0...v1.8.1) (2026-04-20)
 
 
