@@ -1,3 +1,10 @@
+## [1.1.3](https://github.com/stevendejongnl/doen/compare/v1.1.2...v1.1.3) (2026-04-20)
+
+
+### Bug Fixes
+
+* inline FA CSS with rewritten font paths for shadow DOM compatibility ([f810ce5](https://github.com/stevendejongnl/doen/commit/f810ce562cc9467dde89cbf3de1c56cda0b74cce))
+
 ## [1.1.2](https://github.com/stevendejongnl/doen/compare/v1.1.1...v1.1.2) (2026-04-20)
 
 
