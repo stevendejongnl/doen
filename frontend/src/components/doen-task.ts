@@ -1,9 +1,23 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import type { Task, TaskPriority } from '../services/types';
+import type { Task, TaskPriority, RecurringRule } from '../services/types';
 import { api, ApiError } from '../services/api';
 import { toast } from './doen-toast';
 import { sharedStyles } from '../styles/shared-styles';
+
+type RecurringFreq = 'daily' | 'weekly' | 'monthly';
+
+const FREQ_CRON: Record<RecurringFreq, string> = {
+  daily: '0 8 * * *',
+  weekly: '0 8 * * 1',
+  monthly: '0 8 1 * *',
+};
+
+function cronToFreq(cron: string): RecurringFreq {
+  if (cron === FREQ_CRON.daily) return 'daily';
+  if (cron === FREQ_CRON.monthly) return 'monthly';
+  return 'weekly';
+}
 
 @customElement('doen-task')
 export class DoenTask extends LitElement {
@@ -14,6 +28,9 @@ export class DoenTask extends LitElement {
   @state() private _editTitle = '';
   @state() private _editPriority: TaskPriority = 'none';
   @state() private _editDue = '';
+  @state() private _editNotes = '';
+  @state() private _editRecurring = false;
+  @state() private _editRecurringFreq: RecurringFreq = 'weekly';
   @state() private _saving = false;
 
   static styles = [...sharedStyles, css`
@@ -77,6 +94,14 @@ export class DoenTask extends LitElement {
     .due-date.overdue { color: #ef4444; }
     .due-date i { font-size: 9px; }
 
+    .task-meta {
+      display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+    }
+
+    .meta-icon {
+      font-size: 10px; color: rgba(232,234,240,0.35);
+    }
+
     .edit-btn {
       width: 28px; height: 28px;
       border-radius: 7px;
@@ -104,7 +129,7 @@ export class DoenTask extends LitElement {
 
     .edit-row { display: flex; gap: 8px; flex-wrap: wrap; }
 
-    input, select {
+    input, select, textarea {
       font: inherit;
       color: #e8eaf0;
       background: rgba(255,255,255,0.08);
@@ -117,13 +142,22 @@ export class DoenTask extends LitElement {
       transition: border-color 120ms, background 120ms;
     }
 
-    input:focus, select:focus {
+    input:focus, select:focus, textarea:focus {
       border-color: #6366f1;
       background: rgba(255,255,255,0.12);
     }
 
     input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
     select option { background: #1e2436; color: #e8eaf0; }
+
+    textarea {
+      width: 100%;
+      min-height: 72px;
+      resize: vertical;
+      box-sizing: border-box;
+      font-size: 13px;
+      line-height: 1.5;
+    }
 
     .edit-title { flex: 1; min-width: 160px; font-size: 13px; }
 
@@ -160,6 +194,40 @@ export class DoenTask extends LitElement {
       display: flex; align-items: center; gap: 6px;
     }
     .btn-delete:hover { background: rgba(239,68,68,0.2); }
+
+    /* Recurring toggle */
+    .recurring-row {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+
+    .toggle-label {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: rgba(232,234,240,0.6);
+      cursor: pointer; user-select: none;
+    }
+
+    .toggle {
+      position: relative; width: 32px; height: 18px; flex-shrink: 0;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle-track {
+      position: absolute; inset: 0;
+      background: rgba(255,255,255,0.12);
+      border-radius: 9px;
+      transition: background 150ms;
+      cursor: pointer;
+    }
+    .toggle input:checked ~ .toggle-track { background: #6366f1; }
+    .toggle-thumb {
+      position: absolute; top: 3px; left: 3px;
+      width: 12px; height: 12px;
+      background: white; border-radius: 50%;
+      transition: transform 150ms;
+      pointer-events: none;
+    }
+    .toggle input:checked ~ .toggle-thumb { transform: translateX(14px); }
+
+    .freq-select { font-size: 12px; padding: 5px 10px; }
   `];
 
   private async _complete() {
@@ -182,6 +250,11 @@ export class DoenTask extends LitElement {
     this._editTitle = this.task.title;
     this._editPriority = this.task.priority as TaskPriority;
     this._editDue = this.task.due_date ? this.task.due_date.substring(0, 10) : '';
+    this._editNotes = this.task.notes ?? '';
+    this._editRecurring = !!this.task.recurring_rule;
+    this._editRecurringFreq = this.task.recurring_rule
+      ? cronToFreq(this.task.recurring_rule.schedule_cron)
+      : 'weekly';
     this._editing = true;
   }
 
@@ -192,12 +265,31 @@ export class DoenTask extends LitElement {
     try {
       const updated = await api.patch<Task>(`/tasks/${this.task.id}`, {
         title: this._editTitle.trim(),
+        notes: this._editNotes.trim() || null,
         priority: this._editPriority,
         due_date: this._editDue ? new Date(this._editDue).toISOString() : null,
       });
-      this.task = updated;
+
+      const hadRule = !!this.task.recurring_rule;
+      const wantsRule = this._editRecurring;
+
+      if (wantsRule && !hadRule) {
+        await api.post<RecurringRule>(`/tasks/${this.task.id}/recurring`, {
+          schedule_cron: FREQ_CRON[this._editRecurringFreq],
+          notify_on_spawn: false,
+        });
+        // Re-fetch to get the embedded recurring_rule
+        const fresh = await api.get<Task>(`/tasks/${this.task.id}`);
+        this.task = fresh;
+      } else if (!wantsRule && hadRule && this.task.recurring_rule) {
+        await api.delete(`/recurring/${this.task.recurring_rule.id}`);
+        this.task = { ...updated, recurring_rule: undefined };
+      } else {
+        this.task = updated;
+      }
+
       this._editing = false;
-      this.dispatchEvent(new CustomEvent('task-updated', { detail: updated, bubbles: true, composed: true }));
+      this.dispatchEvent(new CustomEvent('task-updated', { detail: this.task, bubbles: true, composed: true }));
       toast.success('Opgeslagen!');
     } catch (e) {
       if (e instanceof ApiError) toast.error(`Opslaan mislukt: ${e.message}`);
@@ -248,6 +340,34 @@ export class DoenTask extends LitElement {
               @input=${(e: Event) => this._editDue = (e.target as HTMLInputElement).value}
             />
           </div>
+          <textarea
+            placeholder="Notities, context, links..."
+            .value=${this._editNotes}
+            @input=${(e: Event) => this._editNotes = (e.target as HTMLTextAreaElement).value}
+            ?disabled=${this._saving}
+          ></textarea>
+          <div class="recurring-row">
+            <label class="toggle-label">
+              <span class="toggle">
+                <input type="checkbox"
+                  .checked=${this._editRecurring}
+                  @change=${(e: Event) => this._editRecurring = (e.target as HTMLInputElement).checked}
+                />
+                <span class="toggle-track"></span>
+                <span class="toggle-thumb"></span>
+              </span>
+              <i class="fa-solid fa-repeat" style="font-size:11px;opacity:0.6"></i>
+              Herhalen
+            </label>
+            ${this._editRecurring ? html`
+              <select class="freq-select" .value=${this._editRecurringFreq}
+                @change=${(e: Event) => this._editRecurringFreq = (e.target as HTMLSelectElement).value as RecurringFreq}>
+                <option value="daily">Dagelijks</option>
+                <option value="weekly">Wekelijks (ma)</option>
+                <option value="monthly">Maandelijks</option>
+              </select>
+            ` : ''}
+          </div>
           <div class="edit-actions">
             <button type="button" class="btn-delete" @click=${this._delete}>
               <i class="fa-solid fa-trash"></i> Verwijderen
@@ -278,12 +398,16 @@ export class DoenTask extends LitElement {
 
         <span class="task-title ${isDone ? 'done-text' : ''}">${this.task.title}</span>
 
-        ${due ? html`
-          <span class="due-date ${due.overdue ? 'overdue' : ''}">
-            <i class="fa-solid fa-${due.overdue ? 'triangle-exclamation' : 'clock'}"></i>
-            ${due.label}
-          </span>
-        ` : ''}
+        <span class="task-meta">
+          ${this.task.notes ? html`<i class="fa-solid fa-align-left meta-icon" title="Heeft notities"></i>` : ''}
+          ${this.task.recurring_rule ? html`<i class="fa-solid fa-repeat meta-icon" title="Herhalende taak"></i>` : ''}
+          ${due ? html`
+            <span class="due-date ${due.overdue ? 'overdue' : ''}">
+              <i class="fa-solid fa-${due.overdue ? 'triangle-exclamation' : 'clock'}"></i>
+              ${due.label}
+            </span>
+          ` : ''}
+        </span>
 
         <button class="edit-btn" @click=${this._startEdit} title="Bewerken">
           <i class="fa-solid fa-pen"></i>

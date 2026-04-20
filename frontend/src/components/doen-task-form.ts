@@ -11,6 +11,8 @@ export class DoenTaskForm extends LitElement {
   @state() private _title = '';
   @state() private _priority: TaskPriority = 'none';
   @state() private _dueDate = '';
+  @state() private _notes = '';
+  @state() private _showNotes = false;
   @state() private _submitting = false;
 
   static styles = [...sharedStyles, css`
@@ -20,7 +22,7 @@ export class DoenTaskForm extends LitElement {
 
     .row { display: flex; gap: 8px; flex-wrap: wrap; }
 
-    input, select {
+    input, select, textarea {
       font: inherit;
       color: #e8eaf0;
       background: rgba(255,255,255,0.07);
@@ -33,13 +35,22 @@ export class DoenTaskForm extends LitElement {
       transition: border-color 120ms, background 120ms;
     }
 
-    input:focus, select:focus {
+    input:focus, select:focus, textarea:focus {
       border-color: #6366f1;
       background: rgba(255,255,255,0.1);
     }
 
     input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
     select option { background: #1e2436; color: #e8eaf0; }
+
+    textarea {
+      width: 100%;
+      min-height: 72px;
+      resize: vertical;
+      box-sizing: border-box;
+      font-size: 13px;
+      line-height: 1.5;
+    }
 
     .btn-add {
       background: var(--color-accent);
@@ -61,6 +72,20 @@ export class DoenTaskForm extends LitElement {
     .btn-add:hover:not(:disabled) { background: var(--color-accent-hover); }
     .btn-add:active:not(:disabled) { transform: scale(0.97); }
     .btn-add:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .btn-notes-toggle {
+      background: none;
+      border: none;
+      color: rgba(232,234,240,0.4);
+      font-size: 12px;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: color 120ms;
+    }
+    .btn-notes-toggle:hover { color: rgba(232,234,240,0.7); }
   `];
 
   private async _submit(e: Event) {
@@ -72,10 +97,13 @@ export class DoenTaskForm extends LitElement {
         title: this._title.trim(),
         priority: this._priority,
         due_date: this._dueDate || undefined,
+        notes: this._notes.trim() || undefined,
       });
       this._title = '';
       this._priority = 'none';
       this._dueDate = '';
+      this._notes = '';
+      this._showNotes = false;
       this.dispatchEvent(new CustomEvent<Task>('task-created', { detail: task, bubbles: true, composed: true }));
       toast.success('Taak aangemaakt!');
     } catch (e) {
@@ -114,7 +142,19 @@ export class DoenTaskForm extends LitElement {
             .value=${this._dueDate}
             @input=${(e: Event) => this._dueDate = (e.target as HTMLInputElement).value}
           />
+          <button type="button" class="btn-notes-toggle" @click=${() => this._showNotes = !this._showNotes}>
+            <i class="fa-solid fa-${this._showNotes ? 'chevron-up' : 'plus'}"></i>
+            ${this._showNotes ? 'Notitie verbergen' : 'Notitie toevoegen'}
+          </button>
         </div>
+        ${this._showNotes ? html`
+          <textarea
+            placeholder="Notities, context, links..."
+            .value=${this._notes}
+            @input=${(e: Event) => this._notes = (e.target as HTMLTextAreaElement).value}
+            ?disabled=${this._submitting}
+          ></textarea>
+        ` : ''}
       </form>
     `;
   }

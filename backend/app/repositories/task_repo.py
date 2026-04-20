@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models.base import new_uuid
 from app.models.task import RecurringRule, Task
@@ -12,12 +13,14 @@ class TaskRepository:
         self._session = session
 
     async def get_by_id(self, task_id: str) -> Task | None:
-        result = await self._session.execute(select(Task).where(Task.id == task_id))
+        result = await self._session.execute(
+            select(Task).options(selectinload(Task.recurring_rule)).where(Task.id == task_id)
+        )
         return result.scalar_one_or_none()
 
     async def list_for_project(self, project_id: str) -> list[Task]:
         result = await self._session.execute(
-            select(Task).where(Task.project_id == project_id)
+            select(Task).options(selectinload(Task.recurring_rule)).where(Task.project_id == project_id)
         )
         return list(result.scalars().all())
 
@@ -30,7 +33,7 @@ class TaskRepository:
     ) -> list[Task]:
         if not project_ids:
             return []
-        stmt = select(Task).where(Task.project_id.in_(project_ids))
+        stmt = select(Task).options(selectinload(Task.recurring_rule)).where(Task.project_id.in_(project_ids))
         now = datetime.now(UTC)
         if due_today:
             stmt = stmt.where(func.date(Task.due_date) == func.date(now))
@@ -62,21 +65,28 @@ class TaskRepository:
         self._session.add(task)
         await self._session.commit()
         await self._session.refresh(task)
+        await self._session.execute(
+            select(Task).options(selectinload(Task.recurring_rule)).where(Task.id == task.id)
+        )
         return task
 
     async def update(self, task: Task, fields: dict[str, object]) -> Task:
         for key, value in fields.items():
             setattr(task, key, value)
         await self._session.commit()
-        await self._session.refresh(task)
-        return task
+        result = await self._session.execute(
+            select(Task).options(selectinload(Task.recurring_rule)).where(Task.id == task.id)
+        )
+        return result.scalar_one()
 
     async def complete(self, task: Task) -> Task:
         task.status = "done"
         task.completed_at = datetime.now(UTC)
         await self._session.commit()
-        await self._session.refresh(task)
-        return task
+        result = await self._session.execute(
+            select(Task).options(selectinload(Task.recurring_rule)).where(Task.id == task.id)
+        )
+        return result.scalar_one()
 
     async def delete(self, task: Task) -> None:
         await self._session.delete(task)

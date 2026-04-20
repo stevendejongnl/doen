@@ -144,6 +144,7 @@ class TaskOut(BaseModel):
     completed_at: datetime | None
     created_at: datetime
     updated_at: datetime
+    recurring_rule: "RecurringRuleOut | None" = None
 
     model_config = {"from_attributes": True}
 
