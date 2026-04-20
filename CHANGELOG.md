@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/stevendejongnl/doen/compare/v1.1.8...v1.2.0) (2026-04-20)
+
+
+### Features
+
+* aurora/northern lights background + improved sidebar spacing ([9db8b34](https://github.com/stevendejongnl/doen/commit/9db8b34790fa36daf03680cb98aece81083ac2be))
+
 ## [1.1.8](https://github.com/stevendejongnl/doen/compare/v1.1.7...v1.1.8) (2026-04-20)
 
 
