@@ -1,3 +1,11 @@
+## [1.1.2](https://github.com/stevendejongnl/doen/compare/v1.1.1...v1.1.2) (2026-04-20)
+
+
+### Bug Fixes
+
+* FA via CDN [@import](https://github.com/import) in shadow DOM + version from build arg ([dc0f2d2](https://github.com/stevendejongnl/doen/commit/dc0f2d229c4e922d7afa74c624e4fb57a3486dc0))
+* regenerate lock file with Node 24 after FA uninstall ([1d5b634](https://github.com/stevendejongnl/doen/commit/1d5b634ea729cbed7f545ece5c1e3237ed0af31f))
+
 ## [1.1.1](https://github.com/stevendejongnl/doen/compare/v1.1.0...v1.1.1) (2026-04-19)
 
 
