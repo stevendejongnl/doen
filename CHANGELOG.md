@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/stevendejongnl/doen/compare/v1.2.0...v1.2.1) (2026-04-20)
+
+
+### Bug Fixes
+
+* add spacing around main content area with glass panel ([3ebf9b2](https://github.com/stevendejongnl/doen/commit/3ebf9b2f513d842a03f24b8eb01a3646b6ec4100))
+
 # [1.2.0](https://github.com/stevendejongnl/doen/compare/v1.1.8...v1.2.0) (2026-04-20)
 
 
