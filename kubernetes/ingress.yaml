@@ -8,13 +8,10 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-    # Prevent stale SPA shell after a fresh deploy: browser always revalidates
-    # index.html even though asset URLs are content-hashed and cacheable forever.
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      if ($request_uri ~* "^/(index\.html)?$") {
-        add_header Cache-Control "no-cache, no-store, must-revalidate";
-        add_header Pragma "no-cache";
-      }
+    # NOTE: configuration-snippet annotations are blocked by the cluster's
+    # ingress-nginx admission webhook (allow-snippet-annotations is off).
+    # If SPA shell caching becomes stale after deploys, set
+    # Cache-Control for index.html from FastAPI (StaticFiles wrapper).
 spec:
   ingressClassName: nginx
   rules:

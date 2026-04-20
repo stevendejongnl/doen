@@ -11,6 +11,11 @@ metadata:
     keel.sh/pollSchedule: "@every 5m"
 spec:
   replicas: 1
+  # PVC is ReadWriteOnce — only one pod can mount it at a time.
+  # Recreate avoids the deadlock where a new pod can never start because the
+  # old pod still holds the volume.
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: doen
@@ -34,6 +39,9 @@ spec:
                 name: doen-config
             - secretRef:
                 name: doen-secret
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
           resources:
             requests:
               cpu: 100m
@@ -53,3 +61,7 @@ spec:
               port: 8000
             initialDelaySeconds: 15
             periodSeconds: 30
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: doen-data

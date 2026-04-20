@@ -1,0 +1,17 @@
+# Binds to the existing hostPath PV doen-data-pv on worker-01:/var/lib/doen.
+# PV has Retain reclaim policy — SQLite file survives PVC recreation.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: doen-data
+  namespace: doen
+  labels:
+    app: doen
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-storage-default
+  resources:
+    requests:
+      storage: 1Gi
+  volumeName: doen-data-pv
