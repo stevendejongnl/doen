@@ -5,10 +5,10 @@
     "@semantic-release/release-notes-generator",
     "@semantic-release/changelog",
     ["@semantic-release/exec", {
-      "prepareCmd": "jq --arg v \"${nextRelease.version}\" '.version = $v' custom_components/doen/manifest.json > custom_components/doen/manifest.json.tmp && mv custom_components/doen/manifest.json.tmp custom_components/doen/manifest.json"
+      "prepareCmd": "jq --arg v \"${nextRelease.version}\" '.version = $v' custom_components/doen/manifest.json > custom_components/doen/manifest.json.tmp && mv custom_components/doen/manifest.json.tmp custom_components/doen/manifest.json && cd ha-card && npm ci && npm run build"
     }],
     ["@semantic-release/github", {
-      "assets": []
+      "assets": [{"path": "ha-card/dist/doen-card.js", "label": "doen-card.js"}]
     }],
     ["@semantic-release/git", {
       "assets": ["CHANGELOG.md", "custom_components/doen/manifest.json"],
