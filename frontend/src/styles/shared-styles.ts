@@ -1,9 +1,12 @@
-import { css } from 'lit';
+import { css, unsafeCSS } from 'lit';
+import faRaw from '@fortawesome/fontawesome-free/css/all.min.css?inline';
 
-export const sharedStyles = [css`
-  @import url('https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0/css/all.min.css');
-`, css`
+const FA_CDN = 'https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.2.0';
+const faStyles = unsafeCSS(
+  faRaw.replace(/url\(\.\.\/webfonts\//g, `url(${FA_CDN}/webfonts/`)
+);
 
+export const sharedStyles = [faStyles, css`
   :host {
     --glass-bg: rgba(255, 255, 255, 0.07);
     --glass-bg-raised: rgba(255, 255, 255, 0.11);
