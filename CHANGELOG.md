@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/stevendejongnl/doen/compare/v1.5.0...v1.6.0) (2026-04-20)
+
+
+### Features
+
+* structured recurring rules with custom intervals, weekdays, and parity ([f0e8bc9](https://github.com/stevendejongnl/doen/commit/f0e8bc9f75c675390f9a7c06d6eda0b3244d2602))
+
 # [1.5.0](https://github.com/stevendejongnl/doen/compare/v1.4.1...v1.5.0) (2026-04-20)
 
 
