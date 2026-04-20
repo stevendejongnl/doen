@@ -31,3 +31,9 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Playwright MCP browser automation artifacts
+.playwright-mcp/
+
+# Development screenshots
+doen-*.jpg
