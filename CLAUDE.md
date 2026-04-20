@@ -25,12 +25,6 @@ npm run build                    # type-check + Vite bundle → dist/
 VITE_API_URL=http://localhost:8000 npm run dev  # point to separate backend
 ```
 
-### HA Card
-```bash
-cd ha-card
-npm ci && npm run build          # bundle → dist/doen-card.js
-```
-
 ### Local full stack
 ```bash
 docker-compose up -d             # postgres + backend + frontend on :8000/:5173
@@ -80,7 +74,7 @@ Single-file Lit web components. The entry shell `doen-app.ts` manages routing (`
 **API client** (`src/services/api.ts`): `BASE = import.meta.env.VITE_API_URL ?? ''` — empty string means same-origin in production. The client auto-retries on 401 using the refresh token, then dispatches `doen:logout` if refresh fails.
 
 ### Production deployment
-Multi-stage Dockerfile: node → frontend build, node → ha-card build, python:3.13-slim runtime. Frontend `dist/` is copied to `backend/static/`, then FastAPI serves it via `StaticFiles` mounted **after** all API routers (SPA fallback). The `static/` dir only exists inside the Docker image, not in the repo.
+Multi-stage Dockerfile: node → frontend build, python:3.13-slim runtime. Frontend `dist/` is copied to `backend/static/`, then FastAPI serves it via `StaticFiles` mounted **after** all API routers (SPA fallback). The `static/` dir only exists inside the Docker image, not in the repo.
 
 CI pushes `:latest` + semver tags to `ghcr.io/<owner>/doen`. Keel polls `:latest` every 5 minutes and rolls the K8s deployment automatically. Semver tags are cut by `semantic-release` on every merge to `main` using Conventional Commits (`feat:` → minor, `fix:` → patch, `feat!:` → major).
 

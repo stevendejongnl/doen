@@ -16,9 +16,6 @@ COPY backend/ .
 # Pre-built frontend (built in CI or locally)
 COPY frontend/dist /app/static
 
-# Pre-built ha-card
-COPY ha-card/dist /app/static/ha-card
-
 COPY addon/run.sh /run.sh
 RUN chmod +x /run.sh
 

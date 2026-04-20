@@ -7,15 +7,7 @@ RUN npm ci
 COPY frontend/ ./
 RUN VITE_APP_VERSION=$APP_VERSION npm run build
 
-# Stage 2: build ha-card
-FROM node:lts-alpine AS card-builder
-WORKDIR /app/ha-card
-COPY ha-card/package*.json ./
-RUN npm ci
-COPY ha-card/ ./
-RUN npm run build
-
-# Stage 3: runtime
+# Stage 2: runtime
 FROM python:3.13-slim
 WORKDIR /app
 
@@ -35,9 +27,6 @@ COPY backend/ .
 
 # Copy built frontend into static dir
 COPY --from=frontend-builder /app/frontend/dist /app/static
-
-# Copy ha-card dist so it can be served too
-COPY --from=card-builder /app/ha-card/dist /app/static/ha-card
 
 EXPOSE 8000
 

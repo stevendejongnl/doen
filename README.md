@@ -11,7 +11,7 @@ Personal and household task planning app. Dutch for "to do / do it".
 | Database | PostgreSQL (production) / SQLite (dev / HA addon) |
 | Real-time | Server-Sent Events (`/events`) |
 | Auth | JWT (standalone) · HA OAuth2 (planned) |
-| HA card | Lit custom element, served at `/ha-card/doen-card.js` |
+| HA card | Shipped separately — see [doen-card](https://github.com/stevendejongnl/doen-card) (HACS) |
 | Deploy | K8s manifests, auto-updated by Keel on every push to `main` |
 
 ## Local development
@@ -54,7 +54,6 @@ Copy `backend/.env.example` (or create `backend/.env`) to set these locally.
 ```
 backend/        FastAPI app, services, repositories, scheduler
 frontend/       Lit PWA (Vite build → backend/static/ in Docker image)
-ha-card/        Lovelace card (Lit, bundled to doen-card.js)
 custom_components/ Custom HA integration (sensors, config_flow) — HACS-discoverable
 addon/          HA addon packaging (config.yaml, Dockerfile)
 kubernetes/     K8s manifests — namespace, deployment, service, ingress, configmap
