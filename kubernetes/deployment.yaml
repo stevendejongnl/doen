@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: doen
+  namespace: doen
+  labels:
+    app: doen
+  annotations:
+    keel.sh/policy: force
+    keel.sh/trigger: poll
+    keel.sh/pollSchedule: "@every 5m"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: doen
+  template:
+    metadata:
+      labels:
+        app: doen
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: worker-01
+      containers:
+        - name: doen
+          # :latest + keel policy: force means Keel rolls on new digest pushes
+          # from the CI (ghcr.io/stevendejongnl/doen:latest).
+          image: ghcr.io/stevendejongnl/doen:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: doen-config
+            - secretRef:
+                name: doen-secret
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 30

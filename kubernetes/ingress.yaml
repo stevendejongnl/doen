@@ -1,34 +1,30 @@
-{{- if .Values.ingress.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "doen.fullname" . }}
-  labels: {{- include "doen.labels" . | nindent 4 }}
+  name: doen
+  namespace: doen
+  labels:
+    app: doen
   annotations:
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    # Prevent stale SPA shell after a fresh deploy: browser always revalidates
+    # index.html even though asset URLs are content-hashed and cacheable forever.
     nginx.ingress.kubernetes.io/configuration-snippet: |
       if ($request_uri ~* "^/(index\.html)?$") {
         add_header Cache-Control "no-cache, no-store, must-revalidate";
         add_header Pragma "no-cache";
       }
 spec:
-  ingressClassName: {{ .Values.ingress.className }}
+  ingressClassName: nginx
   rules:
-    - host: {{ .Values.ingress.host }}
+    - host: doen.madebysteven.nl
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: {{ include "doen.fullname" . }}
+                name: doen
                 port:
-                  number: {{ .Values.service.port }}
-{{- if .Values.ingress.tls }}
-  tls:
-    - hosts:
-        - {{ .Values.ingress.host }}
-      secretName: {{ include "doen.fullname" . }}-tls
-{{- end }}
-{{- end }}
+                  number: 8000

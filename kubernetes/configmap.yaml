@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: doen-config
+  namespace: doen
+data:
+  # Pod TZ — affects log timestamps and APScheduler cron interpretation.
+  # Domain timestamps remain UTC in the database regardless.
+  TZ: "Europe/Amsterdam"
+
+  # Database
+  DB_MODE: "postgres"
+  DEBUG: "false"
+
+  # App
+  APP_BASE_URL: "https://doen.madebysteven.nl"
+
+  # Home Assistant OAuth (client id advertised to HA)
+  HA_BASE_URL: ""
+  HA_CLIENT_ID: "https://doen.madebysteven.nl/"
+
+  # Mail (SMTP relay via mailcow at mail.steven-dejong.nl)
+  # Sender identity is noreply@madebysteven.nl; SPF/DKIM/DMARC configured on that zone.
+  # Flip MAIL_ENABLED to "false" to disable outgoing mail without rebuilding.
+  MAIL_ENABLED: "true"
+  SMTP_HOST: "mail.steven-dejong.nl"
+  SMTP_PORT: "587"
+  SMTP_FROM: "noreply@madebysteven.nl"
+  SMTP_FROM_NAME: "Doen"
+  SMTP_USE_STARTTLS: "true"
+  SMTP_USE_TLS: "false"

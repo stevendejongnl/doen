@@ -53,7 +53,7 @@ frontend/       Lit PWA (Vite build → backend/static/ in Docker image)
 ha-card/        Lovelace card (Lit, bundled to doen-card.js)
 ha-integration/ Custom HA integration (sensors, config_flow)
 addon/          HA addon packaging (config.yaml, Dockerfile)
-helm/doen/      Helm chart for K8s deployment
+kubernetes/     K8s manifests — namespace, deployment, service, ingress, configmap
 ```
 
 ## Deployment
@@ -64,11 +64,16 @@ Every push to `main`:
 3. Docker image pushed to `ghcr.io/stevendejongnl/doen` (`:latest` + `:vX.Y.Z`)
 4. Keel detects the new `:latest` and redeploys within 5 minutes
 
-Manual helm deploy:
+Manual deploy:
 ```bash
-helm upgrade --install doen ./helm/doen -n doen --create-namespace \
-  --set secrets.secretKey=<jwt-secret> \
-  --set secrets.databaseUrl=<pg-url>
+# First-time: create the secret from values in 1Password
+kubectl create secret generic doen-secret -n doen \
+  --from-literal=SECRET_KEY='<jwt-secret>' \
+  --from-literal=DATABASE_URL='<pg-url>' \
+  --from-literal=SMTP_USER='noreply@madebysteven.nl' \
+  --from-literal=SMTP_PASSWORD='<mailcow-password>'
+
+kubectl apply -f kubernetes/
 ```
 
 ## Commit conventions

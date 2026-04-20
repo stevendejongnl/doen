@@ -38,8 +38,17 @@ docker-compose up -d             # postgres + backend + frontend on :8000/:5173
 
 ### K8s deploy (handled by Keel automatically after CI push, but manual):
 ```bash
-helm upgrade --install doen ./helm/doen -n doen --create-namespace
+# First time: create the secret out-of-band (values in 1Password)
+kubectl create secret generic doen-secret -n doen \
+  --from-literal=SECRET_KEY='...' \
+  --from-literal=DATABASE_URL='postgresql://...' \
+  --from-literal=SMTP_USER='noreply@madebysteven.nl' \
+  --from-literal=SMTP_PASSWORD='...'
+
+# Apply everything else
+kubectl apply -f kubernetes/
 ```
+Namespace, ConfigMap, Deployment, Service, and Ingress are plain YAML under `kubernetes/`. Follows the same pattern as the other personal K8s projects (dude-wheres-my-package, homelab-dashboard, stash). No Helm, no Kustomize.
 
 ## Architecture
 
