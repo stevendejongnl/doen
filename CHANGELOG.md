@@ -1,3 +1,10 @@
+## [1.1.6](https://github.com/stevendejongnl/doen/compare/v1.1.5...v1.1.6) (2026-04-20)
+
+
+### Bug Fixes
+
+* inject FA selector rules into shadow roots, load fonts in light DOM ([52f0f97](https://github.com/stevendejongnl/doen/commit/52f0f97a8a526efae50c0e0484305dc2234d0f41))
+
 ## [1.1.5](https://github.com/stevendejongnl/doen/compare/v1.1.4...v1.1.5) (2026-04-20)
 
 
