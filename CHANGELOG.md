@@ -1,3 +1,10 @@
+## [1.2.3](https://github.com/stevendejongnl/doen/compare/v1.2.2...v1.2.3) (2026-04-20)
+
+
+### Bug Fixes
+
+* real-time UI updates without page refresh ([d1ad5b1](https://github.com/stevendejongnl/doen/commit/d1ad5b18318e2cc61c358e390d1e23cb4ff4f7cd))
+
 ## [1.2.2](https://github.com/stevendejongnl/doen/compare/v1.2.1...v1.2.2) (2026-04-20)
 
 
