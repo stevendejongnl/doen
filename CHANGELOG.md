@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/stevendejongnl/doen/compare/v1.2.1...v1.2.2) (2026-04-20)
+
+
+### Bug Fixes
+
+* move page padding to .page-wrap so it actually applies ([7458827](https://github.com/stevendejongnl/doen/commit/745882767d6889017debe16ba5ff6855d35b85a1))
+
 ## [1.2.1](https://github.com/stevendejongnl/doen/compare/v1.2.0...v1.2.1) (2026-04-20)
 
 
