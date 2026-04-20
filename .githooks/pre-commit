@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -e
+
+ROOT="$(git rev-parse --show-toplevel)"
+
+# Backend: ruff lint on staged Python files
+STAGED_PY=$(git diff --cached --name-only --diff-filter=ACM | grep '^backend/.*\.py$' || true)
+if [ -n "$STAGED_PY" ]; then
+  echo "→ ruff check (backend)"
+  (cd "$ROOT/backend" && uv run ruff check app/)
+fi
+
+# Frontend: type-check if any frontend TS files staged
+STAGED_FE=$(git diff --cached --name-only --diff-filter=ACM | grep '^frontend/src/.*\.ts$' || true)
+if [ -n "$STAGED_FE" ]; then
+  echo "→ tsc (frontend)"
+  (cd "$ROOT/frontend" && npm run build --silent)
+fi

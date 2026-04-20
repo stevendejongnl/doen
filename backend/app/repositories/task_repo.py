@@ -20,7 +20,9 @@ class TaskRepository:
 
     async def list_for_project(self, project_id: str) -> list[Task]:
         result = await self._session.execute(
-            select(Task).options(selectinload(Task.recurring_rule)).where(Task.project_id == project_id)
+            select(Task)
+            .options(selectinload(Task.recurring_rule))
+            .where(Task.project_id == project_id)
         )
         return list(result.scalars().all())
 
@@ -33,7 +35,11 @@ class TaskRepository:
     ) -> list[Task]:
         if not project_ids:
             return []
-        stmt = select(Task).options(selectinload(Task.recurring_rule)).where(Task.project_id.in_(project_ids))
+        stmt = (
+            select(Task)
+            .options(selectinload(Task.recurring_rule))
+            .where(Task.project_id.in_(project_ids))
+        )
         now = datetime.now(UTC)
         if due_today:
             stmt = stmt.where(func.date(Task.due_date) == func.date(now))

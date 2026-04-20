@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -e
+
+ROOT="$(git rev-parse --show-toplevel)"
+
+echo "→ ruff check (backend)"
+(cd "$ROOT/backend" && uv run ruff check app/)
+
+echo "→ pytest (backend)"
+(cd "$ROOT/backend" && uv run pytest --tb=short -q)
+
+echo "→ build (frontend)"
+(cd "$ROOT/frontend" && npm run build --silent)
