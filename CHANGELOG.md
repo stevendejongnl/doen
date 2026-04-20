@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/stevendejongnl/doen/compare/v1.3.2...v1.4.0) (2026-04-20)
+
+
+### Features
+
+* **tasks:** add notes field and recurring rule UI ([1df97c3](https://github.com/stevendejongnl/doen/commit/1df97c311191fb5be944255bd16d6f2116792173))
+
 ## [1.3.2](https://github.com/stevendejongnl/doen/compare/v1.3.1...v1.3.2) (2026-04-20)
 
 
