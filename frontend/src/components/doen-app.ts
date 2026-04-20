@@ -28,7 +28,14 @@ export class DoenApp extends LitElement {
   private _sse: EventSource | null = null;
 
   static styles = [...sharedStyles, css`
-    :host { display: flex; height: 100vh; overflow: hidden; position: relative; }
+    :host {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+      background: linear-gradient(135deg, #0d0f1a 0%, #0f172a 40%, #111827 70%, #1a1035 100%);
+      background-attachment: fixed;
+    }
 
     .layout { display: flex; width: 100%; height: 100%; }
 

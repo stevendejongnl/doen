@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import type { Group } from '../services/types';
+import type { Group, Project } from '../services/types';
 import { api, ApiError } from '../services/api';
 import { toast } from '../components/doen-toast';
 import { sharedStyles } from '../styles/shared-styles';
@@ -15,6 +15,9 @@ export class PageGroups extends LitElement {
   @state() private _inviteGroupId = '';
   @state() private _inviteEmail = '';
   @state() private _inviting = false;
+  @state() private _newProjectGroupId = '';
+  @state() private _newProjectName = '';
+  @state() private _creatingProject = false;
 
   static styles = [...sharedStyles, css`
     :host { display: block; padding: 28px; overflow-y: auto; height: 100%; }
@@ -164,6 +167,25 @@ export class PageGroups extends LitElement {
     }
   }
 
+  private async _createProject(groupId: string, e: Event) {
+    e.preventDefault();
+    const name = this._newProjectName.trim();
+    if (!name || this._creatingProject) return;
+    this._creatingProject = true;
+    try {
+      const colors = ['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899'];
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      await api.post<Project>('/projects', { name, color, group_id: groupId });
+      this._newProjectName = '';
+      this._newProjectGroupId = '';
+      toast.success(`Project "${name}" aangemaakt!`);
+    } catch (e) {
+      if (e instanceof ApiError) toast.error(`Aanmaken mislukt: ${e.message}`);
+    } finally {
+      this._creatingProject = false;
+    }
+  }
+
   render() {
     return html`
       <h1>Groepen</h1>
@@ -211,7 +233,21 @@ export class PageGroups extends LitElement {
             </div>
           </div>
 
-          <div class="section-label">Lid uitnodigen</div>
+          <div class="section-label" style="margin-top:14px">Nieuw project</div>
+          <form class="invite-row" @submit=${(e: Event) => this._createProject(g.id, e)}>
+            <input type="text" placeholder="Projectnaam"
+              .value=${this._newProjectGroupId === g.id ? this._newProjectName : ''}
+              @focus=${() => this._newProjectGroupId = g.id}
+              @input=${(e: Event) => this._newProjectName = (e.target as HTMLInputElement).value}
+            />
+            <button type="submit" class="btn btn-primary"
+              ?disabled=${this._creatingProject || this._newProjectGroupId !== g.id || !this._newProjectName.trim()}>
+              <i class="fa-solid fa-${this._creatingProject && this._newProjectGroupId === g.id ? 'spinner fa-spin' : 'plus'}"></i>
+              Aanmaken
+            </button>
+          </form>
+
+          <div class="section-label" style="margin-top:14px">Lid uitnodigen</div>
           <form class="invite-row" @submit=${(e: Event) => this._invite(g.id, e)}>
             <input type="email" placeholder="e-mailadres"
               .value=${this._inviteGroupId === g.id ? this._inviteEmail : ''}

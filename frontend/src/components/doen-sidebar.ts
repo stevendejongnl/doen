@@ -377,7 +377,7 @@ export class DoenSidebar extends LitElement {
             <i class="fa-solid fa-right-from-bracket"></i>
           </button>
         </div>
-        <span class="version">v${__APP_VERSION__}</span>
+        <span class="version">${__APP_VERSION__}</span>
       </div>
     `;
   }

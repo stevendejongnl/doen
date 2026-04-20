@@ -184,7 +184,7 @@ export class PageLogin extends LitElement {
           </button>
         </form>
       </div>
-      <span class="version">v${__APP_VERSION__}</span>
+      <span class="version">${__APP_VERSION__}</span>
     `;
   }
 }
