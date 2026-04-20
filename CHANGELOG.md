@@ -1,3 +1,10 @@
+## [1.1.8](https://github.com/stevendejongnl/doen/compare/v1.1.7...v1.1.8) (2026-04-20)
+
+
+### Bug Fixes
+
+* background gradient, version prefix, add project to group ([93863f1](https://github.com/stevendejongnl/doen/commit/93863f1435417fbdc675e0dab25109e243ba53f6))
+
 ## [1.1.7](https://github.com/stevendejongnl/doen/compare/v1.1.6...v1.1.7) (2026-04-20)
 
 
