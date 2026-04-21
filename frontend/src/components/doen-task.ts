@@ -49,7 +49,8 @@ export class DoenTask extends LitElement {
   @property({ type: Object }) task!: Task;
   @state() private _completing = false;
   @state() private _done = false;
-  @state() private _editing = false;
+  @state() private _modalOpen = false;
+  @state() private _modalMode: 'view' | 'edit' = 'view';
   @state() private _editTitle = '';
   @state() private _editPriority: TaskPriority = 'none';
   @state() private _editDue = '';
@@ -146,6 +147,8 @@ export class DoenTask extends LitElement {
       text-transform: uppercase;
     }
 
+    .task-row { cursor: pointer; }
+
     .edit-btn {
       width: 28px; height: 28px;
       border-radius: 7px;
@@ -158,14 +161,118 @@ export class DoenTask extends LitElement {
     .task-row:hover .edit-btn { opacity: 1; }
     .edit-btn:hover { background: rgba(255,255,255,0.1); color: #e8eaf0; }
 
-    /* Inline edit form */
-    .edit-form {
+    /* Modal */
+    .modal-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(10, 12, 20, 0.55);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+      animation: backdrop-in 160ms ease-out;
+    }
+    @keyframes backdrop-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .modal-panel {
+      width: 100%;
+      max-width: 560px;
+      max-height: calc(100vh - 40px);
+      background: rgba(30, 36, 54, 0.92);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 16px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      animation: panel-in 200ms cubic-bezier(0.2, 0.8, 0.3, 1);
+      cursor: default;
+    }
+    @keyframes panel-in {
+      from { opacity: 0; transform: translateY(8px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .modal-header {
+      display: flex; align-items: center; gap: 10px;
       padding: 14px 16px;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(99,102,241,0.4);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .modal-title {
+      flex: 1; min-width: 0;
+      font-size: 15px; font-weight: 600; color: #e8eaf0;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .modal-close {
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: rgba(232,234,240,0.7);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 120ms, color 120ms;
+    }
+    .modal-close:hover { background: rgba(255,255,255,0.12); color: #e8eaf0; }
+    .modal-body {
+      padding: 16px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .modal-footer {
+      display: flex; gap: 8px; justify-content: flex-end;
+      padding: 12px 16px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.02);
+    }
+
+    /* Detail view */
+    .detail-grid {
+      display: grid; gap: 14px;
+    }
+    .detail-row {
+      display: grid; grid-template-columns: 120px 1fr; gap: 12px;
+      align-items: start;
+      font-size: 13px;
+    }
+    .detail-label {
+      color: rgba(232,234,240,0.55);
+      font-size: 11px; text-transform: uppercase;
+      letter-spacing: 0.04em; padding-top: 2px;
+    }
+    .detail-value {
+      color: #e8eaf0;
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      min-width: 0;
+    }
+    .detail-value.muted { color: rgba(232,234,240,0.4); font-style: italic; }
+    .detail-notes {
+      color: #e8eaf0;
+      font-size: 13px; line-height: 1.55;
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .detail-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      font-size: 12px;
+    }
+    .detail-chip.overdue { color: #ef4444; border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.08); }
+    .detail-chip.done { color: #10b981; border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.08); }
+
+    .btn-edit-modal {
+      background: #6366f1; color: white; border: none;
+      border-radius: 8px; padding: 8px 16px;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      transition: background 120ms;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn-edit-modal:hover { background: #818cf8; }
+
+    /* Edit form (inside modal) */
+    .edit-form {
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -335,7 +442,7 @@ export class DoenTask extends LitElement {
     }
   }
 
-  private async _startEdit() {
+  private _resetEditState() {
     this._editTitle = this.task.title;
     this._editPriority = this.task.priority as TaskPriority;
     this._editDue = this.task.due_date ? this.task.due_date.substring(0, 10) : '';
@@ -350,8 +457,9 @@ export class DoenTask extends LitElement {
     this._editMonthDay = rr?.month_day ?? 1;
     this._editTimeOfDay = rr?.time_of_day ?? '08:00';
     this._editParity = rr?.parity ?? 'any';
-    this._editing = true;
+  }
 
+  private async _loadMembers() {
     try {
       const project = await api.get<Project>(`/projects/${this.task.project_id}`);
       if (project.group_id) {
@@ -362,6 +470,36 @@ export class DoenTask extends LitElement {
     } catch {
       this._members = [];
     }
+  }
+
+  private async _openModal(mode: 'view' | 'edit' = 'view') {
+    this._resetEditState();
+    this._modalMode = mode;
+    this._modalOpen = true;
+    await this._loadMembers();
+  }
+
+  private _closeModal = () => {
+    this._modalOpen = false;
+    this._modalMode = 'view';
+  };
+
+  private _onBackdropClick(e: MouseEvent) {
+    if (e.target === e.currentTarget) this._closeModal();
+  }
+
+  private _onKeydown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && this._modalOpen) this._closeModal();
+  };
+
+  connectedCallback() {
+    super.connectedCallback();
+    document.addEventListener('keydown', this._onKeydown);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    document.removeEventListener('keydown', this._onKeydown);
   }
 
   private _toggleWeekday(n: number) {
@@ -427,7 +565,7 @@ export class DoenTask extends LitElement {
         this.task = updated;
       }
 
-      this._editing = false;
+      this._modalMode = 'view';
       this.dispatchEvent(new CustomEvent('task-updated', { detail: this.task, bubbles: true, composed: true }));
       toast.success('Opgeslagen!');
     } catch (e) {
@@ -442,6 +580,7 @@ export class DoenTask extends LitElement {
     try {
       await api.delete(`/tasks/${this.task.id}`);
       this._done = true;
+      this._closeModal();
       this.dispatchEvent(new CustomEvent('task-deleted', { detail: this.task.id, bubbles: true, composed: true }));
     } catch (e) {
       if (e instanceof ApiError) toast.error(`Verwijderen mislukt: ${e.message}`);
@@ -455,133 +594,232 @@ export class DoenTask extends LitElement {
     return { label: d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' }), overdue };
   }
 
-  render() {
-    if (this._editing) {
-      return html`
-        <form class="edit-form" @submit=${this._saveEdit}>
-          <div class="edit-row">
-            <input class="edit-title" type="text"
-              .value=${this._editTitle}
-              @input=${(e: Event) => this._editTitle = (e.target as HTMLInputElement).value}
-              ?disabled=${this._saving}
-            />
-          </div>
-          <div class="edit-row">
-            <select .value=${this._editPriority}
-              @change=${(e: Event) => this._editPriority = (e.target as HTMLSelectElement).value as TaskPriority}>
-              <option value="none">Geen prioriteit</option>
-              <option value="low">Laag</option>
-              <option value="medium">Middel</option>
-              <option value="high">Hoog</option>
-            </select>
-            <input type="date"
-              .value=${this._editDue}
-              @input=${(e: Event) => this._editDue = (e.target as HTMLInputElement).value}
-            />
-            ${this._members.length > 1 ? html`
-              <select .value=${this._editAssignee}
-                @change=${(e: Event) => this._editAssignee = (e.target as HTMLSelectElement).value}>
-                <option value="">Niemand toegewezen</option>
-                ${this._members.map(m => html`
-                  <option value=${m.user_id}>${m.name}</option>
-                `)}
-              </select>
-            ` : ''}
-          </div>
-          <textarea
-            placeholder="Notities, context, links..."
-            .value=${this._editNotes}
-            @input=${(e: Event) => this._editNotes = (e.target as HTMLTextAreaElement).value}
+  private _renderEditForm() {
+    return html`
+      <form class="edit-form" @submit=${this._saveEdit}>
+        <div class="edit-row">
+          <input class="edit-title" type="text"
+            .value=${this._editTitle}
+            @input=${(e: Event) => this._editTitle = (e.target as HTMLInputElement).value}
             ?disabled=${this._saving}
-          ></textarea>
-          <div class="recurring-row">
-            <label class="toggle-label">
-              <span class="toggle">
-                <input type="checkbox"
-                  .checked=${this._editRecurring}
-                  @change=${(e: Event) => this._editRecurring = (e.target as HTMLInputElement).checked}
-                />
-                <span class="toggle-track"></span>
-                <span class="toggle-thumb"></span>
-              </span>
-              <i class="fa-solid fa-repeat" style="font-size:11px;opacity:0.6"></i>
-              Herhalen
-            </label>
-          </div>
-          ${this._editRecurring ? html`
-            <div class="recurrence-builder">
-              <div class="rb-row">
-                <span>Elke</span>
-                <input type="number" min="1" max="365"
-                  .value=${String(this._editInterval)}
-                  @input=${(e: Event) => this._editInterval = Math.max(1, parseInt((e.target as HTMLInputElement).value, 10) || 1)}
-                />
-                <select .value=${this._editUnit}
-                  @change=${(e: Event) => this._editUnit = (e.target as HTMLSelectElement).value as RecurrenceUnit}>
-                  <option value="day">dag(en)</option>
-                  <option value="week">we(e)k(en)</option>
-                  <option value="month">maand(en)</option>
-                </select>
-              </div>
-              ${this._editUnit === 'week' ? html`
-                <div class="rb-row">
-                  <span>Op:</span>
-                  <div class="weekday-picker">
-                    ${DAY_LABELS.map((label, i) => html`
-                      <span class="weekday-chip ${this._editWeekdays.has(i) ? 'active' : ''}"
-                        @click=${() => this._toggleWeekday(i)}>${label}</span>
-                    `)}
-                  </div>
-                </div>
-              ` : ''}
-              ${this._editUnit === 'month' ? html`
-                <div class="rb-row">
-                  <span>Dag van de maand:</span>
-                  <input type="number" min="1" max="31"
-                    .value=${String(this._editMonthDay)}
-                    @input=${(e: Event) => this._editMonthDay = Math.max(1, Math.min(31, parseInt((e.target as HTMLInputElement).value, 10) || 1))}
-                  />
-                </div>
-              ` : ''}
-              <div class="rb-row">
-                <span>Om:</span>
-                <input type="time"
-                  .value=${this._editTimeOfDay}
-                  @input=${(e: Event) => this._editTimeOfDay = (e.target as HTMLInputElement).value || '08:00'}
-                />
-                <span style="margin-left:8px">Alleen</span>
-                <select .value=${this._editParity}
-                  @change=${(e: Event) => this._editParity = (e.target as HTMLSelectElement).value as RecurrenceParity}>
-                  <option value="any">alle</option>
-                  <option value="odd">oneven</option>
-                  <option value="even">even</option>
-                </select>
-                <span>${this._editUnit === 'week' ? 'weken' : this._editUnit === 'month' ? 'maanden' : 'dagen'}</span>
-              </div>
-              <div class="rb-preview">${this._previewDescription()}</div>
-            </div>
+          />
+        </div>
+        <div class="edit-row">
+          <select .value=${this._editPriority}
+            @change=${(e: Event) => this._editPriority = (e.target as HTMLSelectElement).value as TaskPriority}>
+            <option value="none">Geen prioriteit</option>
+            <option value="low">Laag</option>
+            <option value="medium">Middel</option>
+            <option value="high">Hoog</option>
+          </select>
+          <input type="date"
+            .value=${this._editDue}
+            @input=${(e: Event) => this._editDue = (e.target as HTMLInputElement).value}
+          />
+          ${this._members.length > 1 ? html`
+            <select .value=${this._editAssignee}
+              @change=${(e: Event) => this._editAssignee = (e.target as HTMLSelectElement).value}>
+              <option value="">Niemand toegewezen</option>
+              ${this._members.map(m => html`
+                <option value=${m.user_id}>${m.name}</option>
+              `)}
+            </select>
           ` : ''}
-          <div class="edit-actions">
-            <button type="button" class="btn-delete" @click=${this._delete}>
-              <i class="fa-solid fa-trash"></i> Verwijderen
-            </button>
-            <button type="button" class="btn-cancel-edit" @click=${() => this._editing = false}>
-              Annuleer
-            </button>
-            <button type="submit" class="btn-save" ?disabled=${this._saving}>
-              <i class="fa-solid fa-${this._saving ? 'spinner fa-spin' : 'floppy-disk'}"></i>
-              Opslaan
+        </div>
+        <textarea
+          placeholder="Notities, context, links..."
+          .value=${this._editNotes}
+          @input=${(e: Event) => this._editNotes = (e.target as HTMLTextAreaElement).value}
+          ?disabled=${this._saving}
+        ></textarea>
+        <div class="recurring-row">
+          <label class="toggle-label">
+            <span class="toggle">
+              <input type="checkbox"
+                .checked=${this._editRecurring}
+                @change=${(e: Event) => this._editRecurring = (e.target as HTMLInputElement).checked}
+              />
+              <span class="toggle-track"></span>
+              <span class="toggle-thumb"></span>
+            </span>
+            <i class="fa-solid fa-repeat" style="font-size:11px;opacity:0.6"></i>
+            Herhalen
+          </label>
+        </div>
+        ${this._editRecurring ? html`
+          <div class="recurrence-builder">
+            <div class="rb-row">
+              <span>Elke</span>
+              <input type="number" min="1" max="365"
+                .value=${String(this._editInterval)}
+                @input=${(e: Event) => this._editInterval = Math.max(1, parseInt((e.target as HTMLInputElement).value, 10) || 1)}
+              />
+              <select .value=${this._editUnit}
+                @change=${(e: Event) => this._editUnit = (e.target as HTMLSelectElement).value as RecurrenceUnit}>
+                <option value="day">dag(en)</option>
+                <option value="week">we(e)k(en)</option>
+                <option value="month">maand(en)</option>
+              </select>
+            </div>
+            ${this._editUnit === 'week' ? html`
+              <div class="rb-row">
+                <span>Op:</span>
+                <div class="weekday-picker">
+                  ${DAY_LABELS.map((label, i) => html`
+                    <span class="weekday-chip ${this._editWeekdays.has(i) ? 'active' : ''}"
+                      @click=${() => this._toggleWeekday(i)}>${label}</span>
+                  `)}
+                </div>
+              </div>
+            ` : ''}
+            ${this._editUnit === 'month' ? html`
+              <div class="rb-row">
+                <span>Dag van de maand:</span>
+                <input type="number" min="1" max="31"
+                  .value=${String(this._editMonthDay)}
+                  @input=${(e: Event) => this._editMonthDay = Math.max(1, Math.min(31, parseInt((e.target as HTMLInputElement).value, 10) || 1))}
+                />
+              </div>
+            ` : ''}
+            <div class="rb-row">
+              <span>Om:</span>
+              <input type="time"
+                .value=${this._editTimeOfDay}
+                @input=${(e: Event) => this._editTimeOfDay = (e.target as HTMLInputElement).value || '08:00'}
+              />
+              <span style="margin-left:8px">Alleen</span>
+              <select .value=${this._editParity}
+                @change=${(e: Event) => this._editParity = (e.target as HTMLSelectElement).value as RecurrenceParity}>
+                <option value="any">alle</option>
+                <option value="odd">oneven</option>
+                <option value="even">even</option>
+              </select>
+              <span>${this._editUnit === 'week' ? 'weken' : this._editUnit === 'month' ? 'maanden' : 'dagen'}</span>
+            </div>
+            <div class="rb-preview">${this._previewDescription()}</div>
+          </div>
+        ` : ''}
+      </form>
+    `;
+  }
+
+  private _renderDetailView() {
+    const due = this._formatDue(this.task.due_date);
+    const priorityLabel = {
+      none: 'Geen', low: 'Laag', medium: 'Middel', high: 'Hoog',
+    }[this.task.priority as TaskPriority];
+    const isDone = this.task.status === 'done';
+
+    return html`
+      <div class="detail-grid">
+        <div class="detail-row">
+          <span class="detail-label">Status</span>
+          <span class="detail-value">
+            ${isDone
+              ? html`<span class="detail-chip done"><i class="fa-solid fa-check"></i> Klaar</span>`
+              : html`<span class="detail-chip"><i class="fa-regular fa-circle"></i> Open</span>`}
+          </span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Prioriteit</span>
+          <span class="detail-value">
+            <span class="priority-dot p-${this.task.priority}"></span>
+            ${priorityLabel}
+          </span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Deadline</span>
+          ${due
+            ? html`<span class="detail-value">
+                <span class="detail-chip ${due.overdue ? 'overdue' : ''}">
+                  <i class="fa-solid fa-${due.overdue ? 'triangle-exclamation' : 'clock'}"></i>
+                  ${due.label}
+                </span>
+              </span>`
+            : html`<span class="detail-value muted">Geen deadline</span>`}
+        </div>
+        ${this.task.assignee_name ? html`
+          <div class="detail-row">
+            <span class="detail-label">Toegewezen</span>
+            <span class="detail-value">
+              <span class="assignee-chip">${this.task.assignee_name.slice(0, 1)}</span>
+              ${this.task.assignee_name}
+            </span>
+          </div>
+        ` : ''}
+        ${this.task.recurring_rule ? html`
+          <div class="detail-row">
+            <span class="detail-label">Herhaling</span>
+            <span class="detail-value">
+              <i class="fa-solid fa-repeat" style="opacity:0.6"></i>
+              ${describeRule(this.task.recurring_rule)}
+            </span>
+          </div>
+        ` : ''}
+        <div class="detail-row">
+          <span class="detail-label">Notities</span>
+          ${this.task.notes
+            ? html`<div class="detail-notes">${this.task.notes}</div>`
+            : html`<span class="detail-value muted">Geen notities</span>`}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderModal() {
+    if (!this._modalOpen) return '';
+    const inEdit = this._modalMode === 'edit';
+    return html`
+      <div class="modal-backdrop" @click=${this._onBackdropClick}>
+        <div class="modal-panel">
+          <div class="modal-header">
+            <span class="priority-dot p-${this.task.priority}"></span>
+            <span class="modal-title">${this.task.title}</span>
+            <button class="modal-close" @click=${this._closeModal} title="Sluiten">
+              <i class="fa-solid fa-xmark"></i>
             </button>
           </div>
-        </form>
-      `;
-    }
+          <div class="modal-body">
+            ${inEdit ? this._renderEditForm() : this._renderDetailView()}
+          </div>
+          <div class="modal-footer">
+            ${inEdit ? html`
+              <button type="button" class="btn-delete" @click=${this._delete}>
+                <i class="fa-solid fa-trash"></i> Verwijderen
+              </button>
+              <button type="button" class="btn-cancel-edit" @click=${() => { this._resetEditState(); this._modalMode = 'view'; }}>
+                Annuleer
+              </button>
+              <button type="button" class="btn-save" ?disabled=${this._saving} @click=${(e: Event) => this._saveEdit(e)}>
+                <i class="fa-solid fa-${this._saving ? 'spinner fa-spin' : 'floppy-disk'}"></i>
+                Opslaan
+              </button>
+            ` : html`
+              <button type="button" class="btn-cancel-edit" @click=${this._closeModal}>
+                Sluiten
+              </button>
+              <button type="button" class="btn-edit-modal" @click=${() => this._modalMode = 'edit'}>
+                <i class="fa-solid fa-pen"></i> Bewerken
+              </button>
+            `}
+          </div>
+        </div>
+      </div>
+    `;
+  }
 
+  private _onRowClick(e: MouseEvent) {
+    const target = e.target as HTMLElement;
+    if (target.closest('.check-btn') || target.closest('.edit-btn')) return;
+    this._openModal('view');
+  }
+
+  render() {
     const isDone = this.task.status === 'done';
     const due = this._formatDue(this.task.due_date);
 
     return html`
-      <div class="task-row ${this._done ? 'done-anim' : ''}">
+      <div class="task-row ${this._done ? 'done-anim' : ''}" @click=${this._onRowClick}>
         <button class="check-btn ${this._completing ? 'completing' : ''}"
           @click=${this._complete} title="Markeer als klaar">
           <i class="fa-solid fa-check"></i>
@@ -607,10 +845,11 @@ export class DoenTask extends LitElement {
           ` : ''}
         </span>
 
-        <button class="edit-btn" @click=${this._startEdit} title="Bewerken">
+        <button class="edit-btn" @click=${() => this._openModal('edit')} title="Bewerken">
           <i class="fa-solid fa-pen"></i>
         </button>
       </div>
+      ${this._renderModal()}
     `;
   }
 }
