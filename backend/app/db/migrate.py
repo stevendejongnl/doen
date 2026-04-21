@@ -82,6 +82,25 @@ async def migrate_recurring_rules_to_structured(engine: AsyncEngine) -> None:
                 pass
 
 
+async def migrate_add_user_preferences(engine: AsyncEngine) -> None:
+    """Add the `users.preferences` JSON column if it doesn't exist yet.
+
+    The Alembic migration for this column lives in app/db/migrations/versions/, but
+    k8s deployments don't run Alembic — create_all only creates missing tables, never
+    adds columns. Mirror the runtime-migration pattern used for recurring_rules.
+    """
+    async with engine.begin() as conn:
+        columns = await conn.run_sync(
+            lambda sync_conn: inspect(sync_conn).get_columns("users")
+        )
+        if any(c["name"] == "preferences" for c in columns):
+            return
+        # SQLite and PostgreSQL both accept `DEFAULT '{}'` on a JSON column.
+        await conn.execute(
+            text("ALTER TABLE users ADD COLUMN preferences JSON NOT NULL DEFAULT '{}'")
+        )
+
+
 def _cron_to_structured(cron: str | None) -> dict:
     """Parse a 5-field cron expression into structured fields. Falls back to weekly-Mon-08:00."""
     default = {
