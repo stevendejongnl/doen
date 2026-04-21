@@ -29,6 +29,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     websocket_api.async_register_command(hass, ws_list_projects)
+    websocket_api.async_register_command(hass, ws_list_groups)
     websocket_api.async_register_command(hass, ws_api_proxy)
 
     return True
@@ -98,6 +99,24 @@ async def ws_list_projects(
     try:
         projects = await coordinator.api_request("GET", "/projects")
         connection.send_result(msg["id"], projects)
+    except Exception as err:
+        connection.send_error(msg["id"], "request_failed", str(err))
+
+
+@websocket_api.websocket_command({vol.Required("type"): "doen/list_groups"})
+@websocket_api.async_response
+async def ws_list_groups(
+    hass: HomeAssistant,
+    connection: websocket_api.ActiveConnection,
+    msg: dict,
+) -> None:
+    coordinator = _get_coordinator(hass)
+    if coordinator is None:
+        connection.send_error(msg["id"], "not_configured", "Doen integration not set up")
+        return
+    try:
+        groups = await coordinator.api_request("GET", "/ha/groups")
+        connection.send_result(msg["id"], groups)
     except Exception as err:
         connection.send_error(msg["id"], "request_failed", str(err))
 

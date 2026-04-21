@@ -6,11 +6,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.api.deps import get_current_user, get_db, get_task_repo, raise_http
 from app.api.schemas import TaskOut, TokenResponse
 from app.config import settings
 from app.exceptions import DoenError
+from app.models.base import new_uuid
+from app.models.household_points import PointTransaction
 from app.models.task import Task
 from app.models.user import User
 from app.repositories.group_repo import GroupRepository
@@ -66,6 +69,20 @@ async def ha_callback(
     return TokenResponse(access_token=access, refresh_token=refresh)
 
 
+# ── Groups ────────────────────────────────────────────────────────────────────
+
+@router.get("/groups")
+async def ha_groups(
+    current_user: User = Depends(get_current_user),
+    task_repo: TaskRepository = Depends(get_task_repo),
+) -> list[dict]:
+    """Group list for the Lovelace card editor dropdown."""
+    session = task_repo._session
+    group_repo = GroupRepository(session)
+    groups = await group_repo.list_for_user(current_user.id)
+    return [{"id": g.id, "name": g.name} for g in groups]
+
+
 # ── Sensors ───────────────────────────────────────────────────────────────────
 
 @router.get("/sensors")
@@ -75,17 +92,28 @@ async def ha_sensors(
 ) -> dict:
     """Sensor payload for HA custom integration entities."""
     now = datetime.now(UTC)
+    week_start = (now - timedelta(days=now.weekday())).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
     session = task_repo._session
 
     group_repo = GroupRepository(session)
     project_repo = ProjectRepository(session)
 
-    group_ids = await group_repo.list_group_ids_for_user(current_user.id)
+    groups = await group_repo.list_for_user(current_user.id)
+    group_ids = [g.id for g in groups]
     projects = await project_repo.list_for_user(current_user.id, group_ids)
     project_ids = [p.id for p in projects]
 
     if not project_ids:
-        return {"tasks_total": 0, "tasks_due_today": 0, "tasks_overdue": 0, "has_overdue": False}
+        return {
+            "tasks_total": 0,
+            "tasks_due_today": 0,
+            "tasks_overdue": 0,
+            "has_overdue": False,
+            "points_this_week": 0,
+            "groups": [],
+        }
 
     total = (await session.execute(
         select(func.count()).where(Task.project_id.in_(project_ids), Task.status != "done")
@@ -107,15 +135,61 @@ async def ha_sensors(
         )
     )).scalar_one()
 
+    points_this_week = (await session.execute(
+        select(func.coalesce(func.sum(PointTransaction.amount), 0)).where(
+            PointTransaction.user_id == current_user.id,
+            PointTransaction.created_at >= week_start,
+        )
+    )).scalar_one()
+
+    group_stats = []
+    for group in groups:
+        gp_ids = [p.id for p in projects if p.group_id == group.id]
+        if not gp_ids:
+            continue
+        g_total = (await session.execute(
+            select(func.count()).where(Task.project_id.in_(gp_ids), Task.status != "done")
+        )).scalar_one()
+        g_today = (await session.execute(
+            select(func.count()).where(
+                Task.project_id.in_(gp_ids),
+                Task.status != "done",
+                func.date(Task.due_date) == func.date(now),
+            )
+        )).scalar_one()
+        g_overdue = (await session.execute(
+            select(func.count()).where(
+                Task.project_id.in_(gp_ids),
+                Task.status != "done",
+                Task.due_date < now,
+            )
+        )).scalar_one()
+        group_stats.append({
+            "id": group.id,
+            "name": group.name,
+            "tasks_total": g_total,
+            "tasks_due_today": g_today,
+            "tasks_overdue": g_overdue,
+        })
+
     return {
         "tasks_total": total,
         "tasks_due_today": due_today,
         "tasks_overdue": overdue,
         "has_overdue": overdue > 0,
+        "points_this_week": points_this_week,
+        "groups": group_stats,
     }
 
 
 # ── Card data ─────────────────────────────────────────────────────────────────
+
+_CARD_LOAD_OPTS = (
+    selectinload(Task.category),
+    selectinload(Task.assignee),
+    selectinload(Task.project),
+)
+
 
 @router.get("/card-data")
 async def ha_card_data(
@@ -146,12 +220,16 @@ async def ha_card_data(
             "title": t.title,
             "priority": t.priority,
             "project_id": t.project_id,
+            "project_name": t.project.name if t.project else None,
+            "category_name": t.category.name if t.category else None,
+            "category_color": t.category.color if t.category else None,
+            "assignee_name": t.assignee.name if t.assignee else None,
             "due_date": t.due_date.isoformat() if t.due_date else None,
         }
 
     today_tasks = [
         _slim(t) for t in (await session.execute(
-            select(Task).where(
+            select(Task).options(*_CARD_LOAD_OPTS).where(
                 Task.project_id.in_(project_ids),
                 Task.status != "done",
                 func.date(Task.due_date) == func.date(now),
@@ -161,7 +239,7 @@ async def ha_card_data(
 
     overdue_tasks = [
         _slim(t) for t in (await session.execute(
-            select(Task).where(
+            select(Task).options(*_CARD_LOAD_OPTS).where(
                 Task.project_id.in_(project_ids),
                 Task.status != "done",
                 Task.due_date < now,
@@ -170,6 +248,45 @@ async def ha_card_data(
     ]
 
     return {"today": today_tasks, "overdue": overdue_tasks}
+
+
+# ── Quick add ─────────────────────────────────────────────────────────────────
+
+class QuickAddPayload(BaseModel):
+    title: str
+
+
+@router.post("/quick-add", status_code=status.HTTP_201_CREATED)
+async def ha_quick_add(
+    body: QuickAddPayload,
+    group_id: str = Query(),
+    current_user: User = Depends(get_current_user),
+    task_repo: TaskRepository = Depends(get_task_repo),
+) -> dict:
+    """Create a task in the first project of the given group."""
+    session = task_repo._session
+    group_repo = GroupRepository(session)
+    project_repo = ProjectRepository(session)
+
+    group_ids = await group_repo.list_group_ids_for_user(current_user.id)
+    if group_id not in group_ids:
+        raise HTTPException(status_code=403, detail="Group not accessible")
+
+    projects = await project_repo.list_for_user(current_user.id, [group_id])
+    if not projects:
+        raise HTTPException(status_code=404, detail="No projects in group")
+
+    task = Task(
+        id=new_uuid(),
+        title=body.title,
+        project_id=projects[0].id,
+        status="todo",
+        priority="none",
+    )
+    session.add(task)
+    await session.commit()
+    await session.refresh(task)
+    return {"id": task.id, "title": task.title}
 
 
 # ── Webhook ───────────────────────────────────────────────────────────────────
