@@ -1,3 +1,10 @@
+## [1.13.1](https://github.com/stevendejongnl/doen/compare/v1.13.0...v1.13.1) (2026-04-21)
+
+
+### Bug Fixes
+
+* **task:** force 24h time input and open modal directly from kanban cards ([a16dd57](https://github.com/stevendejongnl/doen/commit/a16dd576bc1797bfb90024c30fdeb5eda510ec85))
+
 # [1.13.0](https://github.com/stevendejongnl/doen/compare/v1.12.0...v1.13.0) (2026-04-21)
 
 
