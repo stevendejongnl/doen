@@ -504,6 +504,14 @@ export class DoenTask extends LitElement {
       font-size: 11px; color: var(--color-text-muted-strong);
       font-style: italic;
     }
+
+    @media (max-width: 768px) {
+      .task-row { gap: 8px; padding: 13px 12px; }
+      .detail-chip,
+      .category-chip,
+      .meta-icon,
+      .due-date { display: none; }
+    }
   `];
 
   private async _complete(e?: Event) {

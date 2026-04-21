@@ -153,6 +153,7 @@ export class DoenViewKanban extends LitElement {
       }
       .col { overflow: visible; }
       .col-body { overflow-y: visible; padding: 6px 10px 14px; }
+      .card-meta { display: none; }
     }
   `];
 

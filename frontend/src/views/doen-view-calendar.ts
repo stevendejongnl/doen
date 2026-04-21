@@ -197,20 +197,27 @@ export class DoenViewCalendar extends LitElement {
 
     /* Mobile: week becomes a vertical day list; month shrinks cells */
     @media (max-width: 640px) {
+      :host { overflow-y: auto; }
       .grid.week {
         grid-template-columns: 1fr;
         grid-auto-rows: auto;
+        flex: none;
+        height: auto;
+        overflow: visible;
       }
       .grid.week .cell {
         min-height: 64px;
         padding: 10px 12px;
       }
+      .grid.week .cell-pills { overflow: visible; }
       .grid.week .cell-head {
         font-size: 12px;
       }
       .grid.week .cell-head .dom {
         font-size: 16px;
       }
+      .grid.week .pill { padding: 7px 9px; font-size: 12px; }
+      .grid.week .pill .pill-time { display: none; }
       .grid.month {
         grid-auto-rows: minmax(68px, auto);
         gap: 4px;
@@ -222,7 +229,7 @@ export class DoenViewCalendar extends LitElement {
       }
       .grid.month .cell-head .dom { font-size: 13px; }
       .grid.month .cell-head .dow { display: none; }
-      .grid.month .pill { padding: 2px 5px; font-size: 10px; }
+      .grid.month .pill { padding: 4px 7px; font-size: 11px; }
       .grid.month .pill .pill-time { display: none; }
 
       .unscheduled { max-height: 45%; }

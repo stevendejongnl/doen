@@ -193,9 +193,23 @@ export class DoenSidebar extends LitElement {
     .user-row {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 4px;
       width: 100%;
     }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      min-width: 0;
+      padding: 6px 8px;
+      border-radius: var(--radius-sm);
+      transition: background var(--transition-fast);
+      text-align: left;
+    }
+
+    .user-info:hover { background: var(--glass-bg-raised); }
 
     .version {
       font-size: 10px;
@@ -343,9 +357,6 @@ export class DoenSidebar extends LitElement {
               <i class="fa-solid fa-users-gear"></i> Gebruikers
             </button>
           ` : ''}
-          <button class="nav-item" @click=${() => this._navigatePage('account')}>
-            <i class="fa-solid fa-user-gear"></i> Account
-          </button>
         </div>
 
         ${this._loading ? html`
@@ -397,8 +408,10 @@ export class DoenSidebar extends LitElement {
 
       <div class="user-footer">
         <div class="user-row">
-          <div class="avatar">${initials}</div>
-          <span class="user-name">${this.user?.name ?? '...'}</span>
+          <button class="user-info" @click=${() => this._navigatePage('account')} title="Account">
+            <div class="avatar">${initials}</div>
+            <span class="user-name">${this.user?.name ?? '...'}</span>
+          </button>
           <button class="logout-btn" @click=${logout} title="Uitloggen">
             <i class="fa-solid fa-right-from-bracket"></i>
           </button>

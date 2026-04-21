@@ -42,6 +42,36 @@ export class DoenApp extends LitElement {
     return match ? decodeURIComponent(match[1]) : null;
   }
 
+  private _routeFromPath(): Route {
+    const path = window.location.pathname;
+    const projectMatch = path.match(/^\/project\/([^/]+)/);
+    if (projectMatch) return { type: 'project', projectId: projectMatch[1] };
+    if (path.startsWith('/groups')) return { type: 'groups' };
+    if (path.startsWith('/admin')) return { type: 'admin' };
+    if (path.startsWith('/account')) return { type: 'account' };
+    return { type: 'todo' };
+  }
+
+  private _pathFromRoute(route: Route): string {
+    switch (route.type) {
+      case 'todo':    return '/';
+      case 'project': return `/project/${route.projectId}`;
+      case 'groups':  return '/groups';
+      case 'admin':   return '/admin';
+      case 'account': return '/account';
+    }
+  }
+
+  private _setRoute(route: Route) {
+    this._route = route;
+    history.pushState(null, '', this._pathFromRoute(route));
+    this._sidebarOpen = false;
+  }
+
+  private _onPopState = () => {
+    this._route = this._routeFromPath();
+  };
+
   static styles = [...sharedStyles, css`
     :host {
       display: flex;
@@ -158,7 +188,7 @@ export class DoenApp extends LitElement {
         transform: translateX(0);
       }
 
-      .main { padding: 8px; }
+      .main { padding: 8px; gap: 8px; }
       .page-wrap { padding: 16px; border-radius: 12px; }
     }
   `];
@@ -166,8 +196,10 @@ export class DoenApp extends LitElement {
   async connectedCallback() {
     super.connectedCallback();
     window.addEventListener('doen:logout', this._onLogout);
+    window.addEventListener('popstate', this._onPopState);
     this._inviteToken = this._readInviteTokenFromUrl();
     this._resetToken = this._readResetTokenFromUrl();
+    this._route = this._routeFromPath();
 
     if (isLoggedIn()) {
       try {
@@ -183,6 +215,7 @@ export class DoenApp extends LitElement {
   disconnectedCallback() {
     super.disconnectedCallback();
     window.removeEventListener('doen:logout', this._onLogout);
+    window.removeEventListener('popstate', this._onPopState);
     this._sse?.close();
   }
 
@@ -234,12 +267,12 @@ export class DoenApp extends LitElement {
 
   private _onNavigate(e: CustomEvent<{ projectId?: string; page?: string }>) {
     const { projectId, page } = e.detail;
-    if (projectId) this._route = { type: 'project', projectId };
-    else if (page === 'todo') this._route = { type: 'todo' };
-    else if (page === 'groups') this._route = { type: 'groups' };
-    else if (page === 'admin') this._route = { type: 'admin' };
-    else if (page === 'account') this._route = { type: 'account' };
-    this._sidebarOpen = false;
+    if (projectId) this._setRoute({ type: 'project', projectId });
+    else if (page === 'todo') this._setRoute({ type: 'todo' });
+    else if (page === 'groups') this._setRoute({ type: 'groups' });
+    else if (page === 'admin') this._setRoute({ type: 'admin' });
+    else if (page === 'account') this._setRoute({ type: 'account' });
+    else this._sidebarOpen = false;
   }
 
   private _renderMain() {
