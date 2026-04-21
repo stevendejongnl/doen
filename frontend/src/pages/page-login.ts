@@ -25,7 +25,7 @@ export class PageLogin extends LitElement {
       justify-content: center;
       width: 100%;
       flex: 1;
-      min-height: 100vh;
+      min-height: 100dvh;
       padding: 20px;
       gap: 16px;
       box-sizing: border-box;

@@ -109,6 +109,11 @@ export class DoenTask extends LitElement {
       transition: border-color 120ms, background 120ms, transform 120ms;
       padding: 0;
       color: #10b981;
+      position: relative;
+    }
+    .check-btn::after {
+      content: ''; position: absolute;
+      top: -11px; right: -11px; bottom: -11px; left: -11px;
     }
 
     .check-btn:hover { border-color: #10b981; transform: scale(1.1); }
@@ -177,15 +182,17 @@ export class DoenTask extends LitElement {
     .task-row { cursor: pointer; }
 
     .edit-btn {
-      width: 28px; height: 28px;
+      width: 44px; height: 44px;
       border-radius: 7px;
       display: flex; align-items: center; justify-content: center;
       font-size: 12px; color: rgba(232,234,240,0.4);
       transition: background 120ms, color 120ms;
       flex-shrink: 0;
-      opacity: 0;
     }
-    .task-row:hover .edit-btn { opacity: 1; }
+    @media (hover: hover) {
+      .edit-btn { opacity: 0; }
+      .task-row:hover .edit-btn { opacity: 1; }
+    }
     .edit-btn:hover { background: rgba(255,255,255,0.1); color: #e8eaf0; }
 
     /* Modal */
@@ -206,7 +213,7 @@ export class DoenTask extends LitElement {
     .modal-panel {
       width: 100%;
       max-width: 560px;
-      max-height: calc(100vh - 40px);
+      max-height: calc(100dvh - 40px);
       background: rgba(30, 36, 54, 0.92);
       border: 1px solid rgba(255,255,255,0.12);
       border-radius: 16px;
@@ -231,7 +238,7 @@ export class DoenTask extends LitElement {
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
     .modal-close {
-      width: 30px; height: 30px;
+      width: 44px; height: 44px;
       border-radius: 8px;
       background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.08);
@@ -313,7 +320,7 @@ export class DoenTask extends LitElement {
       .modal-panel {
         width: 100%;
         max-width: 100%;
-        max-height: 92vh;
+        max-height: 92dvh;
         border-radius: 18px 18px 0 0;
         border-bottom: none;
         animation: panel-up 220ms cubic-bezier(0.2, 0.8, 0.3, 1);
@@ -422,6 +429,7 @@ export class DoenTask extends LitElement {
       display: flex; align-items: center; gap: 8px;
       font-size: 12px; color: rgba(232,234,240,0.6);
       cursor: pointer; user-select: none;
+      min-height: 44px;
     }
 
     .toggle {
@@ -470,7 +478,8 @@ export class DoenTask extends LitElement {
       display: flex; gap: 4px; flex-wrap: wrap;
     }
     .weekday-chip {
-      padding: 4px 10px;
+      padding: 10px 12px;
+      min-height: 36px;
       border-radius: 999px;
       font-size: 11px;
       background: rgba(255,255,255,0.06);

@@ -36,7 +36,7 @@ export class PageInvite extends LitElement {
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
+      min-height: 100dvh;
       padding: 20px;
     }
     .card {

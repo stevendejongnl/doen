@@ -17,7 +17,7 @@ export class PageReset extends LitElement {
   static styles = [...sharedStyles, css`
     :host {
       display: flex; flex-direction: column; align-items: center;
-      justify-content: center; width: 100%; flex: 1; min-height: 100vh;
+      justify-content: center; width: 100%; flex: 1; min-height: 100dvh;
       padding: 20px; gap: 16px; box-sizing: border-box;
     }
 

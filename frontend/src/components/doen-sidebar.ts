@@ -67,8 +67,8 @@ export class DoenSidebar extends LitElement {
     }
 
     .add-project-btn {
-      width: 20px;
-      height: 20px;
+      min-width: 44px;
+      min-height: 44px;
       border-radius: 6px;
       display: flex;
       align-items: center;
@@ -87,7 +87,7 @@ export class DoenSidebar extends LitElement {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 9px 12px;
+      padding: 12px 12px;
       border-radius: 9px;
       cursor: pointer;
       font-size: 13px;
@@ -230,7 +230,10 @@ export class DoenSidebar extends LitElement {
     .logout-btn {
       font-size: 13px;
       color: var(--color-text-muted);
-      padding: 5px 7px;
+      padding: 11px 12px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
       border-radius: 7px;
       transition: color var(--transition-fast), background var(--transition-fast);
     }

@@ -153,6 +153,7 @@ export class DoenTaskForm extends LitElement {
       display: flex; align-items: center; gap: 8px;
       font-size: 12px; color: rgba(232,234,240,0.5);
       cursor: pointer; user-select: none;
+      min-height: 44px;
     }
     .recurring-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
     .toggle {
@@ -191,7 +192,9 @@ export class DoenTaskForm extends LitElement {
 
     .weekday-picker { display: flex; gap: 4px; flex-wrap: wrap; }
     .weekday-chip {
-      padding: 4px 10px; border-radius: 999px;
+      padding: 10px 12px;
+      min-height: 36px;
+      border-radius: 999px;
       font-size: 11px;
       background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.14);
