@@ -60,8 +60,14 @@ class UserOut(BaseModel):
     email: str
     name: str
     created_at: datetime
+    preferences: dict = {}
 
     model_config = {"from_attributes": True}
+
+
+class PreferencesUpdate(BaseModel):
+    """Partial merge — only the keys supplied are overwritten."""
+    preferences: dict
 
 
 # ── Group ─────────────────────────────────────────────────────────────────────

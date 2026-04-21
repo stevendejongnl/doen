@@ -103,3 +103,26 @@ async def test_health_endpoint(client):
     resp = await client.get("/health")
     assert resp.status_code == 200
     assert resp.json()["status"] == "ok"
+
+
+@pytest.mark.asyncio
+async def test_update_preferences_merges_patch(seeded_client, seed_data):
+    headers = {"Authorization": f"Bearer {create_access_token(seed_data['henk'].id)}"}
+
+    r1 = await seeded_client.put(
+        "/auth/me/preferences",
+        headers=headers,
+        json={"preferences": {"todo_view": "calendar", "calendar_range": "week"}},
+    )
+    assert r1.status_code == 200
+    assert r1.json()["preferences"]["todo_view"] == "calendar"
+
+    # Second patch should merge, not replace
+    r2 = await seeded_client.put(
+        "/auth/me/preferences",
+        headers=headers,
+        json={"preferences": {"calendar_range": "month"}},
+    )
+    prefs = r2.json()["preferences"]
+    assert prefs["todo_view"] == "calendar"
+    assert prefs["calendar_range"] == "month"

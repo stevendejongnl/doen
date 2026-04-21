@@ -7,7 +7,7 @@ import type { User, Task } from '../services/types';
 import './doen-sidebar';
 import './doen-toast';
 import '../pages/page-login';
-import '../pages/page-today';
+import '../pages/page-todo';
 import '../pages/page-project';
 import '../pages/page-groups';
 import '../pages/page-admin';
@@ -15,8 +15,7 @@ import '../pages/page-account';
 import '../pages/page-invite';
 
 type Route =
-  | { type: 'today' }
-  | { type: 'inbox' }
+  | { type: 'todo' }
   | { type: 'project'; projectId: string }
   | { type: 'groups' }
   | { type: 'admin' }
@@ -25,7 +24,7 @@ type Route =
 @customElement('doen-app')
 export class DoenApp extends LitElement {
   @state() private _user: User | null = null;
-  @state() private _route: Route = { type: 'today' };
+  @state() private _route: Route = { type: 'todo' };
   @state() private _booting = true;
   @state() private _sidebarOpen = false;
   @state() private _inviteToken: string | null = null;
@@ -186,16 +185,16 @@ export class DoenApp extends LitElement {
 
   private _handleSSE(event: string, task: Task) {
     const project = (this.shadowRoot?.querySelector('page-project') as any);
-    const today = (this.shadowRoot?.querySelector('page-today') as any);
+    const todo = (this.shadowRoot?.querySelector('page-todo') as any);
     if (event === 'task_created') {
       project?.addTask?.(task);
-      today?.addTask?.(task);
+      todo?.addTask?.(task);
     } else if (event === 'task_updated' || event === 'task_completed') {
       project?.updateTask(task);
-      today?.updateTask?.(task);
+      todo?.updateTask?.(task);
     } else if (event === 'task_deleted') {
       project?.removeTask((task as any).id);
-      today?.removeTask?.((task as any).id);
+      todo?.removeTask?.((task as any).id);
     }
   }
 
@@ -207,7 +206,7 @@ export class DoenApp extends LitElement {
 
   private _onLoggedIn(e: CustomEvent<User>) {
     this._user = e.detail;
-    this._route = { type: 'today' };
+    this._route = { type: 'todo' };
     this._connectSSE();
   }
 
@@ -218,8 +217,7 @@ export class DoenApp extends LitElement {
   private _onNavigate(e: CustomEvent<{ projectId?: string; page?: string }>) {
     const { projectId, page } = e.detail;
     if (projectId) this._route = { type: 'project', projectId };
-    else if (page === 'today') this._route = { type: 'today' };
-    else if (page === 'inbox') this._route = { type: 'inbox' };
+    else if (page === 'todo') this._route = { type: 'todo' };
     else if (page === 'groups') this._route = { type: 'groups' };
     else if (page === 'admin') this._route = { type: 'admin' };
     else if (page === 'account') this._route = { type: 'account' };
@@ -228,9 +226,8 @@ export class DoenApp extends LitElement {
 
   private _renderMain() {
     switch (this._route.type) {
-      case 'today':
-      case 'inbox':
-        return html`<page-today></page-today>`;
+      case 'todo':
+        return html`<page-todo></page-todo>`;
       case 'project':
         return html`<page-project .projectId=${this._route.projectId}></page-project>`;
       case 'groups':

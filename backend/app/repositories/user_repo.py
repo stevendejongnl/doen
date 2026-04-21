@@ -45,5 +45,13 @@ class UserRepository:
         await self._session.flush()
         return cred
 
+    async def update_preferences(self, user: User, patch: dict) -> User:
+        """Shallow-merge patch into user.preferences and persist."""
+        merged = {**(user.preferences or {}), **patch}
+        user.preferences = merged
+        await self._session.commit()
+        await self._session.refresh(user)
+        return user
+
     async def commit(self) -> None:
         await self._session.commit()

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, Query, status
 
 from app.api.deps import get_current_user, get_task_service, raise_http
@@ -63,6 +65,9 @@ async def list_all_tasks(
     due_today: bool = Query(False),
     overdue: bool = Query(False),
     assignee_id: str | None = Query(None),
+    date_from: datetime | None = Query(None),
+    date_to: datetime | None = Query(None),
+    include_unscheduled: bool = Query(False),
     current_user: User = Depends(get_current_user),
     svc: TaskService = Depends(get_task_service),
 ) -> list:
@@ -71,6 +76,9 @@ async def list_all_tasks(
         due_today=due_today,
         overdue=overdue,
         assignee_id=assignee_id,
+        date_from=date_from,
+        date_to=date_to,
+        include_unscheduled=include_unscheduled,
     )
 
 

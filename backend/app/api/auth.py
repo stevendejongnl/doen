@@ -5,6 +5,7 @@ from app.api.deps import get_auth_service, get_current_user, get_db, raise_http
 from app.api.schemas import (
     ChangePasswordRequest,
     LoginRequest,
+    PreferencesUpdate,
     RefreshRequest,
     RegisterRequest,
     TokenResponse,
@@ -57,6 +58,15 @@ async def refresh(
 @router.get("/me", response_model=UserOut)
 async def me(current_user: User = Depends(get_current_user)) -> User:
     return current_user
+
+
+@router.put("/me/preferences", response_model=UserOut)
+async def update_preferences(
+    body: PreferencesUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    return await UserRepository(db).update_preferences(current_user, body.preferences)
 
 
 @router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT)

@@ -302,11 +302,8 @@ export class DoenSidebar extends LitElement {
 
       <nav>
         <div class="nav-section">
-          <button class="nav-item" @click=${() => this._navigatePage('today')}>
-            <i class="fa-solid fa-sun"></i> Vandaag
-          </button>
-          <button class="nav-item" @click=${() => this._navigatePage('inbox')}>
-            <i class="fa-solid fa-inbox"></i> Inbox
+          <button class="nav-item" @click=${() => this._navigatePage('todo')}>
+            <i class="fa-solid fa-list-check"></i> Te doen
           </button>
           <button class="nav-item" @click=${() => this._navigatePage('groups')}>
             <i class="fa-solid fa-people-group"></i> Groepen

@@ -37,6 +37,9 @@ class TaskService:
         due_today: bool = False,
         overdue: bool = False,
         assignee_id: str | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
+        include_unscheduled: bool = False,
     ) -> list[Task]:
         projects = await self._projects.list_projects(requesting_user_id)
         project_ids = [p.id for p in projects]
@@ -45,6 +48,9 @@ class TaskService:
             due_today=due_today,
             overdue=overdue,
             assignee_id=assignee_id,
+            date_from=date_from,
+            date_to=date_to,
+            include_unscheduled=include_unscheduled,
         )
 
     async def get_task(self, task_id: str) -> Task:

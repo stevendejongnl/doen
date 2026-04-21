@@ -6,10 +6,16 @@ export interface AuthTokens {
   token_type: string;
 }
 
+export interface UserPreferences {
+  todo_view?: 'list' | 'kanban' | 'calendar';
+  calendar_range?: 'day' | 'week' | 'month';
+}
+
 export interface Me {
   id: string;
   email: string;
   name: string;
+  preferences?: UserPreferences;
 }
 
 export async function login(email: string, password: string): Promise<Me> {

@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import JSON, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, new_uuid
@@ -11,6 +11,7 @@ class User(Base, TimestampMixin):
     email: Mapped[str] = mapped_column(String, unique=True, nullable=False, index=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
     ha_user_id: Mapped[str | None] = mapped_column(String, unique=True, nullable=True)
+    preferences: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
 
     credential: Mapped["LocalCredential | None"] = relationship(
         "LocalCredential", back_populates="user", uselist=False

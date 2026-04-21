@@ -57,6 +57,30 @@ async def test_list_all_tasks_overdue_filter(seeded_client, seed_data):
 
 
 @pytest.mark.asyncio
+async def test_date_range_excludes_unscheduled_by_default(seeded_client, seed_data):
+    # Given todo_task has no due_date
+    resp = await seeded_client.get(
+        "/tasks?date_from=2020-01-01T00:00:00Z&date_to=2030-01-01T00:00:00Z",
+        headers=_headers(seed_data["henk"]),
+    )
+    titles = {t["title"] for t in resp.json()}
+    assert "De rommel in de garage opruimen" not in titles  # unscheduled
+    assert "Belasting aangifte (al 3 dagen te laat)" in titles  # has due_date
+
+
+@pytest.mark.asyncio
+async def test_date_range_with_include_unscheduled(seeded_client, seed_data):
+    resp = await seeded_client.get(
+        "/tasks?date_from=2020-01-01T00:00:00Z&date_to=2030-01-01T00:00:00Z"
+        "&include_unscheduled=true",
+        headers=_headers(seed_data["henk"]),
+    )
+    titles = {t["title"] for t in resp.json()}
+    assert "De rommel in de garage opruimen" in titles
+    assert "Belasting aangifte (al 3 dagen te laat)" in titles
+
+
+@pytest.mark.asyncio
 async def test_update_task(seeded_client, seed_data):
     resp = await seeded_client.put(
         f"/tasks/{seed_data['todo_task'].id}",

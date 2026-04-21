@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -34,6 +34,9 @@ class TaskRepository:
         due_today: bool = False,
         overdue: bool = False,
         assignee_id: str | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
+        include_unscheduled: bool = False,
     ) -> list[Task]:
         if not project_ids:
             return []
@@ -47,6 +50,17 @@ class TaskRepository:
             stmt = stmt.where(func.date(Task.due_date) == func.date(now))
         if overdue:
             stmt = stmt.where(Task.due_date < now, Task.status != "done")
+        if date_from is not None or date_to is not None:
+            conds = []
+            if date_from is not None:
+                conds.append(Task.due_date >= date_from)
+            if date_to is not None:
+                conds.append(Task.due_date < date_to)
+            in_range = and_(*conds)
+            if include_unscheduled:
+                stmt = stmt.where(or_(in_range, Task.due_date.is_(None)))
+            else:
+                stmt = stmt.where(in_range)
         if assignee_id:
             stmt = stmt.where(Task.assignee_id == assignee_id)
         result = await self._session.execute(stmt)
