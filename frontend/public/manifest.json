@@ -4,8 +4,8 @@
   "description": "want er is altijd wel iets",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f1117",
-  "theme_color": "#0f1117",
+  "background_color": "#060d1a",
+  "theme_color": "#060d1a",
   "icons": [
     {
       "src": "/icon-192.png",
