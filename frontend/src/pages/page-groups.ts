@@ -30,16 +30,16 @@ export class PageGroups extends LitElement {
     :host { display: block; overflow-y: auto; height: 100%; }
 
     h1 {
-      font-size: 24px; font-weight: 800; color: #e8eaf0;
+      font-size: 24px; font-weight: 800; color: var(--color-text);
       margin-bottom: 4px; letter-spacing: -0.5px;
     }
 
-    .subtitle { font-size: 13px; color: rgba(232,234,240,0.45); margin-bottom: 28px; }
+    .subtitle { font-size: 13px; color: var(--color-text-muted); margin-bottom: 28px; }
 
     .card {
       background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 18px;
+      border-radius: var(--radius-card);
       padding: 20px 22px;
       margin-bottom: 16px;
       backdrop-filter: blur(16px);
@@ -52,13 +52,13 @@ export class PageGroups extends LitElement {
 
     .group-icon {
       width: 38px; height: 38px; border-radius: 10px;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      background: var(--color-accent-gradient);
       display: flex; align-items: center; justify-content: center;
       font-size: 15px; color: white; flex-shrink: 0;
     }
 
-    .group-name { font-size: 16px; font-weight: 700; color: #e8eaf0; }
-    .group-type { font-size: 11px; color: rgba(232,234,240,0.45); text-transform: uppercase; letter-spacing: 0.6px; }
+    .group-name { font-size: 16px; font-weight: 700; color: var(--color-text); }
+    .group-type { font-size: 11px; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.6px; }
 
     .group-title-row {
       display: flex; align-items: center; gap: 8px;
@@ -66,30 +66,30 @@ export class PageGroups extends LitElement {
 
     .rename-btn {
       background: transparent; border: none;
-      color: rgba(232,234,240,0.35);
-      width: 26px; height: 26px; border-radius: 6px;
+      color: var(--color-text-muted);
+      width: 26px; height: 26px; border-radius: var(--radius-xs);
       cursor: pointer; display: flex;
       align-items: center; justify-content: center;
       font-size: 11px;
       opacity: 0;
-      transition: background 120ms, color 120ms, opacity 120ms;
+      transition: background var(--transition-fast), color var(--transition-fast), opacity var(--transition-fast);
     }
     .card-header:hover .rename-btn { opacity: 1; }
-    .rename-btn:hover { background: rgba(255,255,255,0.08); color: #e8eaf0; }
+    .rename-btn:hover { background: rgba(255,255,255,0.08); color: var(--color-text); }
 
     .group-name-input {
-      font-size: 16px; font-weight: 700; color: #e8eaf0;
+      font-size: 16px; font-weight: 700; color: var(--color-text);
       background: rgba(255,255,255,0.07);
       border: 1px solid rgba(99,102,241,0.5);
-      border-radius: 7px; padding: 4px 10px;
+      border-radius: var(--radius-sm); padding: 4px 10px;
       outline: none;
       min-width: 160px;
     }
-    .group-name-input:focus { border-color: #6366f1; background: rgba(255,255,255,0.1); }
+    .group-name-input:focus { border-color: var(--color-accent); background: rgba(255,255,255,0.1); }
 
     .section-label {
       font-size: 11px; font-weight: 600; text-transform: uppercase;
-      letter-spacing: 0.7px; color: rgba(232,234,240,0.4); margin-bottom: 10px;
+      letter-spacing: 0.7px; color: var(--color-text-muted); margin-bottom: 10px;
     }
 
     .invite-row { display: flex; gap: 8px; }
@@ -100,27 +100,27 @@ export class PageGroups extends LitElement {
       padding: 9px 12px;
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 10px;
+      border-radius: var(--radius-btn);
     }
     .member-avatar {
       width: 30px; height: 30px; border-radius: 50%;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      background: var(--color-accent-gradient);
       display: flex; align-items: center; justify-content: center;
       font-size: 12px; font-weight: 700; color: white; flex-shrink: 0;
     }
     .member-info { flex: 1; min-width: 0; }
     .member-name {
-      font-size: 13px; font-weight: 600; color: #e8eaf0;
+      font-size: 13px; font-weight: 600; color: var(--color-text);
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
     .member-email {
-      font-size: 11px; color: rgba(232,234,240,0.45);
+      font-size: 11px; color: var(--color-text-muted);
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
     .member-badge {
       font-size: 10px; font-weight: 600; text-transform: uppercase;
-      letter-spacing: 0.6px; padding: 3px 7px; border-radius: 6px;
-      background: rgba(99,102,241,0.18); color: #a5b4fc;
+      letter-spacing: 0.6px; padding: 3px 7px; border-radius: var(--radius-xs);
+      background: var(--color-accent-subtle); color: #a5b4fc;
       flex-shrink: 0;
     }
     .member-badge.owner { background: rgba(245,158,11,0.18); color: #fcd34d; }
@@ -128,53 +128,53 @@ export class PageGroups extends LitElement {
 
     .remove-btn {
       background: transparent; border: none;
-      color: rgba(232,234,240,0.4);
-      width: 28px; height: 28px; border-radius: 7px;
+      color: var(--color-text-muted);
+      width: 28px; height: 28px; border-radius: var(--radius-sm);
       cursor: pointer; display: flex;
       align-items: center; justify-content: center;
-      transition: background 120ms, color 120ms;
+      transition: background var(--transition-fast), color var(--transition-fast);
       flex-shrink: 0;
     }
     .remove-btn:hover { background: rgba(239,68,68,0.15); color: #f87171; }
     .remove-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
     .member-empty {
-      font-size: 12px; color: rgba(232,234,240,0.3);
+      font-size: 12px; color: var(--color-text-muted);
       padding: 12px 0;
     }
 
     input, select {
-      font: inherit; color: #e8eaf0;
+      font: inherit; color: var(--color-text);
       background: rgba(255,255,255,0.07);
       border: 1px solid rgba(255,255,255,0.14);
-      border-radius: 9px; padding: 9px 14px;
+      border-radius: var(--radius-sm); padding: 9px 14px;
       outline: none; -webkit-appearance: none; appearance: none;
-      transition: border-color 120ms, background 120ms;
+      transition: border-color var(--transition-fast), background var(--transition-fast);
       width: 100%;
     }
 
-    input:focus, select:focus { border-color: #6366f1; background: rgba(255,255,255,0.1); }
-    select option { background: #1e2436; color: #e8eaf0; }
+    input:focus, select:focus { border-color: var(--color-accent); background: rgba(255,255,255,0.1); }
+    select option { background: var(--color-surface-solid); color: var(--color-text); }
     input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
 
     .btn {
       display: inline-flex; align-items: center; gap: 7px;
-      padding: 9px 18px; border-radius: 9px;
+      padding: 9px 18px; border-radius: var(--radius-sm);
       font-size: 13px; font-weight: 600; cursor: pointer;
       transition: background 120ms, opacity 120ms;
       white-space: nowrap; flex-shrink: 0;
     }
 
-    .btn-primary { background: #6366f1; color: white; border: none; }
-    .btn-primary:hover { background: #818cf8; }
+    .btn-primary { background: var(--color-accent); color: white; border: none; }
+    .btn-primary:hover { background: var(--color-accent-hover); }
     .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
 
     .btn-outline {
       background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.14);
-      color: rgba(232,234,240,0.7);
+      color: var(--color-text-muted-strong);
     }
-    .btn-outline:hover { background: rgba(255,255,255,0.1); color: #e8eaf0; }
+    .btn-outline:hover { background: rgba(255,255,255,0.1); color: var(--color-text); }
 
     .create-form {
       display: flex; flex-direction: column; gap: 12px;
@@ -184,13 +184,13 @@ export class PageGroups extends LitElement {
     .form-row { display: flex; gap: 10px; flex-wrap: wrap; }
 
     .empty-state {
-      padding: 48px; text-align: center; color: rgba(232,234,240,0.3);
+      padding: 48px; text-align: center; color: var(--color-text-muted);
     }
 
     .empty-state i { font-size: 32px; opacity: 0.2; display: block; margin-bottom: 12px; }
 
     .sk {
-      height: 100px; border-radius: 18px; margin-bottom: 16px;
+      height: 100px; border-radius: var(--radius-card); margin-bottom: 16px;
       background: rgba(255,255,255,0.05);
       animation: shimmer 1.4s ease-in-out infinite;
       background-image: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%);

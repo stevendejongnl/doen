@@ -34,13 +34,18 @@ export class PageInvite extends LitElement {
   static styles = [...sharedStyles, css`
     :host {
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      padding: 20px;
+      width: 100%;
+      flex: 1;
+      min-height: 100dvh;
+    }
+    @media (max-width: 480px) {
+      .card { padding: 28px 22px; border-radius: 20px; }
     }
     .card {
-      width: 100%;
+      width: calc(100% - 32px);
       max-width: 420px;
       padding: 40px;
       border-radius: 24px;
@@ -73,7 +78,7 @@ export class PageInvite extends LitElement {
       background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.22);
       border-radius: 10px; padding: 11px 14px; font-size: 13px; color: #fca5a5;
     }
-    .muted { font-size: 12px; color: rgba(232,234,240,0.5); margin-top: 6px; }
+    .muted { font-size: 12px; color: var(--color-text-muted); margin-top: 6px; }
   `];
 
   async connectedCallback() {

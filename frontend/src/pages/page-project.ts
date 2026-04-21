@@ -122,7 +122,7 @@ export class PageProject extends LitElement {
       outline: none;
       width: 100%;
     }
-    .edit-row input[type="text"]:focus { border-color: #6366f1; }
+    .edit-row input[type="text"]:focus { border-color: var(--color-accent); }
 
     .edit-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
@@ -141,8 +141,8 @@ export class PageProject extends LitElement {
       font-size: 12px; font-weight: 600; cursor: pointer;
       border: none;
     }
-    .btn-primary { background: #6366f1; color: white; }
-    .btn-primary:hover { background: #818cf8; }
+    .btn-primary { background: var(--color-accent); color: white; }
+    .btn-primary:hover { background: var(--color-accent-hover); }
     .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
     .btn-ghost {
       background: transparent; color: var(--color-text-muted);
@@ -166,7 +166,7 @@ export class PageProject extends LitElement {
     .household-panel {
       margin-bottom: 18px;
       padding: 14px 16px;
-      border-radius: 14px;
+      border-radius: var(--radius-card);
       background: rgba(255,255,255,0.05);
       border: 1px solid rgba(255,255,255,0.08);
       display: flex;

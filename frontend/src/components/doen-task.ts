@@ -14,6 +14,10 @@ import type {
 import { api, ApiError } from '../services/api';
 import { toast } from './doen-toast';
 import { sharedStyles } from '../styles/shared-styles';
+import './ui/doen-confirm-dialog';
+import './ui/doen-prompt-dialog';
+import type { DoenConfirmDialog } from './ui/doen-confirm-dialog';
+import type { DoenPromptDialog } from './ui/doen-prompt-dialog';
 
 const DAY_LABELS = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
 
@@ -92,7 +96,7 @@ export class DoenTask extends LitElement {
       border: 1px solid rgba(255,255,255,0.1);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
-      transition: background 220ms ease-out, opacity 220ms ease-out, transform 220ms ease-out;
+      transition: background var(--transition-smooth), opacity var(--transition-smooth), transform var(--transition-smooth);
     }
 
     .task-row:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.16); }
@@ -106,15 +110,20 @@ export class DoenTask extends LitElement {
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
-      transition: border-color 120ms, background 120ms, transform 120ms;
+      transition: border-color var(--transition-fast), background var(--transition-fast), transform var(--transition-fast);
       padding: 0;
-      color: #10b981;
+      color: var(--color-success);
+      position: relative;
+    }
+    .check-btn::after {
+      content: ''; position: absolute;
+      top: -11px; right: -11px; bottom: -11px; left: -11px;
     }
 
-    .check-btn:hover { border-color: #10b981; transform: scale(1.1); }
-    .check-btn.completing { border-color: #10b981; background: rgba(16,185,129,0.15); }
-    .check-btn.done { border-color: #10b981; background: rgba(16,185,129,0.2); }
-    .check-btn i { font-size: 10px; opacity: 0; transition: opacity 120ms; }
+    .check-btn:hover { border-color: var(--color-success); transform: scale(1.1); }
+    .check-btn.completing { border-color: var(--color-success); background: rgba(16,185,129,0.15); }
+    .check-btn.done { border-color: var(--color-success); background: rgba(16,185,129,0.2); }
+    .check-btn i { font-size: 10px; opacity: 0; transition: opacity var(--transition-fast); }
     .check-btn.completing i, .check-btn.done i { opacity: 1; }
 
     .priority-dot {
@@ -123,22 +132,22 @@ export class DoenTask extends LitElement {
       flex-shrink: 0;
     }
     .p-none { background: rgba(255,255,255,0.22); }
-    .p-low  { background: #10b981; }
-    .p-medium { background: #f59e0b; }
-    .p-high { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
+    .p-low  { background: var(--color-priority-low); }
+    .p-medium { background: var(--color-priority-medium); }
+    .p-high { background: var(--color-priority-high); box-shadow: 0 0 6px var(--color-priority-high); }
 
     .task-title {
-      flex: 1; font-size: 13px; color: #e8eaf0;
+      flex: 1; font-size: 13px; color: var(--color-text);
       line-height: 1.4; min-width: 0;
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
     .task-title.done-text { text-decoration: line-through; opacity: 0.38; }
 
     .due-date {
-      font-size: 11px; color: rgba(232,234,240,0.45);
+      font-size: 11px; color: var(--color-text-muted);
       white-space: nowrap; display: flex; align-items: center; gap: 4px; flex-shrink: 0;
     }
-    .due-date.overdue { color: #ef4444; }
+    .due-date.overdue { color: var(--color-danger); }
     .due-date i { font-size: 9px; }
 
     .task-meta {
@@ -146,7 +155,7 @@ export class DoenTask extends LitElement {
     }
 
     .meta-icon {
-      font-size: 10px; color: rgba(232,234,240,0.35);
+      font-size: 10px; color: var(--color-text-muted);
     }
 
     .assignee-chip {
@@ -177,16 +186,18 @@ export class DoenTask extends LitElement {
     .task-row { cursor: pointer; }
 
     .edit-btn {
-      width: 28px; height: 28px;
-      border-radius: 7px;
+      width: 44px; height: 44px;
+      border-radius: var(--radius-sm);
       display: flex; align-items: center; justify-content: center;
-      font-size: 12px; color: rgba(232,234,240,0.4);
-      transition: background 120ms, color 120ms;
+      font-size: 12px; color: var(--color-text-muted);
+      transition: background var(--transition-fast), color var(--transition-fast);
       flex-shrink: 0;
-      opacity: 0;
     }
-    .task-row:hover .edit-btn { opacity: 1; }
-    .edit-btn:hover { background: rgba(255,255,255,0.1); color: #e8eaf0; }
+    @media (hover: hover) {
+      .edit-btn { opacity: 0; }
+      .task-row:hover .edit-btn { opacity: 1; }
+    }
+    .edit-btn:hover { background: rgba(255,255,255,0.1); color: var(--color-text); }
 
     /* Modal */
     .modal-backdrop {
@@ -206,11 +217,11 @@ export class DoenTask extends LitElement {
     .modal-panel {
       width: 100%;
       max-width: 560px;
-      max-height: calc(100vh - 40px);
+      max-height: calc(100dvh - 40px);
       background: rgba(30, 36, 54, 0.92);
       border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 16px;
-      box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-lg);
       display: flex; flex-direction: column;
       overflow: hidden;
       animation: panel-in 200ms cubic-bezier(0.2, 0.8, 0.3, 1);
@@ -227,20 +238,20 @@ export class DoenTask extends LitElement {
     }
     .modal-title {
       flex: 1; min-width: 0;
-      font-size: 15px; font-weight: 600; color: #e8eaf0;
+      font-size: 15px; font-weight: 600; color: var(--color-text);
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
     .modal-close {
-      width: 30px; height: 30px;
-      border-radius: 8px;
+      width: 44px; height: 44px;
+      border-radius: var(--radius-sm);
       background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.08);
-      color: rgba(232,234,240,0.7);
+      color: var(--color-text-muted-strong);
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      transition: background 120ms, color 120ms;
+      transition: background var(--transition-fast), color var(--transition-fast);
     }
-    .modal-close:hover { background: rgba(255,255,255,0.12); color: #e8eaf0; }
+    .modal-close:hover { background: rgba(255,255,255,0.12); color: var(--color-text); }
     .modal-body {
       padding: 16px;
       overflow-y: auto;
@@ -263,18 +274,18 @@ export class DoenTask extends LitElement {
       font-size: 13px;
     }
     .detail-label {
-      color: rgba(232,234,240,0.55);
+      color: var(--color-text-muted-strong);
       font-size: 11px; text-transform: uppercase;
       letter-spacing: 0.04em; padding-top: 2px;
     }
     .detail-value {
-      color: #e8eaf0;
+      color: var(--color-text);
       display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
       min-width: 0;
     }
-    .detail-value.muted { color: rgba(232,234,240,0.4); font-style: italic; }
+    .detail-value.muted { color: var(--color-text-muted); font-style: italic; }
     .detail-notes {
-      color: #e8eaf0;
+      color: var(--color-text);
       font-size: 13px; line-height: 1.55;
       white-space: pre-wrap; word-break: break-word;
     }
@@ -286,20 +297,20 @@ export class DoenTask extends LitElement {
       border: 1px solid rgba(255,255,255,0.1);
       font-size: 12px;
     }
-    .detail-chip.overdue { color: #ef4444; border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.08); }
-    .detail-chip.done { color: #10b981; border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.08); }
-    .detail-chip.toggle { cursor: pointer; transition: background 120ms, border-color 120ms; }
+    .detail-chip.overdue { color: var(--color-danger); border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.08); }
+    .detail-chip.done { color: var(--color-success); border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.08); }
+    .detail-chip.toggle { cursor: pointer; transition: background var(--transition-fast), border-color var(--transition-fast); }
     .detail-chip.toggle:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.22); }
     .detail-chip.toggle.done:hover { background: rgba(16,185,129,0.16); border-color: rgba(16,185,129,0.45); }
 
     .btn-edit-modal {
-      background: #6366f1; color: white; border: none;
-      border-radius: 8px; padding: 8px 16px;
+      background: var(--color-accent); color: white; border: none;
+      border-radius: var(--radius-sm); padding: 8px 16px;
       font-size: 12px; font-weight: 600; cursor: pointer;
-      transition: background 120ms;
+      transition: background var(--transition-fast);
       display: flex; align-items: center; gap: 6px;
     }
-    .btn-edit-modal:hover { background: #818cf8; }
+    .btn-edit-modal:hover { background: var(--color-accent-hover); }
 
     /* Edit form (inside modal) */
     .edit-form {
@@ -313,7 +324,7 @@ export class DoenTask extends LitElement {
       .modal-panel {
         width: 100%;
         max-width: 100%;
-        max-height: 92vh;
+        max-height: 92dvh;
         border-radius: 18px 18px 0 0;
         border-bottom: none;
         animation: panel-up 220ms cubic-bezier(0.2, 0.8, 0.3, 1);
@@ -349,24 +360,24 @@ export class DoenTask extends LitElement {
 
     input, select, textarea {
       font: inherit;
-      color: #e8eaf0;
+      color: var(--color-text);
       background: rgba(255,255,255,0.08);
       border: 1px solid rgba(255,255,255,0.14);
-      border-radius: 8px;
+      border-radius: var(--radius-sm);
       padding: 8px 12px;
       outline: none;
       -webkit-appearance: none;
       appearance: none;
-      transition: border-color 120ms, background 120ms;
+      transition: border-color var(--transition-fast), background var(--transition-fast);
     }
 
     input:focus, select:focus, textarea:focus {
-      border-color: #6366f1;
+      border-color: var(--color-accent);
       background: rgba(255,255,255,0.12);
     }
 
     input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
-    select option { background: #1e2436; color: #e8eaf0; }
+    select option { background: var(--color-surface-solid); color: var(--color-text); }
 
     textarea {
       width: 100%;
@@ -382,32 +393,32 @@ export class DoenTask extends LitElement {
     .edit-actions { display: flex; gap: 8px; justify-content: flex-end; }
 
     .btn-save {
-      background: #6366f1; color: white; border: none;
-      border-radius: 8px; padding: 7px 16px;
+      background: var(--color-accent); color: white; border: none;
+      border-radius: var(--radius-sm); padding: 7px 16px;
       font-size: 12px; font-weight: 600; cursor: pointer;
-      transition: background 120ms;
+      transition: background var(--transition-fast);
       display: flex; align-items: center; gap: 6px;
     }
-    .btn-save:hover { background: #818cf8; }
+    .btn-save:hover { background: var(--color-accent-hover); }
     .btn-save:disabled { opacity: 0.45; cursor: not-allowed; }
 
     .btn-cancel-edit {
       background: rgba(255,255,255,0.07);
       border: 1px solid rgba(255,255,255,0.12);
-      color: rgba(232,234,240,0.6);
-      border-radius: 8px; padding: 7px 12px;
+      color: var(--color-text-muted-strong);
+      border-radius: var(--radius-sm); padding: 7px 12px;
       font-size: 12px; cursor: pointer;
-      transition: background 120ms;
+      transition: background var(--transition-fast);
     }
     .btn-cancel-edit:hover { background: rgba(255,255,255,0.12); }
 
     .btn-delete {
       background: rgba(239,68,68,0.1);
       border: 1px solid rgba(239,68,68,0.2);
-      color: #ef4444;
-      border-radius: 8px; padding: 7px 12px;
+      color: var(--color-danger);
+      border-radius: var(--radius-sm); padding: 7px 12px;
       font-size: 12px; cursor: pointer;
-      transition: background 120ms;
+      transition: background var(--transition-fast);
       margin-right: auto;
       display: flex; align-items: center; gap: 6px;
     }
@@ -420,8 +431,9 @@ export class DoenTask extends LitElement {
 
     .toggle-label {
       display: flex; align-items: center; gap: 8px;
-      font-size: 12px; color: rgba(232,234,240,0.6);
+      font-size: 12px; color: var(--color-text-muted-strong);
       cursor: pointer; user-select: none;
+      min-height: 44px;
     }
 
     .toggle {
@@ -435,7 +447,7 @@ export class DoenTask extends LitElement {
       transition: background 150ms;
       cursor: pointer;
     }
-    .toggle input:checked ~ .toggle-track { background: #6366f1; }
+    .toggle input:checked ~ .toggle-track { background: var(--color-accent); }
     .toggle-thumb {
       position: absolute; top: 3px; left: 3px;
       width: 12px; height: 12px;
@@ -458,7 +470,7 @@ export class DoenTask extends LitElement {
     }
     .rb-row {
       display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-      font-size: 12px; color: rgba(232,234,240,0.7);
+      font-size: 12px; color: var(--color-text-muted-strong);
     }
     .rb-row select, .rb-row input {
       font-size: 12px; padding: 5px 8px;
@@ -470,25 +482,26 @@ export class DoenTask extends LitElement {
       display: flex; gap: 4px; flex-wrap: wrap;
     }
     .weekday-chip {
-      padding: 4px 10px;
-      border-radius: 999px;
+      padding: 10px 12px;
+      min-height: 36px;
+      border-radius: var(--radius-pill);
       font-size: 11px;
       background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.14);
-      color: rgba(232,234,240,0.6);
+      color: var(--color-text-muted-strong);
       cursor: pointer;
       user-select: none;
-      transition: background 120ms, border-color 120ms, color 120ms;
+      transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
     }
     .weekday-chip.active {
       background: rgba(99,102,241,0.28);
-      border-color: #6366f1;
-      color: #e8eaf0;
+      border-color: var(--color-accent);
+      color: var(--color-text);
     }
     .weekday-chip:hover { border-color: rgba(255,255,255,0.28); }
 
     .rb-preview {
-      font-size: 11px; color: rgba(232,234,240,0.55);
+      font-size: 11px; color: var(--color-text-muted-strong);
       font-style: italic;
     }
   `];
@@ -553,21 +566,40 @@ export class DoenTask extends LitElement {
     }
   }
 
-  private async _offerTask() {
+  private _offerTask() {
     if (!this._project?.group_id) {
       toast.error('Alleen taken in een huishouden kunnen worden aangeboden.');
       return;
     }
-    const reward = window.prompt('Wat krijg je terug? (optioneel, bijvoorbeeld pizza of bier)');
-    try {
-      await api.post<TaskOffer>(`/tasks/${this.task.id}/offer`, {
-        reward_note: reward?.trim() || null,
-      });
-      toast.success('Aanbod geplaatst');
-      this.dispatchEvent(new CustomEvent('offer-created', { bubbles: true, composed: true }));
-    } catch (e) {
-      if (e instanceof ApiError) toast.error(`Aanbieden mislukt: ${e.message}`);
-    }
+    const dialog = document.createElement('doen-prompt-dialog') as DoenPromptDialog;
+    dialog.message = 'Wat krijg je terug?';
+    dialog.placeholder = 'Bijv. pizza of bier (optioneel)';
+    dialog.submitLabel = 'Aanbieden';
+    dialog.addEventListener('doen-submit', async (e: Event) => {
+      const reward = (e as CustomEvent<string>).detail;
+      dialog.remove();
+      try {
+        await api.post<TaskOffer>(`/tasks/${this.task.id}/offer`, {
+          reward_note: reward || null,
+        });
+        toast.success('Aanbod geplaatst');
+        this.dispatchEvent(new CustomEvent('offer-created', { bubbles: true, composed: true }));
+      } catch (err) {
+        if (err instanceof ApiError) toast.error(`Aanbieden mislukt: ${err.message}`);
+      }
+    }, { once: true });
+    dialog.addEventListener('doen-cancel', async () => {
+      // No reward provided — offer with null reward
+      dialog.remove();
+      try {
+        await api.post<TaskOffer>(`/tasks/${this.task.id}/offer`, { reward_note: null });
+        toast.success('Aanbod geplaatst');
+        this.dispatchEvent(new CustomEvent('offer-created', { bubbles: true, composed: true }));
+      } catch (err) {
+        if (err instanceof ApiError) toast.error(`Aanbieden mislukt: ${err.message}`);
+      }
+    }, { once: true });
+    document.body.appendChild(dialog);
   }
 
   private async _loadCategories(project: Project) {
@@ -584,22 +616,31 @@ export class DoenTask extends LitElement {
     }
   }
 
-  private async _onEditCategoryChange(value: string) {
+  private _onEditCategoryChange(value: string) {
     if (value === '__new__') {
-      const name = window.prompt('Naam van de categorie?');
-      if (!name || !name.trim()) { this._editCategoryId = this.task.category_id ?? ''; return; }
-      try {
-        const created = await api.post<Category>('/categories', {
-          name: name.trim(),
-          color: '#a855f7',
-          project_id: this.task.project_id,
-        });
-        this._categories = [...this._categories, created];
-        this._editCategoryId = created.id;
-      } catch (e) {
-        if (e instanceof ApiError) toast.error(`Aanmaken mislukt: ${e.message}`);
+      const dialog = document.createElement('doen-prompt-dialog') as DoenPromptDialog;
+      dialog.message = 'Naam van de categorie?';
+      dialog.addEventListener('doen-submit', async (e: Event) => {
+        const name = (e as CustomEvent<string>).detail;
+        dialog.remove();
+        try {
+          const created = await api.post<Category>('/categories', {
+            name: name,
+            color: '#a855f7',
+            project_id: this.task.project_id,
+          });
+          this._categories = [...this._categories, created];
+          this._editCategoryId = created.id;
+        } catch (err) {
+          if (err instanceof ApiError) toast.error(`Aanmaken mislukt: ${err.message}`);
+          this._editCategoryId = this.task.category_id ?? '';
+        }
+      }, { once: true });
+      dialog.addEventListener('doen-cancel', () => {
+        dialog.remove();
         this._editCategoryId = this.task.category_id ?? '';
-      }
+      }, { once: true });
+      document.body.appendChild(dialog);
     } else {
       this._editCategoryId = value;
     }
@@ -716,16 +757,24 @@ export class DoenTask extends LitElement {
     }
   }
 
-  private async _delete() {
-    if (!confirm(`"${this.task.title}" verwijderen?`)) return;
-    try {
-      await api.delete(`/tasks/${this.task.id}`);
-      this._done = true;
-      this._closeModal();
-      this.dispatchEvent(new CustomEvent('task-deleted', { detail: this.task.id, bubbles: true, composed: true }));
-    } catch (e) {
-      if (e instanceof ApiError) toast.error(`Verwijderen mislukt: ${e.message}`);
-    }
+  private _delete() {
+    const dialog = document.createElement('doen-confirm-dialog') as DoenConfirmDialog;
+    dialog.message = `"${this.task.title}" verwijderen?`;
+    dialog.confirmLabel = 'Verwijderen';
+    dialog.confirmVariant = 'danger';
+    dialog.addEventListener('doen-confirm', async () => {
+      dialog.remove();
+      try {
+        await api.delete(`/tasks/${this.task.id}`);
+        this._done = true;
+        this._closeModal();
+        this.dispatchEvent(new CustomEvent('task-deleted', { detail: this.task.id, bubbles: true, composed: true }));
+      } catch (e) {
+        if (e instanceof ApiError) toast.error(`Verwijderen mislukt: ${e.message}`);
+      }
+    }, { once: true });
+    dialog.addEventListener('doen-cancel', () => dialog.remove(), { once: true });
+    document.body.appendChild(dialog);
   }
 
   private _formatDue(due?: string | null): { label: string; overdue: boolean } | null {

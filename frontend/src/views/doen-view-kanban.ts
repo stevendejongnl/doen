@@ -46,7 +46,7 @@ export class DoenViewKanban extends LitElement {
       flex-direction: column;
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 12px;
+      border-radius: var(--radius-card);
       overflow: hidden;
       transition: border-color 140ms, background 140ms;
     }
@@ -86,7 +86,7 @@ export class DoenViewKanban extends LitElement {
     }
 
     .empty {
-      color: rgba(232,234,240,0.3);
+      color: var(--color-text-muted);
       font-size: 12px;
       padding: 20px 10px;
       text-align: center;
@@ -101,7 +101,7 @@ export class DoenViewKanban extends LitElement {
       background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.1);
       border-left: 3px solid var(--accent, rgba(255,255,255,0.2));
-      border-radius: 10px;
+      border-radius: var(--radius-btn);
       cursor: grab;
       transition: background 120ms, transform 140ms, opacity 140ms;
     }

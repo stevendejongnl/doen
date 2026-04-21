@@ -45,7 +45,7 @@ export class DoenApp extends LitElement {
   static styles = [...sharedStyles, css`
     :host {
       display: flex;
-      height: 100vh;
+      height: 100dvh;
       overflow: hidden;
       position: relative;
       background:
@@ -112,8 +112,8 @@ export class DoenApp extends LitElement {
     }
 
     .menu-btn {
-      width: 36px;
-      height: 36px;
+      width: 44px;
+      height: 44px;
       border-radius: 10px;
       background: var(--glass-bg-raised);
       border: 1px solid var(--glass-border);

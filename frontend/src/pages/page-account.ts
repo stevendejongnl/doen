@@ -47,45 +47,45 @@ export class PageAccount extends LitElement {
     :host { display: block; overflow-y: auto; height: 100%; }
 
     h1 {
-      font-size: 24px; font-weight: 800; color: #e8eaf0;
+      font-size: 24px; font-weight: 800; color: var(--color-text);
       margin-bottom: 4px; letter-spacing: -0.5px;
     }
-    .subtitle { font-size: 13px; color: rgba(232,234,240,0.45); margin-bottom: 28px; }
+    .subtitle { font-size: 13px; color: var(--color-text-muted); margin-bottom: 28px; }
 
     .card {
       background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 18px;
+      border-radius: var(--radius-card);
       padding: 22px;
       margin-bottom: 16px;
       backdrop-filter: blur(16px);
     }
 
-    h2 { font-size: 14px; font-weight: 700; color: #e8eaf0; margin: 0 0 4px 0; letter-spacing: -0.2px; }
-    .help { font-size: 12px; color: rgba(232,234,240,0.5); margin: 0 0 14px 0; }
+    h2 { font-size: 14px; font-weight: 700; color: var(--color-text); margin: 0 0 4px 0; letter-spacing: -0.2px; }
+    .help { font-size: 12px; color: var(--color-text-muted); margin: 0 0 14px 0; }
 
-    label { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: rgba(232,234,240,0.55); margin-bottom: 10px; }
+    label { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--color-text-muted-strong); margin-bottom: 10px; }
 
     input {
-      font: inherit; color: #e8eaf0;
+      font: inherit; color: var(--color-text);
       background: rgba(255,255,255,0.07);
       border: 1px solid rgba(255,255,255,0.14);
-      border-radius: 9px; padding: 9px 14px;
+      border-radius: var(--radius-sm); padding: 9px 14px;
       outline: none; width: 100%;
-      transition: border-color 120ms, background 120ms;
+      transition: border-color var(--transition-fast), background var(--transition-fast);
     }
-    input:focus { border-color: #6366f1; background: rgba(255,255,255,0.1); }
+    input:focus { border-color: var(--color-accent); background: rgba(255,255,255,0.1); }
     input[disabled] { opacity: 0.6; }
 
     .btn {
       display: inline-flex; align-items: center; gap: 7px;
-      padding: 9px 16px; border-radius: 9px;
+      padding: 9px 16px; border-radius: var(--radius-sm);
       font-size: 13px; font-weight: 600; cursor: pointer;
       transition: background 120ms, opacity 120ms;
       white-space: nowrap; border: none;
     }
-    .btn-primary { background: #6366f1; color: white; }
-    .btn-primary:hover { background: #818cf8; }
+    .btn-primary { background: var(--color-accent); color: white; }
+    .btn-primary:hover { background: var(--color-accent-hover); }
     .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
     .btn-danger {
       background: rgba(239,68,68,0.12); color: #fca5a5;
@@ -104,11 +104,11 @@ export class PageAccount extends LitElement {
 
     .key-row {
       display: flex; align-items: center; gap: 12px; padding: 12px 14px;
-      border: 1px solid rgba(255,255,255,0.08); border-radius: 11px;
+      border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-btn);
       background: rgba(255,255,255,0.03);
     }
-    .key-name { font-weight: 600; font-size: 13px; color: #e8eaf0; }
-    .key-meta { font-size: 11px; color: rgba(232,234,240,0.45); margin-top: 2px; }
+    .key-name { font-weight: 600; font-size: 13px; color: var(--color-text); }
+    .key-meta { font-size: 11px; color: var(--color-text-muted); margin-top: 2px; }
     .key-main { flex: 1; min-width: 0; }
     code { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 12px; color: #a5b4fc; }
 
@@ -129,7 +129,7 @@ export class PageAccount extends LitElement {
       word-break: break-all; font-size: 12px; color: #e0e7ff;
     }
 
-    .empty { font-size: 12px; color: rgba(232,234,240,0.4); padding: 8px 0; }
+    .empty { font-size: 12px; color: var(--color-text-muted); padding: 8px 0; }
     .error { color: #fca5a5; font-size: 12px; margin-top: 6px; }
   `];
 

@@ -21,68 +21,68 @@ export class PageAdmin extends LitElement {
   static styles = [...sharedStyles, css`
     :host { display: block; overflow-y: auto; height: 100%; }
 
-    h1 { font-size: 24px; font-weight: 800; color: #e8eaf0; margin-bottom: 4px; letter-spacing: -0.5px; }
-    .subtitle { font-size: 13px; color: rgba(232,234,240,0.45); margin-bottom: 28px; }
+    h1 { font-size: 24px; font-weight: 800; color: var(--color-text); margin-bottom: 4px; letter-spacing: -0.5px; }
+    .subtitle { font-size: 13px; color: var(--color-text-muted); margin-bottom: 28px; }
 
     .card {
       background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 18px; padding: 20px 22px; margin-bottom: 20px;
+      border-radius: var(--radius-card); padding: 20px 22px; margin-bottom: 20px;
       backdrop-filter: blur(16px);
     }
 
     .section-label {
       font-size: 11px; font-weight: 600; text-transform: uppercase;
-      letter-spacing: 0.7px; color: rgba(232,234,240,0.4); margin-bottom: 14px;
+      letter-spacing: 0.7px; color: var(--color-text-muted); margin-bottom: 14px;
     }
 
     .form-grid { display: flex; flex-direction: column; gap: 10px; }
     .form-row { display: flex; gap: 10px; flex-wrap: wrap; }
 
     input[type="text"], input[type="email"], input[type="password"], input[type="search"] {
-      font: inherit; color: #e8eaf0;
+      font: inherit; color: var(--color-text);
       background: rgba(255,255,255,0.07);
       border: 1px solid rgba(255,255,255,0.14);
-      border-radius: 9px; padding: 10px 14px;
-      outline: none; transition: border-color 120ms, background 120ms;
+      border-radius: var(--radius-sm); padding: 10px 14px;
+      outline: none; transition: border-color var(--transition-fast), background var(--transition-fast);
       flex: 1; min-width: 140px;
     }
-    input:focus { border-color: #6366f1; background: rgba(255,255,255,0.1); }
+    input:focus { border-color: var(--color-accent); background: rgba(255,255,255,0.1); }
 
     .toolbar {
       display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap;
     }
 
     .search-wrap { position: relative; flex: 1; min-width: 180px; }
-    .search-wrap i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: rgba(232,234,240,0.35); font-size: 12px; pointer-events: none; }
+    .search-wrap i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); font-size: 12px; pointer-events: none; }
     .search-wrap input { padding-left: 32px; width: 100%; }
 
     .filter-tabs { display: flex; gap: 4px; }
     .tab {
-      padding: 6px 13px; border-radius: 8px; font-size: 12px; font-weight: 600;
+      padding: 6px 13px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600;
       cursor: pointer; border: 1px solid transparent;
-      color: rgba(232,234,240,0.5); background: none; transition: all 120ms;
+      color: var(--color-text-muted); background: none; transition: all var(--transition-fast);
     }
     .tab.active {
-      background: rgba(99,102,241,0.18); border-color: rgba(99,102,241,0.35);
+      background: var(--color-accent-subtle); border-color: rgba(99,102,241,0.35);
       color: #a5b4fc;
     }
     .tab:hover:not(.active) { background: rgba(255,255,255,0.06); color: #e8eaf0; }
 
     .btn-primary {
       display: inline-flex; align-items: center; gap: 7px;
-      background: #6366f1; color: white; border: none;
-      border-radius: 9px; padding: 10px 18px;
+      background: var(--color-accent); color: white; border: none;
+      border-radius: var(--radius-sm); padding: 10px 18px;
       font-size: 13px; font-weight: 600; cursor: pointer;
-      transition: background 120ms; white-space: nowrap; flex-shrink: 0;
+      transition: background var(--transition-fast); white-space: nowrap; flex-shrink: 0;
     }
-    .btn-primary:hover { background: #818cf8; }
+    .btn-primary:hover { background: var(--color-accent-hover); }
     .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
 
     .btn-icon {
-      padding: 6px 9px; border-radius: 7px; border: none; cursor: pointer;
+      padding: 6px 9px; border-radius: var(--radius-sm); border: none; cursor: pointer;
       font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;
-      transition: background 120ms, color 120ms; white-space: nowrap;
+      transition: background var(--transition-fast), color var(--transition-fast); white-space: nowrap;
     }
     .btn-danger { background: rgba(239,68,68,0.1); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
     .btn-danger:hover { background: rgba(239,68,68,0.2); }
@@ -97,17 +97,17 @@ export class PageAdmin extends LitElement {
     th {
       text-align: left; font-size: 11px; font-weight: 600;
       text-transform: uppercase; letter-spacing: 0.6px;
-      color: rgba(232,234,240,0.4); padding: 0 12px 10px;
+      color: var(--color-text-muted); padding: 0 12px 10px;
     }
     td {
-      padding: 10px 12px; font-size: 13px; color: #e8eaf0;
+      padding: 10px 12px; font-size: 13px; color: var(--color-text);
       border-top: 1px solid rgba(255,255,255,0.06); vertical-align: middle;
     }
     tr:hover td { background: rgba(255,255,255,0.03); }
 
     .avatar-sm {
       width: 26px; height: 26px; border-radius: 50%;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      background: var(--color-accent-gradient);
       display: inline-flex; align-items: center; justify-content: center;
       font-size: 10px; font-weight: 700; color: white; vertical-align: middle;
       margin-right: 8px; flex-shrink: 0;
@@ -115,19 +115,19 @@ export class PageAdmin extends LitElement {
     .avatar-disabled { background: rgba(255,255,255,0.1); }
 
     .badge {
-      display: inline-block; padding: 2px 7px; border-radius: 5px;
+      display: inline-block; padding: 2px 7px; border-radius: var(--radius-xs);
       font-size: 10px; font-weight: 700; letter-spacing: 0.3px; margin-left: 5px;
       vertical-align: middle;
     }
-    .badge-admin { background: rgba(99,102,241,0.2); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3); }
+    .badge-admin { background: var(--color-accent-subtle); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3); }
     .badge-you { background: rgba(34,197,94,0.15); color: #86efac; border: 1px solid rgba(34,197,94,0.25); }
     .badge-disabled { background: rgba(239,68,68,0.12); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
 
     .actions { display: flex; gap: 5px; flex-wrap: wrap; }
 
-    .muted { color: rgba(232,234,240,0.4); font-size: 12px; }
+    .muted { color: var(--color-text-muted); font-size: 12px; }
 
-    .sk { height: 44px; border-radius: 9px; margin-bottom: 6px;
+    .sk { height: 44px; border-radius: var(--radius-sm); margin-bottom: 6px;
       background: rgba(255,255,255,0.05);
       animation: shimmer 1.4s ease-in-out infinite;
       background-image: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%);
@@ -135,7 +135,7 @@ export class PageAdmin extends LitElement {
     }
     @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 
-    .empty-state { text-align: center; padding: 32px; color: rgba(232,234,240,0.35); font-size: 13px; }
+    .empty-state { text-align: center; padding: 32px; color: var(--color-text-muted); font-size: 13px; }
 
     @media (max-width: 768px) { h1 { font-size: 20px; } }
     @media (max-width: 600px) {

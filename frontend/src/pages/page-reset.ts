@@ -17,12 +17,15 @@ export class PageReset extends LitElement {
   static styles = [...sharedStyles, css`
     :host {
       display: flex; flex-direction: column; align-items: center;
-      justify-content: center; width: 100%; flex: 1; min-height: 100vh;
-      padding: 20px; gap: 16px; box-sizing: border-box;
+      justify-content: center; width: 100%; flex: 1; min-height: 100dvh;
+    }
+
+    @media (max-width: 480px) {
+      .card { padding: 28px 22px; border-radius: 20px; }
     }
 
     .card {
-      width: 100%; max-width: 380px; padding: 40px; border-radius: 24px;
+      width: calc(100% - 32px); max-width: 380px; padding: 40px; border-radius: 24px;
       background: var(--glass-bg); border: 1px solid var(--glass-border);
       backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
       box-shadow: 0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
@@ -31,7 +34,7 @@ export class PageReset extends LitElement {
     .brand { text-align: center; margin-bottom: 36px; }
     .brand-icon {
       width: 56px; height: 56px; border-radius: 16px;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      background: var(--color-accent-gradient);
       display: flex; align-items: center; justify-content: center;
       margin: 0 auto 14px; font-size: 22px; color: white;
       box-shadow: 0 8px 24px rgba(99,102,241,0.4);
@@ -84,9 +87,9 @@ export class PageReset extends LitElement {
     .link-btn {
       background: none; border: none; padding: 0;
       color: rgba(99,102,241,0.8); font-size: 12px; cursor: pointer;
-      text-align: center; margin-top: 4px; transition: color 120ms;
+      text-align: center; margin-top: 4px; transition: color var(--transition-fast);
     }
-    .link-btn:hover { color: #818cf8; }
+    .link-btn:hover { color: var(--color-accent-hover); }
   `];
 
   private async _submit(e: Event) {

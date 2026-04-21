@@ -67,9 +67,9 @@ export class DoenSidebar extends LitElement {
     }
 
     .add-project-btn {
-      width: 20px;
-      height: 20px;
-      border-radius: 6px;
+      min-width: 44px;
+      min-height: 44px;
+      border-radius: var(--radius-xs);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -87,11 +87,11 @@ export class DoenSidebar extends LitElement {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 9px 12px;
-      border-radius: 9px;
+      padding: 12px 12px;
+      border-radius: var(--radius-sm);
       cursor: pointer;
       font-size: 13px;
-      color: rgba(232,234,240,0.65);
+      color: var(--color-text-muted-strong);
       transition: background var(--transition-fast), color var(--transition-fast);
       width: 100%;
       text-align: left;
@@ -103,7 +103,7 @@ export class DoenSidebar extends LitElement {
     }
 
     .nav-item.active {
-      background: rgba(99,102,241,0.18);
+      background: var(--color-accent-subtle);
       color: #a5b4fc;
     }
 
@@ -136,19 +136,19 @@ export class DoenSidebar extends LitElement {
       flex: 1;
       padding: 5px 10px;
       font-size: 12px;
-      border-radius: 7px;
+      border-radius: var(--radius-sm);
       font: inherit;
-      color: #e8eaf0;
+      color: var(--color-text);
       background: rgba(255,255,255,0.09);
       border: 1px solid rgba(255,255,255,0.16);
       outline: none;
     }
 
-    .new-project-form input:focus { border-color: #6366f1; }
+    .new-project-form input:focus { border-color: var(--color-accent); }
 
     .new-project-form button {
       padding: 5px 10px;
-      border-radius: 7px;
+      border-radius: var(--radius-sm);
       font-size: 11px;
       font-weight: 600;
     }
@@ -207,7 +207,7 @@ export class DoenSidebar extends LitElement {
       width: 30px;
       height: 30px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      background: var(--color-accent-gradient);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -230,8 +230,11 @@ export class DoenSidebar extends LitElement {
     .logout-btn {
       font-size: 13px;
       color: var(--color-text-muted);
-      padding: 5px 7px;
-      border-radius: 7px;
+      padding: 11px 12px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      border-radius: var(--radius-sm);
       transition: color var(--transition-fast), background var(--transition-fast);
     }
 
