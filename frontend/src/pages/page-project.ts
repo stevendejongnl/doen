@@ -3,6 +3,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import type {
   GroupMember,
   HouseholdBalance,
+  HouseholdNotification,
   PointTransaction,
   Project,
   Task,
@@ -30,6 +31,7 @@ export class PageProject extends LitElement {
   @state() private _offers: TaskOffer[] = [];
   @state() private _transactions: PointTransaction[] = [];
   @state() private _members: GroupMember[] = [];
+  @state() private _notifications: HouseholdNotification[] = [];
   @state() private _me: Me | null = null;
   @state() private _transferTo = '';
   @state() private _transferAmount = 1;
@@ -255,6 +257,60 @@ export class PageProject extends LitElement {
       border: 1px solid rgba(255,255,255,0.12);
     }
 
+    .inbox-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .inbox-item {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .inbox-item.actionable {
+      border-color: rgba(99,102,241,0.24);
+      background: rgba(99,102,241,0.08);
+    }
+
+    .inbox-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-text);
+    }
+
+    .inbox-meta {
+      font-size: 11px;
+      color: var(--color-text-muted);
+    }
+
+    .inbox-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .inbox-actions button {
+      border: none;
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      color: white;
+      background: rgba(99,102,241,0.9);
+    }
+
+    .inbox-actions button.secondary {
+      background: rgba(255,255,255,0.1);
+      color: var(--color-text);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
     .transaction-list {
       display: flex;
       flex-direction: column;
@@ -378,18 +434,21 @@ export class PageProject extends LitElement {
       this._offers = [];
       this._transactions = [];
       this._members = [];
+      this._notifications = [];
       return;
     }
-    const [balances, offers, transactions, members] = await Promise.all([
+    const [balances, offers, transactions, members, notifications] = await Promise.all([
       api.get<HouseholdBalance[]>(`/households/${project.group_id}/balances`),
       api.get<TaskOffer[]>(`/households/${project.group_id}/offers`),
       api.get<PointTransaction[]>(`/households/${project.group_id}/transactions`),
       api.get<GroupMember[]>(`/groups/${project.group_id}/members`),
+      api.get<HouseholdNotification[]>(`/households/${project.group_id}/notifications`),
     ]);
     this._balances = balances;
     this._offers = offers;
     this._transactions = transactions;
     this._members = members;
+    this._notifications = notifications;
   }
 
   private async _refreshHousehold() {
@@ -447,6 +506,16 @@ export class PageProject extends LitElement {
       toast.success('Aanbod ingetrokken');
     } catch (e) {
       if (e instanceof ApiError) toast.error(`Intrekken mislukt: ${e.message}`);
+    }
+  }
+
+  private async _handleInboxAction(offer: TaskOffer, approved: boolean) {
+    try {
+      const reopen = approved ? true : confirm('Na afwijzen opnieuw openzetten?');
+      await api.post(`/offers/${offer.id}/decision`, { approved, reopen });
+      await this._load();
+    } catch (e) {
+      if (e instanceof ApiError) toast.error(`Inbox actie mislukt: ${e.message}`);
     }
   }
 
@@ -571,6 +640,26 @@ export class PageProject extends LitElement {
 
       ${this._project?.group_id ? html`
         <div class="household-panel">
+          <div class="panel-title">Inbox</div>
+          <div class="inbox-list">
+            ${this._notifications.length === 0 ? html`
+              <div class="inbox-meta">Geen meldingen.</div>
+            ` : this._notifications.map(item => {
+              const offer = this._offers.find(o => o.id === item.offer_id);
+              return html`
+                <div class="inbox-item ${item.actionable ? 'actionable' : ''}">
+                  <div class="inbox-title">${item.title}</div>
+                  <div class="inbox-meta">${item.message}</div>
+                  ${item.actionable && offer ? html`
+                    <div class="inbox-actions">
+                      <button @click=${() => this._handleInboxAction(offer, true)}>Goedkeuren</button>
+                      <button class="secondary" @click=${() => this._handleInboxAction(offer, false)}>Afwijzen</button>
+                    </div>
+                  ` : ''}
+                </div>
+              `;
+            })}
+          </div>
           <div class="panel-title">Huishoudsaldo</div>
           <div class="balance-row">
             ${this._balances.map(b => html`

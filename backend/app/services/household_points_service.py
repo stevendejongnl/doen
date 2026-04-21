@@ -93,6 +93,71 @@ class HouseholdPointsService:
             for tx, name in transactions
         ]
 
+    async def list_notifications(self, group_id: str, requesting_user_id: str) -> list[dict]:
+        await self._assert_group_access(group_id, requesting_user_id)
+        offers = await self._points.list_offers_for_group(group_id)
+        out: list[dict] = []
+        for offer in offers:
+            task_title = offer.task.title if offer.task else "Taak"
+            owner_name = offer.owner.name if offer.owner else "Iemand"
+            accepted_name = offer.accepted_by.name if offer.accepted_by else "iemand"
+            if offer.status == "requested":
+                if offer.owner_id == requesting_user_id:
+                    out.append(
+                        {
+                            "id": f"{offer.id}:requested-owner",
+                            "kind": "offer_requested",
+                            "title": f"{accepted_name} wil '{task_title}' overnemen",
+                            "message": offer.reward_note or "Beoordeel dit aanbod.",
+                            "offer_id": offer.id,
+                            "task_id": offer.task_id,
+                            "actionable": True,
+                            "created_at": offer.accepted_at or offer.updated_at,
+                        }
+                    )
+                elif offer.accepted_by_id == requesting_user_id:
+                    out.append(
+                        {
+                            "id": f"{offer.id}:requested-accepted",
+                            "kind": "offer_pending",
+                            "title": f"Wacht op goedkeuring voor '{task_title}'",
+                            "message": f"Aangeboden door {owner_name}.",
+                            "offer_id": offer.id,
+                            "task_id": offer.task_id,
+                            "actionable": False,
+                            "created_at": offer.accepted_at or offer.updated_at,
+                        }
+                    )
+            elif offer.status == "approved":
+                if offer.accepted_by_id == requesting_user_id:
+                    out.append(
+                    {
+                        "id": f"{offer.id}:approved-accepted",
+                        "kind": "offer_approved",
+                        "title": f"'{task_title}' is goedgekeurd",
+                        "message": "Je mag de taak nu doen.",
+                            "offer_id": offer.id,
+                            "task_id": offer.task_id,
+                            "actionable": False,
+                            "created_at": offer.decided_at or offer.updated_at,
+                        }
+                    )
+                elif offer.owner_id == requesting_user_id:
+                    out.append(
+                        {
+                            "id": f"{offer.id}:approved-owner",
+                            "kind": "offer_assigned",
+                            "title": f"'{task_title}' is overgedragen aan {accepted_name}",
+                            "message": offer.reward_note or "Geen extra beloning toegevoegd.",
+                            "offer_id": offer.id,
+                            "task_id": offer.task_id,
+                            "actionable": False,
+                            "created_at": offer.decided_at or offer.updated_at,
+                        }
+                    )
+        out.sort(key=lambda item: item["created_at"], reverse=True)
+        return out
+
     async def create_offer(
         self,
         task_id: str,

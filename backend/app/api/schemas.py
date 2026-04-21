@@ -350,3 +350,14 @@ class PointTransferCreate(BaseModel):
     to_user_id: str
     amount: int
     note: str | None = None
+
+
+class HouseholdNotificationOut(BaseModel):
+    id: str
+    kind: str
+    title: str
+    message: str
+    offer_id: str | None = None
+    task_id: str | None = None
+    actionable: bool = False
+    created_at: datetime

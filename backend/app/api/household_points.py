@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, status
 from app.api.deps import get_current_user, get_household_points_service, raise_http
 from app.api.schemas import (
     HouseholdBalanceOut,
+    HouseholdNotificationOut,
     PointTransactionOut,
     PointTransferCreate,
     TaskOfferCreate,
@@ -80,6 +81,18 @@ async def list_transactions(
     except DoenError as exc:
         raise_http(exc)
     return [_transaction_payload(tx) for tx in txs]
+
+
+@router.get("/households/{group_id}/notifications", response_model=list[HouseholdNotificationOut])
+async def list_notifications(
+    group_id: str,
+    current_user: User = Depends(get_current_user),
+    svc: HouseholdPointsService = Depends(get_household_points_service),
+) -> list[dict]:
+    try:
+        return await svc.list_notifications(group_id, current_user.id)
+    except DoenError as exc:
+        raise_http(exc)
 
 
 @router.post(

@@ -128,3 +128,14 @@ export interface PointTransaction {
   note?: string | null;
   created_at: string;
 }
+
+export interface HouseholdNotification {
+  id: string;
+  kind: string;
+  title: string;
+  message: string;
+  offer_id?: string | null;
+  task_id?: string | null;
+  actionable: boolean;
+  created_at: string;
+}
