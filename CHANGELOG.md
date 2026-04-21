@@ -1,3 +1,10 @@
+# [1.13.0](https://github.com/stevendejongnl/doen/compare/v1.12.0...v1.13.0) (2026-04-21)
+
+
+### Features
+
+* **task:** toggle complete/reopen and open modal directly from calendar pills ([5e1cd9d](https://github.com/stevendejongnl/doen/commit/5e1cd9de073412a33378d05b79d1650cd63167fe))
+
 # [1.12.0](https://github.com/stevendejongnl/doen/compare/v1.11.1...v1.12.0) (2026-04-21)
 
 
