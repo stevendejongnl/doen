@@ -61,6 +61,9 @@ class UserOut(BaseModel):
     name: str
     created_at: datetime
     preferences: dict = {}
+    is_admin: bool = False
+    disabled_at: datetime | None = None
+    last_login_at: datetime | None = None
 
     model_config = {"from_attributes": True}
 
@@ -68,6 +71,34 @@ class UserOut(BaseModel):
 class PreferencesUpdate(BaseModel):
     """Partial merge — only the keys supplied are overwritten."""
     preferences: dict
+
+
+class AuthStatusOut(BaseModel):
+    """Public bootstrap info for the login page — lets the UI decide
+    whether to show login or a 'create first admin' register form."""
+    has_users: bool
+
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetConfirm(BaseModel):
+    token: str
+    new_password: str
+
+
+class UserOwnedCounts(BaseModel):
+    projects: int
+    categories: int
+    owned_groups: int
+    assigned_tasks: int
+    group_memberships: int
+    sent_invitations: int
+
+
+class AdminSetAdminRequest(BaseModel):
+    is_admin: bool
 
 
 # ── Group ─────────────────────────────────────────────────────────────────────

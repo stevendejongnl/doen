@@ -335,9 +335,11 @@ export class DoenSidebar extends LitElement {
           <button class="nav-item" @click=${() => this._navigatePage('groups')}>
             <i class="fa-solid fa-people-group"></i> Groepen
           </button>
-          <button class="nav-item" @click=${() => this._navigatePage('admin')}>
-            <i class="fa-solid fa-users-gear"></i> Gebruikers
-          </button>
+          ${this.user?.is_admin ? html`
+            <button class="nav-item" @click=${() => this._navigatePage('admin')}>
+              <i class="fa-solid fa-users-gear"></i> Gebruikers
+            </button>
+          ` : ''}
           <button class="nav-item" @click=${() => this._navigatePage('account')}>
             <i class="fa-solid fa-user-gear"></i> Account
           </button>

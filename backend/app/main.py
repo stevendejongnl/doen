@@ -31,6 +31,7 @@ telegram = TelegramNotificationService(
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     from app.db.migrate import (
         migrate_add_task_category_id,
+        migrate_add_user_admin_fields,
         migrate_add_user_preferences,
         migrate_recurring_rules_to_structured,
     )
@@ -39,6 +40,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         await conn.run_sync(Base.metadata.create_all)
     await migrate_recurring_rules_to_structured(engine)
     await migrate_add_user_preferences(engine)
+    await migrate_add_user_admin_fields(engine)
     await migrate_add_task_category_id(engine)
 
     Session = async_sessionmaker(engine, expire_on_commit=False)
@@ -126,9 +128,13 @@ async def health() -> JSONResponse | dict:
 # Falls back gracefully if static/ doesn't exist (dev without a build).
 _static = Path(__file__).parent.parent / "static"
 if _static.exists():
-    # SPA deep-links (like email invite URLs) need to serve index.html — StaticFiles would 404.
+    # SPA deep-links need to serve index.html — StaticFiles would 404.
     @app.get("/invite/{token}", include_in_schema=False)
     async def _spa_invite_fallback(token: str) -> FileResponse:
+        return FileResponse(str(_static / "index.html"))
+
+    @app.get("/reset/{token}", include_in_schema=False)
+    async def _spa_reset_fallback(token: str) -> FileResponse:
         return FileResponse(str(_static / "index.html"))
 
     app.mount("/", StaticFiles(directory=str(_static), html=True), name="static")

@@ -2,6 +2,9 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  is_admin: boolean;
+  disabled_at?: string | null;
+  last_login_at?: string | null;
 }
 
 export interface Group {

@@ -13,6 +13,7 @@ import '../pages/page-groups';
 import '../pages/page-admin';
 import '../pages/page-account';
 import '../pages/page-invite';
+import '../pages/page-reset';
 
 type Route =
   | { type: 'todo' }
@@ -28,10 +29,16 @@ export class DoenApp extends LitElement {
   @state() private _booting = true;
   @state() private _sidebarOpen = false;
   @state() private _inviteToken: string | null = null;
+  @state() private _resetToken: string | null = null;
   private _sse: EventSource | null = null;
 
   private _readInviteTokenFromUrl(): string | null {
     const match = window.location.pathname.match(/^\/invite\/([^/]+)/);
+    return match ? decodeURIComponent(match[1]) : null;
+  }
+
+  private _readResetTokenFromUrl(): string | null {
+    const match = window.location.pathname.match(/^\/reset\/([^/]+)/);
     return match ? decodeURIComponent(match[1]) : null;
   }
 
@@ -160,6 +167,7 @@ export class DoenApp extends LitElement {
     super.connectedCallback();
     window.addEventListener('doen:logout', this._onLogout);
     this._inviteToken = this._readInviteTokenFromUrl();
+    this._resetToken = this._readResetTokenFromUrl();
 
     if (isLoggedIn()) {
       try {
@@ -233,7 +241,7 @@ export class DoenApp extends LitElement {
       case 'groups':
         return html`<page-groups></page-groups>`;
       case 'admin':
-        return html`<page-admin></page-admin>`;
+        return html`<page-admin .me=${this._user}></page-admin>`;
       case 'account':
         return html`<page-account></page-account>`;
     }
@@ -245,6 +253,15 @@ export class DoenApp extends LitElement {
     if (this._inviteToken) {
       return html`
         <page-invite .token=${this._inviteToken}></page-invite>
+        <doen-toast></doen-toast>
+      `;
+    }
+
+    if (this._resetToken) {
+      return html`
+        <page-reset .token=${this._resetToken}
+          @navigate=${(e: CustomEvent) => { if (e.detail.page === 'login') this._resetToken = null; }}>
+        </page-reset>
         <doen-toast></doen-toast>
       `;
     }

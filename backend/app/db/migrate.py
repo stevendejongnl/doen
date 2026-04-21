@@ -99,6 +99,41 @@ async def migrate_add_task_category_id(engine: AsyncEngine) -> None:
         )
 
 
+async def migrate_add_user_admin_fields(engine: AsyncEngine) -> None:
+    """Add `users.is_admin`, `users.disabled_at`, `users.last_login_at` if missing.
+
+    Also backfills: if there are no admins yet and at least one user exists,
+    the oldest user is auto-promoted so the instance is never orphaned.
+    """
+    async with engine.begin() as conn:
+        columns = await conn.run_sync(
+            lambda sync_conn: inspect(sync_conn).get_columns("users")
+        )
+        names = {c["name"] for c in columns}
+        dialect = conn.dialect.name
+        dt = "TIMESTAMP WITH TIME ZONE" if dialect == "postgresql" else "DATETIME"
+
+        if "is_admin" not in names:
+            await conn.execute(
+                text("ALTER TABLE users ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT 0")
+            )
+        if "disabled_at" not in names:
+            await conn.execute(text(f"ALTER TABLE users ADD COLUMN disabled_at {dt}"))
+        if "last_login_at" not in names:
+            await conn.execute(text(f"ALTER TABLE users ADD COLUMN last_login_at {dt}"))
+
+        # Backfill: promote the oldest user if no admin exists yet.
+        row = (await conn.execute(text("SELECT COUNT(*) FROM users WHERE is_admin"))).first()
+        admin_count = row[0] if row else 0
+        if admin_count == 0:
+            await conn.execute(
+                text(
+                    "UPDATE users SET is_admin = 1 "
+                    "WHERE id = (SELECT id FROM users ORDER BY created_at ASC LIMIT 1)"
+                )
+            )
+
+
 async def migrate_add_user_preferences(engine: AsyncEngine) -> None:
     """Add the `users.preferences` JSON column if it doesn't exist yet.
 

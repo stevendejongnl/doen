@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import { api, ApiError } from '../services/api';
+import { api, ApiError, logout } from '../services/api';
 import { getMe } from '../services/auth';
 import { toast } from '../components/doen-toast';
 import { sharedStyles } from '../styles/shared-styles';
@@ -41,6 +41,7 @@ export class PageAccount extends LitElement {
   @state() private _creatingKey = false;
 
   @state() private _justCreated: ApiKeyCreateResponse | null = null;
+  @state() private _deletingAccount = false;
 
   static styles = [...sharedStyles, css`
     :host { display: block; overflow-y: auto; height: 100%; }
@@ -228,6 +229,19 @@ export class PageAccount extends LitElement {
     );
   }
 
+  private async _deleteAccount() {
+    if (!confirm('Je account permanent verwijderen? Als je nog projecten of groepen bezit, wordt je account uitgeschakeld in plaats van verwijderd.')) return;
+    if (!confirm('Weet je het zeker? Dit is onomkeerbaar.')) return;
+    this._deletingAccount = true;
+    try {
+      await api.delete('/auth/me');
+      logout();
+    } catch (e) {
+      if (e instanceof ApiError) toast.error(`Mislukt: ${e.message}`);
+      this._deletingAccount = false;
+    }
+  }
+
   private _fmtDate(iso: string | null): string {
     if (!iso) return '—';
     return new Date(iso).toLocaleString('nl-NL', { dateStyle: 'short', timeStyle: 'short' });
@@ -338,6 +352,20 @@ export class PageAccount extends LitElement {
             </div>
           `)}
         </div>
+      </div>
+
+      <div class="card" style="border-color: rgba(239,68,68,0.2);">
+        <h2 style="color:#fca5a5;">Account verwijderen</h2>
+        <p class="help">
+          Verwijdert je account permanent. Als je nog projecten, groepen of categorieën bezit,
+          wordt je account uitgeschakeld in plaats van verwijderd — een beheerder kan daarna
+          de data overdragen en het account definitief verwijderen.
+        </p>
+        <button class="btn btn-danger" ?disabled=${this._deletingAccount}
+          @click=${this._deleteAccount}>
+          <i class="fa-solid fa-${this._deletingAccount ? 'spinner fa-spin' : 'user-xmark'}"></i>
+          Account verwijderen
+        </button>
       </div>
     `;
   }

@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
 from app.exceptions import (
     AccessDeniedError,
+    AdminRequiredError,
     AlreadyExistsError,
     ConflictError,
     DoenError,
@@ -14,12 +15,14 @@ from app.exceptions import (
     InvitationEmailMismatchError,
     InvitationExpiredError,
     NotFoundError,
+    UserDisabledError,
 )
 from app.models.user import User
 from app.repositories.api_key_repo import ApiKeyRepository
 from app.repositories.category_repo import CategoryRepository
 from app.repositories.group_invitation_repo import GroupInvitationRepository
 from app.repositories.group_repo import GroupRepository
+from app.repositories.password_reset_repo import PasswordResetRepository
 from app.repositories.project_repo import ProjectRepository
 from app.repositories.task_repo import TaskRepository
 from app.repositories.user_repo import UserRepository
@@ -39,6 +42,7 @@ bearer_optional = HTTPBearer(auto_error=False)
 _STATUS_MAP: dict[type, int] = {
     NotFoundError: 404,
     AccessDeniedError: 403,
+    AdminRequiredError: 403,
     AlreadyExistsError: 400,
     ConflictError: 409,
     InvalidCredentialsError: 401,
@@ -46,6 +50,7 @@ _STATUS_MAP: dict[type, int] = {
     InvitationExpiredError: 410,
     InvitationAlreadyAcceptedError: 410,
     InvitationEmailMismatchError: 403,
+    UserDisabledError: 403,
 }
 
 
@@ -58,6 +63,12 @@ def raise_http(exc: DoenError) -> None:
 
 def get_user_repo(db: AsyncSession = Depends(get_db)) -> UserRepository:
     return UserRepository(db)
+
+
+def get_password_reset_repo(
+    db: AsyncSession = Depends(get_db),
+) -> PasswordResetRepository:
+    return PasswordResetRepository(db)
 
 
 def get_group_repo(db: AsyncSession = Depends(get_db)) -> GroupRepository:
@@ -90,8 +101,9 @@ def get_category_repo(db: AsyncSession = Depends(get_db)) -> CategoryRepository:
 
 def get_auth_service(
     user_repo: UserRepository = Depends(get_user_repo),
+    reset_repo: PasswordResetRepository = Depends(get_password_reset_repo),
 ) -> AuthService:
-    return AuthService(user_repo)
+    return AuthService(user_repo, reset_repo)
 
 
 def get_api_key_service(
@@ -159,6 +171,15 @@ async def get_current_user(
     except DoenError as exc:
         raise_http(exc)
         raise  # unreachable, satisfies type checker
+
+
+async def get_current_admin(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """Require the caller to be an active admin."""
+    if not current_user.is_admin:
+        raise_http(AdminRequiredError())
+    return current_user
 
 
 async def get_current_user_optional(

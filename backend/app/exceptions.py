@@ -47,3 +47,13 @@ class InvitationAlreadyAcceptedError(DoenError):
 class InvitationEmailMismatchError(DoenError):
     def __init__(self) -> None:
         super().__init__("Invitation email does not match the authenticated user")
+
+
+class UserDisabledError(DoenError):
+    def __init__(self) -> None:
+        super().__init__("This account has been disabled")
+
+
+class AdminRequiredError(AccessDeniedError):
+    def __init__(self) -> None:
+        super().__init__("Admin privileges required")

@@ -21,16 +21,16 @@ async def test_register_returns_201_with_tokens(client):
 
 
 @pytest.mark.asyncio
-async def test_register_duplicate_email_returns_400(client):
-    # Given a user already registered
+async def test_register_after_first_user_returns_409(client):
+    # Given a user already registered (bootstrap done)
     body = {"email": "dup@example.com", "name": "Dup", "password": "pass1234"}
     await client.post("/auth/register", json=body)
 
-    # When registering again with same email
+    # When trying to bootstrap again via public register
     resp = await client.post("/auth/register", json=body)
 
-    # Then 400 is returned
-    assert resp.status_code == 400
+    # Then 409 is returned (bootstrap endpoint locked)
+    assert resp.status_code == 409
 
 
 @pytest.mark.asyncio
