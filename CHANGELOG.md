@@ -1,3 +1,10 @@
+# [1.17.0](https://github.com/stevendejongnl/doen/compare/v1.16.2...v1.17.0) (2026-04-21)
+
+
+### Features
+
+* **users:** add user management with disable, delete, admin roles, password reset, and first-user bootstrap ([ada23ed](https://github.com/stevendejongnl/doen/commit/ada23ed7afe6437466fac0165e72c0e8af246ebb))
+
 ## [1.16.2](https://github.com/stevendejongnl/doen/compare/v1.16.1...v1.16.2) (2026-04-21)
 
 
