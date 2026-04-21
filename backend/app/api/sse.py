@@ -4,7 +4,7 @@ from collections.abc import AsyncGenerator
 from fastapi import APIRouter, Depends
 from sse_starlette.sse import EventSourceResponse
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user_sse
 from app.models.user import User
 from app.services.sse_bus import sse_bus
 
@@ -12,7 +12,7 @@ router = APIRouter(tags=["sse"])
 
 
 @router.get("/events")
-async def events(current_user: User = Depends(get_current_user)) -> EventSourceResponse:
+async def events(current_user: User = Depends(get_current_user_sse)) -> EventSourceResponse:
     async def generator() -> AsyncGenerator[str]:
         q = sse_bus.subscribe(current_user.id)
         try:

@@ -34,13 +34,18 @@ export class PageInvite extends LitElement {
   static styles = [...sharedStyles, css`
     :host {
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      width: 100%;
+      flex: 1;
       min-height: 100dvh;
-      padding: 20px;
+    }
+    @media (max-width: 480px) {
+      .card { padding: 28px 22px; border-radius: 20px; }
     }
     .card {
-      width: 100%;
+      width: calc(100% - 32px);
       max-width: 420px;
       padding: 40px;
       border-radius: 24px;

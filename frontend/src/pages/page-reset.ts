@@ -18,11 +18,14 @@ export class PageReset extends LitElement {
     :host {
       display: flex; flex-direction: column; align-items: center;
       justify-content: center; width: 100%; flex: 1; min-height: 100dvh;
-      padding: 20px; gap: 16px; box-sizing: border-box;
+    }
+
+    @media (max-width: 480px) {
+      .card { padding: 28px 22px; border-radius: 20px; }
     }
 
     .card {
-      width: 100%; max-width: 380px; padding: 40px; border-radius: 24px;
+      width: calc(100% - 32px); max-width: 380px; padding: 40px; border-radius: 24px;
       background: var(--glass-bg); border: 1px solid var(--glass-border);
       backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
       box-shadow: 0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);

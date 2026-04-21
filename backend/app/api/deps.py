@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Query
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -187,6 +187,24 @@ async def get_current_user(
         if token.startswith(API_KEY_PREFIX):
             return await api_key_service.authenticate(token)
         return await auth_service.get_user_by_token(token)
+    except DoenError as exc:
+        raise_http(exc)
+        raise  # unreachable, satisfies type checker
+
+
+async def get_current_user_sse(
+    token: str | None = Query(default=None),
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_optional),
+    auth_service: AuthService = Depends(get_auth_service),
+    api_key_service: ApiKeyService = Depends(get_api_key_service),
+) -> User:
+    raw = token or (credentials.credentials if credentials else None)
+    if not raw:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        if raw.startswith(API_KEY_PREFIX):
+            return await api_key_service.authenticate(raw)
+        return await auth_service.get_user_by_token(raw)
     except DoenError as exc:
         raise_http(exc)
         raise  # unreachable, satisfies type checker
