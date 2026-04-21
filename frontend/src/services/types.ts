@@ -36,6 +36,9 @@ export interface Task {
   title: string;
   notes?: string;
   project_id: string;
+  category_id?: string | null;
+  category_name?: string | null;
+  category_color?: string | null;
   assignee_id?: string;
   assignee_name?: string;
   status: TaskStatus;
@@ -45,6 +48,17 @@ export interface Task {
   created_at: string;
   updated_at: string;
   recurring_rule?: RecurringRule;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  description?: string | null;
+  color: string;
+  group_id?: string | null;
+  project_id?: string | null;
+  owner_id: string;
+  created_at: string;
 }
 
 export type RecurrenceUnit = 'day' | 'week' | 'month';

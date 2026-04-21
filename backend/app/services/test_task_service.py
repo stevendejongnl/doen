@@ -1,6 +1,7 @@
 import pytest
 
 from app.exceptions import AccessDeniedError, ConflictError, NotFoundError
+from app.repositories.category_repo import CategoryRepository
 from app.repositories.group_repo import GroupRepository
 from app.repositories.project_repo import ProjectRepository
 from app.repositories.task_repo import TaskRepository
@@ -13,6 +14,7 @@ def _service(db_session) -> TaskService:
         task_repo=TaskRepository(db_session),
         project_service=ProjectService(ProjectRepository(db_session), GroupRepository(db_session)),
         group_repo=GroupRepository(db_session),
+        category_repo=CategoryRepository(db_session),
     )
 
 

@@ -1,4 +1,5 @@
 from app.models.api_key import ApiKey
+from app.models.category import Category
 from app.models.group import Group, GroupMember
 from app.models.group_invitation import GroupInvitation
 from app.models.project import Project
@@ -13,6 +14,7 @@ __all__ = [
     "GroupMember",
     "GroupInvitation",
     "Project",
+    "Category",
     "Task",
     "Label",
     "TaskLabel",

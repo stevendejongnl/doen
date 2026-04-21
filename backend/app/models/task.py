@@ -13,6 +13,9 @@ class Task(Base, TimestampMixin):
     title: Mapped[str] = mapped_column(String, nullable=False)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     project_id: Mapped[str] = mapped_column(String, ForeignKey("projects.id"), nullable=False)
+    category_id: Mapped[str | None] = mapped_column(
+        String, ForeignKey("categories.id"), nullable=True
+    )
     assignee_id: Mapped[str | None] = mapped_column(
         String, ForeignKey("users.id"), nullable=True
     )
@@ -32,6 +35,7 @@ class Task(Base, TimestampMixin):
     )
 
     project: Mapped["Project"] = relationship("Project", back_populates="tasks")
+    category: Mapped["Category | None"] = relationship("Category", back_populates="tasks")
     assignee: Mapped["User | None"] = relationship(
         "User", back_populates="assigned_tasks", foreign_keys=[assignee_id]
     )
@@ -45,6 +49,14 @@ class Task(Base, TimestampMixin):
     @property
     def assignee_name(self) -> str | None:
         return self.assignee.name if self.assignee else None
+
+    @property
+    def category_name(self) -> str | None:
+        return self.category.name if self.category else None
+
+    @property
+    def category_color(self) -> str | None:
+        return self.category.color if self.category else None
 
 
 class Label(Base):
@@ -107,5 +119,6 @@ class RecurringRule(Base):
     template_task: Mapped["Task"] = relationship("Task", back_populates="recurring_rule")
 
 
+from app.models.category import Category  # noqa: E402
 from app.models.project import Project  # noqa: E402
 from app.models.user import User  # noqa: E402

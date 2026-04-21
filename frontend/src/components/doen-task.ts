@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import type {
+  Category,
   GroupMember,
   Project,
   Task,
@@ -71,7 +72,9 @@ export class DoenTask extends LitElement {
   @state() private _editTimeOfDay = '08:00';
   @state() private _editParity: RecurrenceParity = 'any';
   @state() private _editAssignee = '';
+  @state() private _editCategoryId = '';
   @state() private _members: GroupMember[] = [];
+  @state() private _categories: Category[] = [];
   @state() private _saving = false;
 
   static styles = [...sharedStyles, css`
@@ -154,6 +157,19 @@ export class DoenTask extends LitElement {
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
       text-transform: uppercase;
+    }
+
+    .category-chip {
+      display: inline-flex; align-items: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 10px; font-weight: 600;
+      background: rgba(168,85,247,0.15);
+      border: 1px solid rgba(168,85,247,0.35);
+      color: #c4a1ff;
+      flex-shrink: 0;
+      max-width: 120px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
 
     .task-row { cursor: pointer; }
@@ -507,6 +523,7 @@ export class DoenTask extends LitElement {
     this._editDue = this.task.due_date ? this.task.due_date.substring(0, 10) : '';
     this._editNotes = this.task.notes ?? '';
     this._editAssignee = this.task.assignee_id ?? '';
+    this._editCategoryId = this.task.category_id ?? '';
 
     const rr = this.task.recurring_rule;
     this._editRecurring = !!rr;
@@ -526,8 +543,44 @@ export class DoenTask extends LitElement {
       } else {
         this._members = [];
       }
+      await this._loadCategories(project);
     } catch {
       this._members = [];
+    }
+  }
+
+  private async _loadCategories(project: Project) {
+    try {
+      const all = await api.get<Category[]>('/categories');
+      const gid = project.group_id ?? null;
+      this._categories = all.filter(c =>
+        (c.project_id === project.id) ||
+        (c.project_id == null && c.group_id === gid) ||
+        (c.project_id == null && c.group_id == null)
+      );
+    } catch {
+      this._categories = [];
+    }
+  }
+
+  private async _onEditCategoryChange(value: string) {
+    if (value === '__new__') {
+      const name = window.prompt('Naam van de categorie?');
+      if (!name || !name.trim()) { this._editCategoryId = this.task.category_id ?? ''; return; }
+      try {
+        const created = await api.post<Category>('/categories', {
+          name: name.trim(),
+          color: '#a855f7',
+          project_id: this.task.project_id,
+        });
+        this._categories = [...this._categories, created];
+        this._editCategoryId = created.id;
+      } catch (e) {
+        if (e instanceof ApiError) toast.error(`Aanmaken mislukt: ${e.message}`);
+        this._editCategoryId = this.task.category_id ?? '';
+      }
+    } else {
+      this._editCategoryId = value;
     }
   }
 
@@ -608,6 +661,7 @@ export class DoenTask extends LitElement {
         priority: this._editPriority,
         due_date: this._editDue ? new Date(this._editDue).toISOString() : null,
         assignee_id: this._members.length > 1 ? (this._editAssignee || null) : undefined,
+        category_id: this._editCategoryId || null,
       });
 
       const hadRule = !!this.task.recurring_rule;
@@ -691,6 +745,14 @@ export class DoenTask extends LitElement {
               `)}
             </select>
           ` : ''}
+          <select .value=${this._editCategoryId}
+            @change=${(e: Event) => this._onEditCategoryChange((e.target as HTMLSelectElement).value)}>
+            <option value="">Geen categorie</option>
+            ${this._categories.map(c => html`
+              <option value=${c.id}>${c.name}</option>
+            `)}
+            <option value="__new__">+ Nieuwe categorie…</option>
+          </select>
         </div>
         <textarea
           placeholder="Notities, context, links..."
@@ -831,6 +893,17 @@ export class DoenTask extends LitElement {
             </span>
           </div>
         ` : ''}
+        ${this.task.category_name ? html`
+          <div class="detail-row">
+            <span class="detail-label">Categorie</span>
+            <span class="detail-value">
+              <span class="category-chip"
+                style=${`background:${this.task.category_color ?? '#a855f7'}22;border-color:${this.task.category_color ?? '#a855f7'};color:${this.task.category_color ?? '#c4a1ff'}`}>
+                ${this.task.category_name}
+              </span>
+            </span>
+          </div>
+        ` : ''}
         ${this.task.recurring_rule ? html`
           <div class="detail-row">
             <span class="detail-label">Herhaling</span>
@@ -917,6 +990,13 @@ export class DoenTask extends LitElement {
         <span class="task-title ${isDone ? 'done-text' : ''}">${this.task.title}</span>
 
         <span class="task-meta">
+          ${this.task.category_name ? html`
+            <span class="category-chip"
+              style=${`background:${this.task.category_color ?? '#a855f7'}22;border-color:${this.task.category_color ?? '#a855f7'};color:${this.task.category_color ?? '#c4a1ff'}`}
+              title=${this.task.category_name}>
+              ${this.task.category_name}
+            </span>
+          ` : ''}
           ${this.task.assignee_name ? html`
             <span class="assignee-chip" title=${`Toegewezen aan ${this.task.assignee_name}`}>
               ${this.task.assignee_name.slice(0, 1)}

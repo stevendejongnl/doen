@@ -154,6 +154,35 @@ class ProjectOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+# ── Category ──────────────────────────────────────────────────────────────────
+
+class CategoryCreate(BaseModel):
+    name: str
+    description: str | None = None
+    color: str = "#a855f7"
+    group_id: str | None = None
+    project_id: str | None = None
+
+
+class CategoryUpdate(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    color: str | None = None
+
+
+class CategoryOut(BaseModel):
+    id: str
+    name: str
+    description: str | None
+    color: str
+    group_id: str | None
+    project_id: str | None
+    owner_id: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 # ── Task ──────────────────────────────────────────────────────────────────────
 
 class TaskCreate(BaseModel):
@@ -162,6 +191,7 @@ class TaskCreate(BaseModel):
     assignee_id: str | None = None
     priority: str = "none"
     due_date: datetime | None = None
+    category_id: str | None = None
 
 
 class TaskUpdate(BaseModel):
@@ -171,6 +201,7 @@ class TaskUpdate(BaseModel):
     status: str | None = None
     priority: str | None = None
     due_date: datetime | None = None
+    category_id: str | None = None
 
 
 class TaskOut(BaseModel):
@@ -178,6 +209,9 @@ class TaskOut(BaseModel):
     title: str
     notes: str | None
     project_id: str
+    category_id: str | None
+    category_name: str | None = None
+    category_color: str | None = None
     assignee_id: str | None
     assignee_name: str | None = None
     status: str

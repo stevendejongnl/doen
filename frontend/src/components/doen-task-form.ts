@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import type {
+  Category,
   GroupMember,
   Project,
   Task,
@@ -61,8 +62,11 @@ export class DoenTaskForm extends LitElement {
   @state() private _submitting = false;
   @state() private _assigneeId = '';
   @state() private _members: GroupMember[] = [];
+  @state() private _categoryId = '';
+  @state() private _categories: Category[] = [];
 
   private _loadedForGroup: string | null = null;
+  private _loadedCategoriesFor: string | null = null;
 
   @state() private _recurring = false;
   @state() private _unit: RecurrenceUnit = 'week';
@@ -209,7 +213,10 @@ export class DoenTaskForm extends LitElement {
   `];
 
   updated(changed: Map<string, unknown>) {
-    if (changed.has('project')) this._maybeLoadMembers();
+    if (changed.has('project')) {
+      this._maybeLoadMembers();
+      this._maybeLoadCategories();
+    }
   }
 
   private async _maybeLoadMembers() {
@@ -221,6 +228,46 @@ export class DoenTaskForm extends LitElement {
       this._members = await api.get<GroupMember[]>(`/groups/${groupId}/members`);
     } catch {
       this._members = [];
+    }
+  }
+
+  private async _maybeLoadCategories() {
+    const projectId = this.project?.id ?? null;
+    if (!projectId) return;
+    if (this._loadedCategoriesFor === projectId) return;
+    this._loadedCategoriesFor = projectId;
+    try {
+      const all = await api.get<Category[]>('/categories');
+      // Relevant = project-scoped to this project, group-scoped to this project's group, or unscoped.
+      const gid = this.project.group_id ?? null;
+      this._categories = all.filter(c =>
+        (c.project_id === projectId) ||
+        (c.project_id == null && c.group_id === gid) ||
+        (c.project_id == null && c.group_id == null)
+      );
+    } catch {
+      this._categories = [];
+    }
+  }
+
+  private async _onCategoryChange(value: string) {
+    if (value === '__new__') {
+      const name = window.prompt('Naam van de categorie?');
+      if (!name || !name.trim()) { this._categoryId = ''; return; }
+      try {
+        const created = await api.post<Category>('/categories', {
+          name: name.trim(),
+          color: '#a855f7',
+          project_id: this.project.id,
+        });
+        this._categories = [...this._categories, created];
+        this._categoryId = created.id;
+      } catch (e) {
+        if (e instanceof ApiError) toast.error(`Aanmaken mislukt: ${e.message}`);
+        this._categoryId = '';
+      }
+    } else {
+      this._categoryId = value;
     }
   }
 
@@ -242,6 +289,7 @@ export class DoenTaskForm extends LitElement {
         due_date: this._dueDate || undefined,
         notes: this._notes.trim() || undefined,
         assignee_id: this._assigneeId || undefined,
+        category_id: this._categoryId || undefined,
       });
 
       let finalTask = task;
@@ -264,6 +312,7 @@ export class DoenTaskForm extends LitElement {
       this._notes = '';
       this._showNotes = false;
       this._assigneeId = '';
+      this._categoryId = '';
       this._recurring = false;
       this._unit = 'week';
       this._interval = 1;
@@ -318,6 +367,14 @@ export class DoenTaskForm extends LitElement {
               `)}
             </select>
           ` : ''}
+          <select .value=${this._categoryId}
+            @change=${(e: Event) => this._onCategoryChange((e.target as HTMLSelectElement).value)}>
+            <option value="">Geen categorie</option>
+            ${this._categories.map(c => html`
+              <option value=${c.id}>${c.name}</option>
+            `)}
+            <option value="__new__">+ Nieuwe categorie…</option>
+          </select>
           <button type="button" class="btn-notes-toggle" @click=${() => this._showNotes = !this._showNotes}>
             <i class="fa-solid fa-${this._showNotes ? 'chevron-up' : 'plus'}"></i>
             ${this._showNotes ? 'Notitie verbergen' : 'Notitie toevoegen'}

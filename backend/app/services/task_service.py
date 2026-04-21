@@ -1,7 +1,8 @@
 from datetime import datetime
 
-from app.exceptions import ConflictError, NotFoundError
+from app.exceptions import AccessDeniedError, ConflictError, NotFoundError
 from app.models.task import RecurringRule, Task
+from app.repositories.category_repo import CategoryRepository
 from app.repositories.group_repo import GroupRepository
 from app.repositories.task_repo import TaskRepository
 from app.services.project_service import ProjectService
@@ -13,10 +14,38 @@ class TaskService:
         task_repo: TaskRepository,
         project_service: ProjectService,
         group_repo: GroupRepository,
+        category_repo: CategoryRepository,
     ) -> None:
         self._tasks = task_repo
         self._projects = project_service
         self._groups = group_repo
+        self._categories = category_repo
+
+    async def _assert_category_usable(
+        self,
+        category_id: str | None,
+        user_id: str,
+        project_id: str,
+    ) -> None:
+        """Category must be visible to the user AND compatible with the task's project."""
+        if category_id is None:
+            return
+        category = await self._categories.get_by_id(category_id)
+        if category is None:
+            raise NotFoundError("Category", category_id)
+        # If category is pinned to a project, it must match the task's project.
+        if category.project_id and category.project_id != project_id:
+            raise AccessDeniedError("Category is scoped to a different project")
+        # Visibility: owner OR group-member OR project-accessible.
+        if category.owner_id == user_id:
+            return
+        if category.group_id and await self._groups.get_membership(category.group_id, user_id):
+            return
+        if category.project_id:
+            project = await self._projects.get_project_raw(category.project_id)
+            await self._projects.assert_access(project, user_id)
+            return
+        raise AccessDeniedError()
 
     async def _member_ids_for_project(self, project_id: str) -> list[str]:
         project = await self._projects.get_project_raw(project_id)
@@ -68,9 +97,11 @@ class TaskService:
         assignee_id: str | None,
         priority: str,
         due_date: datetime | None,
+        category_id: str | None = None,
     ) -> tuple[Task, list[str]]:
         project = await self._projects.get_project_raw(project_id)
         await self._projects.assert_access(project, requesting_user_id)
+        await self._assert_category_usable(category_id, requesting_user_id, project_id)
         task = await self._tasks.create(
             title=title,
             notes=notes,
@@ -78,14 +109,22 @@ class TaskService:
             assignee_id=assignee_id,
             priority=priority,
             due_date=due_date,
+            category_id=category_id,
         )
         member_ids = await self._member_ids_for_project(project_id)
         return task, member_ids
 
     async def update_task(
-        self, task_id: str, fields: dict[str, object]
+        self,
+        task_id: str,
+        fields: dict[str, object],
+        requesting_user_id: str | None = None,
     ) -> tuple[Task, list[str]]:
         task = await self.get_task(task_id)
+        if "category_id" in fields and requesting_user_id is not None:
+            await self._assert_category_usable(
+                fields["category_id"], requesting_user_id, task.project_id  # type: ignore[arg-type]
+            )
         updated = await self._tasks.update(task, fields)
         member_ids = await self._member_ids_for_project(task.project_id)
         return updated, member_ids

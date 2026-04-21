@@ -76,7 +76,10 @@ export function sseConnect(onEvent: (name: string, data: unknown) => void): Even
   const handle = (name: string) => (e: MessageEvent) => {
     try { onEvent(name, JSON.parse(e.data)); } catch { /* skip */ }
   };
-  for (const ev of ['task_created', 'task_updated', 'task_completed', 'task_deleted']) {
+  for (const ev of [
+    'task_created', 'task_updated', 'task_completed', 'task_deleted',
+    'category_created', 'category_updated', 'category_deleted',
+  ]) {
     src.addEventListener(ev, handle(ev) as EventListener);
   }
   return src;

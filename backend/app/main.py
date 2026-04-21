@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
-from app.api import api_keys, auth, groups, ha, invitations, projects, sse, tasks
+from app.api import api_keys, auth, categories, groups, ha, invitations, projects, sse, tasks
 from app.config import settings
 from app.db.session import engine
 from app.models import *  # noqa: F401, F403 — register all models with metadata
@@ -88,6 +88,7 @@ app.include_router(api_keys.router)
 app.include_router(groups.router)
 app.include_router(invitations.router)
 app.include_router(projects.router)
+app.include_router(categories.router)
 app.include_router(tasks.router)
 app.include_router(sse.router)
 app.include_router(ha.router)

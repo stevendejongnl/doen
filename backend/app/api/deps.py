@@ -17,6 +17,7 @@ from app.exceptions import (
 )
 from app.models.user import User
 from app.repositories.api_key_repo import ApiKeyRepository
+from app.repositories.category_repo import CategoryRepository
 from app.repositories.group_invitation_repo import GroupInvitationRepository
 from app.repositories.group_repo import GroupRepository
 from app.repositories.project_repo import ProjectRepository
@@ -25,6 +26,7 @@ from app.repositories.user_repo import UserRepository
 from app.services.api_key_service import TOKEN_PREFIX as API_KEY_PREFIX
 from app.services.api_key_service import ApiKeyService
 from app.services.auth import AuthService
+from app.services.category_service import CategoryService
 from app.services.group_invitation_service import GroupInvitationService
 from app.services.group_service import GroupService
 from app.services.mail_service import MailService, get_mail_service
@@ -80,6 +82,10 @@ def get_api_key_repo(db: AsyncSession = Depends(get_db)) -> ApiKeyRepository:
     return ApiKeyRepository(db)
 
 
+def get_category_repo(db: AsyncSession = Depends(get_db)) -> CategoryRepository:
+    return CategoryRepository(db)
+
+
 # ── Service providers ─────────────────────────────────────────────────────────
 
 def get_auth_service(
@@ -124,8 +130,18 @@ def get_task_service(
     task_repo: TaskRepository = Depends(get_task_repo),
     project_service: ProjectService = Depends(get_project_service),
     group_repo: GroupRepository = Depends(get_group_repo),
+    category_repo: CategoryRepository = Depends(get_category_repo),
 ) -> TaskService:
-    return TaskService(task_repo, project_service, group_repo)
+    return TaskService(task_repo, project_service, group_repo, category_repo)
+
+
+def get_category_service(
+    category_repo: CategoryRepository = Depends(get_category_repo),
+    project_service: ProjectService = Depends(get_project_service),
+    group_repo: GroupRepository = Depends(get_group_repo),
+    task_repo: TaskRepository = Depends(get_task_repo),
+) -> CategoryService:
+    return CategoryService(category_repo, project_service, group_repo, task_repo)
 
 
 # ── Current user ──────────────────────────────────────────────────────────────

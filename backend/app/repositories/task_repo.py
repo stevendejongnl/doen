@@ -7,7 +7,11 @@ from sqlalchemy.orm import selectinload
 from app.models.base import new_uuid
 from app.models.task import RecurringRule, Task
 
-_TASK_LOAD_OPTS = (selectinload(Task.recurring_rule), selectinload(Task.assignee))
+_TASK_LOAD_OPTS = (
+    selectinload(Task.recurring_rule),
+    selectinload(Task.assignee),
+    selectinload(Task.category),
+)
 
 
 class TaskRepository:
@@ -74,12 +78,14 @@ class TaskRepository:
         assignee_id: str | None,
         priority: str,
         due_date: datetime | None,
+        category_id: str | None = None,
     ) -> Task:
         task = Task(
             id=new_uuid(),
             title=title,
             notes=notes,
             project_id=project_id,
+            category_id=category_id,
             assignee_id=assignee_id,
             priority=priority,
             due_date=due_date,

@@ -51,6 +51,7 @@ async def create_task(
             assignee_id=body.assignee_id,
             priority=body.priority,
             due_date=body.due_date,
+            category_id=body.category_id,
         )
     except DoenError as exc:
         raise_http(exc)
@@ -102,7 +103,11 @@ async def update_task(
     svc: TaskService = Depends(get_task_service),
 ):
     try:
-        task, member_ids = await svc.update_task(task_id, body.model_dump(exclude_none=True))
+        task, member_ids = await svc.update_task(
+            task_id,
+            body.model_dump(exclude_unset=True),
+            requesting_user_id=current_user.id,
+        )
     except DoenError as exc:
         raise_http(exc)
     await sse_bus.publish_to_group(member_ids, "task_updated", {"id": task.id})
