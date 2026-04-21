@@ -1,3 +1,10 @@
+## [1.16.1](https://github.com/stevendejongnl/doen/compare/v1.16.0...v1.16.1) (2026-04-21)
+
+
+### Bug Fixes
+
+* **db:** add runtime migration for tasks.category_id ([29b7603](https://github.com/stevendejongnl/doen/commit/29b7603c780dfeb9399d59c26d9681ea8db437a1))
+
 # [1.16.0](https://github.com/stevendejongnl/doen/compare/v1.15.0...v1.16.0) (2026-04-21)
 
 
