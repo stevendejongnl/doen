@@ -115,3 +115,16 @@ export interface TaskOffer {
   created_at: string;
   updated_at: string;
 }
+
+export interface PointTransaction {
+  id: string;
+  group_id: string;
+  user_id: string;
+  user_name: string;
+  amount: number;
+  kind: string;
+  task_id?: string | null;
+  offer_id?: string | null;
+  note?: string | null;
+  created_at: string;
+}

@@ -74,6 +74,25 @@ class HouseholdPointsService:
         await self._assert_group_access(group_id, requesting_user_id)
         return await self._points.list_offers_for_group(group_id)
 
+    async def list_transactions(self, group_id: str, requesting_user_id: str) -> list[dict]:
+        await self._assert_group_access(group_id, requesting_user_id)
+        transactions = await self._points.list_transactions(group_id)
+        return [
+            {
+                "id": tx.id,
+                "group_id": tx.group_id,
+                "user_id": tx.user_id,
+                "user_name": name,
+                "amount": tx.amount,
+                "kind": tx.kind,
+                "task_id": tx.task_id,
+                "offer_id": tx.offer_id,
+                "note": tx.note,
+                "created_at": tx.created_at,
+            }
+            for tx, name in transactions
+        ]
+
     async def create_offer(
         self,
         task_id: str,
@@ -211,4 +230,26 @@ class HouseholdPointsService:
             task_id=task.id,
             note=f"Reversal: {task.title}",
             reverses_transaction_id=completion.id,
+        )
+
+    async def transfer_points(
+        self,
+        group_id: str,
+        requesting_user_id: str,
+        to_user_id: str,
+        amount: int,
+        note: str | None,
+    ) -> None:
+        await self._assert_group_access(group_id, requesting_user_id)
+        if amount <= 0:
+            raise ConflictError("Amount must be greater than zero")
+        if requesting_user_id == to_user_id:
+            raise ConflictError("Cannot transfer points to yourself")
+        await self._assert_group_access(group_id, to_user_id)
+        await self._points.transfer_points(
+            group_id=group_id,
+            from_user_id=requesting_user_id,
+            to_user_id=to_user_id,
+            amount=amount,
+            note=note,
         )

@@ -4,6 +4,7 @@ from sqlalchemy.orm import selectinload
 
 from app.models.base import new_uuid
 from app.models.household_points import PointTransaction, TaskOffer
+from app.models.user import User
 
 _OFFER_LOAD_OPTS = (
     selectinload(TaskOffer.task),
@@ -78,6 +79,18 @@ class HouseholdPointsRepository:
         )
         return {user_id: int(total) for user_id, total in result.all()}
 
+    async def list_transactions(
+        self, group_id: str, limit: int = 50
+    ) -> list[tuple[PointTransaction, str]]:
+        result = await self._session.execute(
+            select(PointTransaction, User.name)
+            .join(User, User.id == PointTransaction.user_id)
+            .where(PointTransaction.group_id == group_id)
+            .order_by(PointTransaction.created_at.desc())
+            .limit(limit)
+        )
+        return [(tx, name) for tx, name in result.all()]
+
     async def add_transaction(
         self,
         *,
@@ -104,6 +117,37 @@ class HouseholdPointsRepository:
         self._session.add(tx)
         await self._session.commit()
         return tx
+
+    async def transfer_points(
+        self,
+        *,
+        group_id: str,
+        from_user_id: str,
+        to_user_id: str,
+        amount: int,
+        note: str | None,
+    ) -> None:
+        self._session.add_all(
+            [
+                PointTransaction(
+                    id=new_uuid(),
+                    group_id=group_id,
+                    user_id=from_user_id,
+                    amount=-amount,
+                    kind="manual",
+                    note=note,
+                ),
+                PointTransaction(
+                    id=new_uuid(),
+                    group_id=group_id,
+                    user_id=to_user_id,
+                    amount=amount,
+                    kind="manual",
+                    note=note,
+                ),
+            ]
+        )
+        await self._session.commit()
 
     async def get_latest_completion_for_task(self, task_id: str) -> PointTransaction | None:
         result = await self._session.execute(

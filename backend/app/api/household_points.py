@@ -3,6 +3,8 @@ from fastapi import APIRouter, Depends, status
 from app.api.deps import get_current_user, get_household_points_service, raise_http
 from app.api.schemas import (
     HouseholdBalanceOut,
+    PointTransactionOut,
+    PointTransferCreate,
     TaskOfferCreate,
     TaskOfferDecision,
     TaskOfferOut,
@@ -38,6 +40,10 @@ def _offer_payload(offer) -> dict:
     return TaskOfferOut.model_validate(payload).model_dump(mode="json")
 
 
+def _transaction_payload(tx: dict) -> dict:
+    return PointTransactionOut.model_validate(tx).model_dump(mode="json")
+
+
 @router.get("/households/{group_id}/balances", response_model=list[HouseholdBalanceOut])
 async def list_balances(
     group_id: str,
@@ -61,6 +67,19 @@ async def list_offers(
     except DoenError as exc:
         raise_http(exc)
     return [_offer_payload(offer) for offer in offers]
+
+
+@router.get("/households/{group_id}/transactions", response_model=list[PointTransactionOut])
+async def list_transactions(
+    group_id: str,
+    current_user: User = Depends(get_current_user),
+    svc: HouseholdPointsService = Depends(get_household_points_service),
+) -> list[dict]:
+    try:
+        txs = await svc.list_transactions(group_id, current_user.id)
+    except DoenError as exc:
+        raise_http(exc)
+    return [_transaction_payload(tx) for tx in txs]
 
 
 @router.post(
@@ -112,6 +131,27 @@ async def decide_offer(
     member_ids = await svc._groups.list_member_ids(offer.group_id)
     await sse_bus.publish_to_group(member_ids, "offer_updated", _offer_payload(offer))
     return _offer_payload(offer)
+
+
+@router.post("/households/{group_id}/transfer", status_code=status.HTTP_204_NO_CONTENT)
+async def transfer_points(
+    group_id: str,
+    body: PointTransferCreate,
+    current_user: User = Depends(get_current_user),
+    svc: HouseholdPointsService = Depends(get_household_points_service),
+) -> None:
+    try:
+        await svc.transfer_points(
+            group_id=group_id,
+            requesting_user_id=current_user.id,
+            to_user_id=body.to_user_id,
+            amount=body.amount,
+            note=body.note,
+        )
+    except DoenError as exc:
+        raise_http(exc)
+    member_ids = await svc._groups.list_member_ids(group_id)
+    await sse_bus.publish_to_group(member_ids, "points_updated", {"group_id": group_id})
 
 
 @router.delete("/offers/{offer_id}", status_code=status.HTTP_204_NO_CONTENT)

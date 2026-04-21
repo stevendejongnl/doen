@@ -1,6 +1,13 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import type { HouseholdBalance, Project, Task, TaskOffer } from '../services/types';
+import type {
+  GroupMember,
+  HouseholdBalance,
+  PointTransaction,
+  Project,
+  Task,
+  TaskOffer,
+} from '../services/types';
 import { api, ApiError } from '../services/api';
 import { getMe, type Me } from '../services/auth';
 import { toast } from '../components/doen-toast';
@@ -21,7 +28,12 @@ export class PageProject extends LitElement {
   @state() private _saving = false;
   @state() private _balances: HouseholdBalance[] = [];
   @state() private _offers: TaskOffer[] = [];
+  @state() private _transactions: PointTransaction[] = [];
+  @state() private _members: GroupMember[] = [];
   @state() private _me: Me | null = null;
+  @state() private _transferTo = '';
+  @state() private _transferAmount = 1;
+  @state() private _transferNote = '';
 
   private static readonly COLORS = [
     '#6366f1', '#10b981', '#f59e0b', '#ef4444',
@@ -243,6 +255,30 @@ export class PageProject extends LitElement {
       border: 1px solid rgba(255,255,255,0.12);
     }
 
+    .transaction-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .transaction-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      font-size: 12px;
+    }
+
+    .transaction-row .amt {
+      font-weight: 700;
+    }
+
+    .transaction-row .amt.positive { color: #4ade80; }
+    .transaction-row .amt.negative { color: #f87171; }
+
     .section-label {
       font-size: 11px;
       font-weight: 600;
@@ -340,14 +376,20 @@ export class PageProject extends LitElement {
     if (!project.group_id) {
       this._balances = [];
       this._offers = [];
+      this._transactions = [];
+      this._members = [];
       return;
     }
-    const [balances, offers] = await Promise.all([
+    const [balances, offers, transactions, members] = await Promise.all([
       api.get<HouseholdBalance[]>(`/households/${project.group_id}/balances`),
       api.get<TaskOffer[]>(`/households/${project.group_id}/offers`),
+      api.get<PointTransaction[]>(`/households/${project.group_id}/transactions`),
+      api.get<GroupMember[]>(`/groups/${project.group_id}/members`),
     ]);
     this._balances = balances;
     this._offers = offers;
+    this._transactions = transactions;
+    this._members = members;
   }
 
   private async _refreshHousehold() {
@@ -405,6 +447,24 @@ export class PageProject extends LitElement {
       toast.success('Aanbod ingetrokken');
     } catch (e) {
       if (e instanceof ApiError) toast.error(`Intrekken mislukt: ${e.message}`);
+    }
+  }
+
+  private async _transferPoints() {
+    if (!this._project?.group_id || !this._transferTo || this._transferAmount <= 0) return;
+    try {
+      await api.post(`/households/${this._project.group_id}/transfer`, {
+        to_user_id: this._transferTo,
+        amount: this._transferAmount,
+        note: this._transferNote.trim() || null,
+      });
+      this._transferTo = '';
+      this._transferAmount = 1;
+      this._transferNote = '';
+      await this._load();
+      toast.success('Punten overgezet');
+    } catch (e) {
+      if (e instanceof ApiError) toast.error(`Overzetten mislukt: ${e.message}`);
     }
   }
 
@@ -552,6 +612,50 @@ export class PageProject extends LitElement {
                 </div>
               `;
             })}
+          </div>
+          <div class="panel-title">Punten overzetten</div>
+          <div class="offer-card">
+            <div class="offer-meta">Stuur punten naar iemand anders als debt payment of onderlinge verrekening.</div>
+            <div class="offer-actions">
+              <select .value=${this._transferTo}
+                @change=${(e: Event) => this._transferTo = (e.target as HTMLSelectElement).value}>
+                <option value="">Kies iemand</option>
+                ${this._members.filter(m => m.user_id !== this._me?.id).map(m => html`
+                  <option value=${m.user_id}>${m.name}</option>
+                `)}
+              </select>
+              <input
+                type="number"
+                min="1"
+                .value=${String(this._transferAmount)}
+                @input=${(e: Event) => this._transferAmount = Math.max(1, parseInt((e.target as HTMLInputElement).value, 10) || 1)}
+                style="max-width: 90px;"
+              />
+              <input
+                type="text"
+                placeholder="Notitie"
+                .value=${this._transferNote}
+                @input=${(e: Event) => this._transferNote = (e.target as HTMLInputElement).value}
+                style="flex:1;min-width:160px"
+              />
+              <button @click=${this._transferPoints} ?disabled=${!this._transferTo || this._transferAmount <= 0}>Versturen</button>
+            </div>
+          </div>
+          <div class="panel-title">Recente transacties</div>
+          <div class="transaction-list">
+            ${this._transactions.length === 0 ? html`
+              <div class="offer-meta">Nog geen transacties.</div>
+            ` : this._transactions.map(tx => html`
+              <div class="transaction-row">
+                <div>
+                  <div>${tx.user_name} · ${tx.kind}</div>
+                  <div class="offer-meta">${tx.note ?? ''}</div>
+                </div>
+                <div class="amt ${tx.amount < 0 ? 'negative' : 'positive'}">
+                  ${tx.amount > 0 ? '+' : ''}${tx.amount}
+                </div>
+              </div>
+            `)}
           </div>
         </div>
       ` : ''}

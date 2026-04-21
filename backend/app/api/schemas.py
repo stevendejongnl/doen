@@ -331,3 +331,22 @@ class TaskOfferOut(BaseModel):
     decided_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
+
+
+class PointTransactionOut(BaseModel):
+    id: str
+    group_id: str
+    user_id: str
+    user_name: str
+    amount: int
+    kind: str
+    task_id: str | None = None
+    offer_id: str | None = None
+    note: str | None = None
+    created_at: datetime
+
+
+class PointTransferCreate(BaseModel):
+    to_user_id: str
+    amount: int
+    note: str | None = None

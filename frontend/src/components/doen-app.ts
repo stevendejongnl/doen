@@ -198,6 +198,10 @@ export class DoenApp extends LitElement {
       project?.reload?.();
       return;
     }
+    if (event === 'points_updated') {
+      project?.reload?.();
+      return;
+    }
     if (event === 'task_created') {
       project?.addTask?.(task);
       todo?.addTask?.(task);

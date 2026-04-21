@@ -65,3 +65,21 @@ async def test_group_task_completion_earns_points(db_session, seed_data):
     balances = await svc.list_balances(seed_data["zooiboel"].id, seed_data["henk"].id)
     balance_map = {row["user_id"]: row["balance"] for row in balances}
     assert balance_map[seed_data["piet"].id] == 2
+
+
+@pytest.mark.asyncio
+async def test_transfer_points_updates_both_balances(db_session, seed_data):
+    svc = _service(db_session)
+
+    await svc.transfer_points(
+        seed_data["zooiboel"].id,
+        seed_data["henk"].id,
+        seed_data["piet"].id,
+        3,
+        "debt payment",
+    )
+
+    balances = await svc.list_balances(seed_data["zooiboel"].id, seed_data["henk"].id)
+    balance_map = {row["user_id"]: row["balance"] for row in balances}
+    assert balance_map[seed_data["henk"].id] == -3
+    assert balance_map[seed_data["piet"].id] == 3
