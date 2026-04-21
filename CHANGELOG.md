@@ -1,3 +1,10 @@
+# [1.20.0](https://github.com/stevendejongnl/doen/compare/v1.19.0...v1.20.0) (2026-04-21)
+
+
+### Features
+
+* **mobile:** block zoom, simplify task rows, URL routing, account via name ([7485b0f](https://github.com/stevendejongnl/doen/commit/7485b0f2dd520264859788aeb18047e3f0da24fb))
+
 # [1.19.0](https://github.com/stevendejongnl/doen/compare/v1.18.0...v1.19.0) (2026-04-21)
 
 
