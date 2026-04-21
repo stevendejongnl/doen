@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/stevendejongnl/doen/compare/v1.10.0...v1.11.0) (2026-04-21)
+
+
+### Features
+
+* **ops:** telegram notifications for releases, deploys, and pod lifecycle ([6e53c68](https://github.com/stevendejongnl/doen/commit/6e53c680791487da6ae2e87ca5cff12aaf854fd8))
+
 # [1.10.0](https://github.com/stevendejongnl/doen/compare/v1.9.0...v1.10.0) (2026-04-21)
 
 
