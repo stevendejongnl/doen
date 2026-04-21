@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/stevendejongnl/doen/compare/v1.9.0...v1.10.0) (2026-04-21)
+
+
+### Features
+
+* **todo:** unify vandaag+inbox into "Te doen" with list/kanban/calendar views ([e3882af](https://github.com/stevendejongnl/doen/commit/e3882afd8a4910729f89de15f80d18ebde19df15))
+
 # [1.9.0](https://github.com/stevendejongnl/doen/compare/v1.8.1...v1.9.0) (2026-04-20)
 
 
