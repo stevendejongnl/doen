@@ -13,6 +13,8 @@ import type {
 import { api, ApiError } from '../services/api';
 import { toast } from './doen-toast';
 import { sharedStyles } from '../styles/shared-styles';
+import './ui/doen-prompt-dialog';
+import type { DoenPromptDialog } from './ui/doen-prompt-dialog';
 
 const DAY_LABELS = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
 
@@ -253,22 +255,31 @@ export class DoenTaskForm extends LitElement {
     }
   }
 
-  private async _onCategoryChange(value: string) {
+  private _onCategoryChange(value: string) {
     if (value === '__new__') {
-      const name = window.prompt('Naam van de categorie?');
-      if (!name || !name.trim()) { this._categoryId = ''; return; }
-      try {
-        const created = await api.post<Category>('/categories', {
-          name: name.trim(),
-          color: '#a855f7',
-          project_id: this.project.id,
-        });
-        this._categories = [...this._categories, created];
-        this._categoryId = created.id;
-      } catch (e) {
-        if (e instanceof ApiError) toast.error(`Aanmaken mislukt: ${e.message}`);
+      const dialog = document.createElement('doen-prompt-dialog') as DoenPromptDialog;
+      dialog.message = 'Naam van de categorie?';
+      dialog.addEventListener('doen-submit', async (e: Event) => {
+        const name = (e as CustomEvent<string>).detail;
+        dialog.remove();
+        try {
+          const created = await api.post<Category>('/categories', {
+            name: name,
+            color: '#a855f7',
+            project_id: this.project.id,
+          });
+          this._categories = [...this._categories, created];
+          this._categoryId = created.id;
+        } catch (err) {
+          if (err instanceof ApiError) toast.error(`Aanmaken mislukt: ${err.message}`);
+          this._categoryId = '';
+        }
+      }, { once: true });
+      dialog.addEventListener('doen-cancel', () => {
+        dialog.remove();
         this._categoryId = '';
-      }
+      }, { once: true });
+      document.body.appendChild(dialog);
     } else {
       this._categoryId = value;
     }

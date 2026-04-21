@@ -14,6 +14,10 @@ import type {
 import { api, ApiError } from '../services/api';
 import { toast } from './doen-toast';
 import { sharedStyles } from '../styles/shared-styles';
+import './ui/doen-confirm-dialog';
+import './ui/doen-prompt-dialog';
+import type { DoenConfirmDialog } from './ui/doen-confirm-dialog';
+import type { DoenPromptDialog } from './ui/doen-prompt-dialog';
 
 const DAY_LABELS = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
 
@@ -562,21 +566,40 @@ export class DoenTask extends LitElement {
     }
   }
 
-  private async _offerTask() {
+  private _offerTask() {
     if (!this._project?.group_id) {
       toast.error('Alleen taken in een huishouden kunnen worden aangeboden.');
       return;
     }
-    const reward = window.prompt('Wat krijg je terug? (optioneel, bijvoorbeeld pizza of bier)');
-    try {
-      await api.post<TaskOffer>(`/tasks/${this.task.id}/offer`, {
-        reward_note: reward?.trim() || null,
-      });
-      toast.success('Aanbod geplaatst');
-      this.dispatchEvent(new CustomEvent('offer-created', { bubbles: true, composed: true }));
-    } catch (e) {
-      if (e instanceof ApiError) toast.error(`Aanbieden mislukt: ${e.message}`);
-    }
+    const dialog = document.createElement('doen-prompt-dialog') as DoenPromptDialog;
+    dialog.message = 'Wat krijg je terug?';
+    dialog.placeholder = 'Bijv. pizza of bier (optioneel)';
+    dialog.submitLabel = 'Aanbieden';
+    dialog.addEventListener('doen-submit', async (e: Event) => {
+      const reward = (e as CustomEvent<string>).detail;
+      dialog.remove();
+      try {
+        await api.post<TaskOffer>(`/tasks/${this.task.id}/offer`, {
+          reward_note: reward || null,
+        });
+        toast.success('Aanbod geplaatst');
+        this.dispatchEvent(new CustomEvent('offer-created', { bubbles: true, composed: true }));
+      } catch (err) {
+        if (err instanceof ApiError) toast.error(`Aanbieden mislukt: ${err.message}`);
+      }
+    }, { once: true });
+    dialog.addEventListener('doen-cancel', async () => {
+      // No reward provided — offer with null reward
+      dialog.remove();
+      try {
+        await api.post<TaskOffer>(`/tasks/${this.task.id}/offer`, { reward_note: null });
+        toast.success('Aanbod geplaatst');
+        this.dispatchEvent(new CustomEvent('offer-created', { bubbles: true, composed: true }));
+      } catch (err) {
+        if (err instanceof ApiError) toast.error(`Aanbieden mislukt: ${err.message}`);
+      }
+    }, { once: true });
+    document.body.appendChild(dialog);
   }
 
   private async _loadCategories(project: Project) {
@@ -593,22 +616,31 @@ export class DoenTask extends LitElement {
     }
   }
 
-  private async _onEditCategoryChange(value: string) {
+  private _onEditCategoryChange(value: string) {
     if (value === '__new__') {
-      const name = window.prompt('Naam van de categorie?');
-      if (!name || !name.trim()) { this._editCategoryId = this.task.category_id ?? ''; return; }
-      try {
-        const created = await api.post<Category>('/categories', {
-          name: name.trim(),
-          color: '#a855f7',
-          project_id: this.task.project_id,
-        });
-        this._categories = [...this._categories, created];
-        this._editCategoryId = created.id;
-      } catch (e) {
-        if (e instanceof ApiError) toast.error(`Aanmaken mislukt: ${e.message}`);
+      const dialog = document.createElement('doen-prompt-dialog') as DoenPromptDialog;
+      dialog.message = 'Naam van de categorie?';
+      dialog.addEventListener('doen-submit', async (e: Event) => {
+        const name = (e as CustomEvent<string>).detail;
+        dialog.remove();
+        try {
+          const created = await api.post<Category>('/categories', {
+            name: name,
+            color: '#a855f7',
+            project_id: this.task.project_id,
+          });
+          this._categories = [...this._categories, created];
+          this._editCategoryId = created.id;
+        } catch (err) {
+          if (err instanceof ApiError) toast.error(`Aanmaken mislukt: ${err.message}`);
+          this._editCategoryId = this.task.category_id ?? '';
+        }
+      }, { once: true });
+      dialog.addEventListener('doen-cancel', () => {
+        dialog.remove();
         this._editCategoryId = this.task.category_id ?? '';
-      }
+      }, { once: true });
+      document.body.appendChild(dialog);
     } else {
       this._editCategoryId = value;
     }
@@ -725,16 +757,24 @@ export class DoenTask extends LitElement {
     }
   }
 
-  private async _delete() {
-    if (!confirm(`"${this.task.title}" verwijderen?`)) return;
-    try {
-      await api.delete(`/tasks/${this.task.id}`);
-      this._done = true;
-      this._closeModal();
-      this.dispatchEvent(new CustomEvent('task-deleted', { detail: this.task.id, bubbles: true, composed: true }));
-    } catch (e) {
-      if (e instanceof ApiError) toast.error(`Verwijderen mislukt: ${e.message}`);
-    }
+  private _delete() {
+    const dialog = document.createElement('doen-confirm-dialog') as DoenConfirmDialog;
+    dialog.message = `"${this.task.title}" verwijderen?`;
+    dialog.confirmLabel = 'Verwijderen';
+    dialog.confirmVariant = 'danger';
+    dialog.addEventListener('doen-confirm', async () => {
+      dialog.remove();
+      try {
+        await api.delete(`/tasks/${this.task.id}`);
+        this._done = true;
+        this._closeModal();
+        this.dispatchEvent(new CustomEvent('task-deleted', { detail: this.task.id, bubbles: true, composed: true }));
+      } catch (e) {
+        if (e instanceof ApiError) toast.error(`Verwijderen mislukt: ${e.message}`);
+      }
+    }, { once: true });
+    dialog.addEventListener('doen-cancel', () => dialog.remove(), { once: true });
+    document.body.appendChild(dialog);
   }
 
   private _formatDue(due?: string | null): { label: string; overdue: boolean } | null {
