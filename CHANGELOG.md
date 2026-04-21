@@ -1,3 +1,10 @@
+# [1.14.0](https://github.com/stevendejongnl/doen/compare/v1.13.1...v1.14.0) (2026-04-21)
+
+
+### Features
+
+* **ui:** rename projects and remove group members ([ed953a0](https://github.com/stevendejongnl/doen/commit/ed953a0624844a656770e01405582abe889e5b59))
+
 ## [1.13.1](https://github.com/stevendejongnl/doen/compare/v1.13.0...v1.13.1) (2026-04-21)
 
 
