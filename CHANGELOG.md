@@ -1,3 +1,19 @@
+# [1.19.0](https://github.com/stevendejongnl/doen/compare/v1.18.0...v1.19.0) (2026-04-21)
+
+
+### Bug Fixes
+
+* **mobile:** 100dvh, touch targets ≥44px, edit-btn visible on touch ([943897f](https://github.com/stevendejongnl/doen/commit/943897f93af89b9694a897317e7854494660cf2d))
+* **pwa:** add iOS meta tags, viewport-fit=cover, safe-area insets, 16px inputs ([17478fc](https://github.com/stevendejongnl/doen/commit/17478fc1dfb6c4438acf6c5120b124158301b534))
+* **pwa:** add mobile-web-app-capable meta for Android PWA compatibility ([d2b50ba](https://github.com/stevendejongnl/doen/commit/d2b50ba09551ed44a2bb37aa405c2fb39198be72))
+* SSE auth, invite/reset card centering, and side margins ([cbf63f4](https://github.com/stevendejongnl/doen/commit/cbf63f482f4333249addc3cad3075c9f8715bed8))
+
+
+### Features
+
+* **ui:** add doen-confirm/prompt-dialog, replace window.prompt/confirm ([4d4cfdb](https://github.com/stevendejongnl/doen/commit/4d4cfdb59cf0fc513e1a93f1eb264428c04d169d))
+* **ui:** comprehensive styling audit — PWA, token consistency, touch targets, SSE auth ([ea482ae](https://github.com/stevendejongnl/doen/commit/ea482aea541d1c31d17045e9b9da55171368b74c))
+
 # [1.18.0](https://github.com/stevendejongnl/doen/compare/v1.17.0...v1.18.0) (2026-04-21)
 
 
