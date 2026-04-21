@@ -22,6 +22,9 @@ export class PageGroups extends LitElement {
   @state() private _newProjectName = '';
   @state() private _creatingProject = false;
   @state() private _removingUserId = '';
+  @state() private _editingGroupId = '';
+  @state() private _editingGroupName = '';
+  @state() private _savingRename = false;
 
   static styles = [...sharedStyles, css`
     :host { display: block; overflow-y: auto; height: 100%; }
@@ -56,6 +59,33 @@ export class PageGroups extends LitElement {
 
     .group-name { font-size: 16px; font-weight: 700; color: #e8eaf0; }
     .group-type { font-size: 11px; color: rgba(232,234,240,0.45); text-transform: uppercase; letter-spacing: 0.6px; }
+
+    .group-title-row {
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .rename-btn {
+      background: transparent; border: none;
+      color: rgba(232,234,240,0.35);
+      width: 26px; height: 26px; border-radius: 6px;
+      cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+      font-size: 11px;
+      opacity: 0;
+      transition: background 120ms, color 120ms, opacity 120ms;
+    }
+    .card-header:hover .rename-btn { opacity: 1; }
+    .rename-btn:hover { background: rgba(255,255,255,0.08); color: #e8eaf0; }
+
+    .group-name-input {
+      font-size: 16px; font-weight: 700; color: #e8eaf0;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(99,102,241,0.5);
+      border-radius: 7px; padding: 4px 10px;
+      outline: none;
+      min-width: 160px;
+    }
+    .group-name-input:focus { border-color: #6366f1; background: rgba(255,255,255,0.1); }
 
     .section-label {
       font-size: 11px; font-weight: 600; text-transform: uppercase;
@@ -313,6 +343,76 @@ export class PageGroups extends LitElement {
     }
   }
 
+  private _startRename(g: Group) {
+    this._editingGroupId = g.id;
+    this._editingGroupName = g.name;
+  }
+
+  private _cancelRename() {
+    this._editingGroupId = '';
+    this._editingGroupName = '';
+  }
+
+  private async _commitRename(g: Group) {
+    if (this._savingRename) return;
+    const name = this._editingGroupName.trim();
+    if (!name || name === g.name) {
+      this._cancelRename();
+      return;
+    }
+    this._editingGroupId = '';
+    this._savingRename = true;
+    try {
+      const updated = await api.put<Group>(`/groups/${g.id}`, { name });
+      this._groups = this._groups.map(x => x.id === g.id ? updated : x);
+      this.dispatchEvent(new CustomEvent('project-created', { bubbles: true, composed: true }));
+      toast.success(`Groep hernoemd naar "${updated.name}"`);
+    } catch (e) {
+      if (e instanceof ApiError) toast.error(`Hernoemen mislukt: ${e.message}`);
+    } finally {
+      this._savingRename = false;
+      this._editingGroupName = '';
+    }
+  }
+
+  private _onRenameKeydown(e: KeyboardEvent, g: Group) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      void this._commitRename(g);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      this._cancelRename();
+    }
+  }
+
+  private _renderGroupName(g: Group) {
+    const canManage = this._canManage(g);
+    if (this._editingGroupId === g.id) {
+      return html`
+        <input
+          class="group-name-input"
+          type="text"
+          .value=${this._editingGroupName}
+          @input=${(e: Event) => this._editingGroupName = (e.target as HTMLInputElement).value}
+          @keydown=${(e: KeyboardEvent) => this._onRenameKeydown(e, g)}
+          @blur=${() => this._commitRename(g)}
+          autofocus
+        />
+      `;
+    }
+    return html`
+      <div class="group-title-row">
+        <div class="group-name">${g.name}</div>
+        ${canManage ? html`
+          <button class="rename-btn" title="Naam wijzigen"
+            @click=${() => this._startRename(g)}>
+            <i class="fa-solid fa-pen"></i>
+          </button>
+        ` : ''}
+      </div>
+    `;
+  }
+
   private _renderMembers(g: Group) {
     const members = this._members[g.id];
     if (!members) return html`<div class="member-empty">Leden laden...</div>`;
@@ -393,7 +493,7 @@ export class PageGroups extends LitElement {
           <div class="card-header">
             <div class="group-icon"><i class="fa-solid fa-people-group"></i></div>
             <div>
-              <div class="group-name">${g.name}</div>
+              ${this._renderGroupName(g)}
               <div class="group-type">${g.type}</div>
             </div>
           </div>

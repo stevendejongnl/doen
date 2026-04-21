@@ -11,7 +11,7 @@ export class DoenSidebar extends LitElement {
   @state() private _projects: Project[] = [];
   @state() private _groups: Group[] = [];
   @state() private _loading = true;
-  @state() private _creatingProject = false;
+  @state() private _creatingIn: string | null = null; // 'personal' | group_id | null
   @state() private _newProjectName = '';
 
   static styles = [...sharedStyles, css`
@@ -268,19 +268,46 @@ export class DoenSidebar extends LitElement {
     this.dispatchEvent(new CustomEvent('navigate', { detail: { page }, bubbles: true, composed: true }));
   }
 
+  private _toggleCreate(target: string) {
+    this._creatingIn = this._creatingIn === target ? null : target;
+    if (this._creatingIn) this._newProjectName = '';
+  }
+
   private async _createProject(e: Event) {
     e.preventDefault();
     const name = this._newProjectName.trim();
-    if (!name) return;
+    const target = this._creatingIn;
+    if (!name || !target) return;
     try {
       const colors = ['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899'];
       const color = colors[Math.floor(Math.random() * colors.length)];
-      const p = await api.post<Project>('/projects', { name, color });
+      const body: Record<string, unknown> = { name, color };
+      if (target !== 'personal') body.group_id = target;
+      const p = await api.post<Project>('/projects', body);
       this._projects = [...this._projects, p];
       this._newProjectName = '';
-      this._creatingProject = false;
+      this._creatingIn = null;
       this._navigate(p.id);
     } catch { /* toast handled by api */ }
+  }
+
+  private _renderCreateForm() {
+    return html`
+      <form class="new-project-form" @submit=${this._createProject}>
+        <input
+          type="text"
+          placeholder="Projectnaam..."
+          .value=${this._newProjectName}
+          @input=${(e: Event) => this._newProjectName = (e.target as HTMLInputElement).value}
+          autofocus
+        />
+        <button type="submit" class="btn-confirm"><i class="fa-solid fa-check"></i></button>
+        <button type="button" class="btn-cancel"
+          @click=${() => { this._creatingIn = null; this._newProjectName = ''; }}>
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </form>
+    `;
   }
 
   private _personalProjects() {
@@ -325,27 +352,12 @@ export class DoenSidebar extends LitElement {
             <div class="section-header">
               <span class="section-label">Persoonlijk</span>
               <button class="add-project-btn" title="Nieuw project"
-                @click=${() => this._creatingProject = !this._creatingProject}>
+                @click=${() => this._toggleCreate('personal')}>
                 <i class="fa-solid fa-plus"></i>
               </button>
             </div>
 
-            ${this._creatingProject ? html`
-              <form class="new-project-form" @submit=${this._createProject}>
-                <input
-                  type="text"
-                  placeholder="Projectnaam..."
-                  .value=${this._newProjectName}
-                  @input=${(e: Event) => this._newProjectName = (e.target as HTMLInputElement).value}
-                  autofocus
-                />
-                <button type="submit" class="btn-confirm"><i class="fa-solid fa-check"></i></button>
-                <button type="button" class="btn-cancel"
-                  @click=${() => { this._creatingProject = false; this._newProjectName = ''; }}>
-                  <i class="fa-solid fa-xmark"></i>
-                </button>
-              </form>
-            ` : ''}
+            ${this._creatingIn === 'personal' ? this._renderCreateForm() : ''}
 
             ${this._personalProjects().map(p => html`
               <button class="nav-item ${this.activeProjectId === p.id ? 'active' : ''}"
@@ -360,7 +372,12 @@ export class DoenSidebar extends LitElement {
             <div class="nav-section">
               <div class="section-header">
                 <span class="section-label">${g.name}</span>
+                <button class="add-project-btn" title="Nieuw project in ${g.name}"
+                  @click=${() => this._toggleCreate(g.id)}>
+                  <i class="fa-solid fa-plus"></i>
+                </button>
               </div>
+              ${this._creatingIn === g.id ? this._renderCreateForm() : ''}
               ${this._groupProjects(g.id).map(p => html`
                 <button class="nav-item ${this.activeProjectId === p.id ? 'active' : ''}"
                   @click=${() => this._navigate(p.id)}>
