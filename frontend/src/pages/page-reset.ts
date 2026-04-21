@@ -31,7 +31,7 @@ export class PageReset extends LitElement {
     .brand { text-align: center; margin-bottom: 36px; }
     .brand-icon {
       width: 56px; height: 56px; border-radius: 16px;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      background: var(--color-accent-gradient);
       display: flex; align-items: center; justify-content: center;
       margin: 0 auto 14px; font-size: 22px; color: white;
       box-shadow: 0 8px 24px rgba(99,102,241,0.4);
@@ -84,9 +84,9 @@ export class PageReset extends LitElement {
     .link-btn {
       background: none; border: none; padding: 0;
       color: rgba(99,102,241,0.8); font-size: 12px; cursor: pointer;
-      text-align: center; margin-top: 4px; transition: color 120ms;
+      text-align: center; margin-top: 4px; transition: color var(--transition-fast);
     }
-    .link-btn:hover { color: #818cf8; }
+    .link-btn:hover { color: var(--color-accent-hover); }
   `];
 
   private async _submit(e: Event) {

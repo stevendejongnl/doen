@@ -60,7 +60,7 @@ export class PageTodo extends LitElement {
       display: flex;
       background: rgba(255,255,255,0.05);
       border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 10px;
+      border-radius: var(--radius-btn);
       padding: 3px;
       gap: 2px;
     }
@@ -68,16 +68,16 @@ export class PageTodo extends LitElement {
     .seg button {
       background: transparent;
       border: none;
-      color: rgba(232,234,240,0.55);
+      color: var(--color-text-muted-strong);
       font-size: 12px;
       font-weight: 500;
       padding: 6px 11px;
-      border-radius: 7px;
+      border-radius: var(--radius-sm);
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 6px;
-      transition: background 120ms, color 120ms;
+      transition: background var(--transition-fast), color var(--transition-fast);
     }
     .seg button:hover { color: var(--color-text); }
     .seg button.active {
@@ -92,16 +92,16 @@ export class PageTodo extends LitElement {
       gap: 4px;
       background: rgba(255,255,255,0.05);
       border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 10px;
+      border-radius: var(--radius-btn);
       padding: 3px;
     }
     .nav-pill button {
       background: transparent;
       border: none;
-      color: rgba(232,234,240,0.6);
+      color: var(--color-text-muted-strong);
       width: 28px;
       height: 28px;
-      border-radius: 7px;
+      border-radius: var(--radius-sm);
       cursor: pointer;
       font-size: 12px;
       display: flex;

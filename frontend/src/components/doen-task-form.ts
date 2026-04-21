@@ -85,24 +85,24 @@ export class DoenTaskForm extends LitElement {
 
     input, select, textarea {
       font: inherit;
-      color: #e8eaf0;
+      color: var(--color-text);
       background: rgba(255,255,255,0.07);
       border: 1px solid rgba(255,255,255,0.14);
-      border-radius: 10px;
+      border-radius: var(--radius-btn);
       padding: 10px 14px;
       outline: none;
       -webkit-appearance: none;
       appearance: none;
-      transition: border-color 120ms, background 120ms;
+      transition: border-color var(--transition-fast), background var(--transition-fast);
     }
 
     input:focus, select:focus, textarea:focus {
-      border-color: #6366f1;
+      border-color: var(--color-accent);
       background: rgba(255,255,255,0.1);
     }
 
     input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
-    select option { background: #1e2436; color: #e8eaf0; }
+    select option { background: var(--color-surface-solid); color: var(--color-text); }
 
     textarea {
       width: 100%;
@@ -137,21 +137,21 @@ export class DoenTaskForm extends LitElement {
     .btn-notes-toggle {
       background: none;
       border: none;
-      color: rgba(232,234,240,0.4);
+      color: var(--color-text-muted);
       font-size: 12px;
       cursor: pointer;
       padding: 0;
       display: flex;
       align-items: center;
       gap: 5px;
-      transition: color 120ms;
+      transition: color var(--transition-fast);
     }
-    .btn-notes-toggle:hover { color: rgba(232,234,240,0.7); }
+    .btn-notes-toggle:hover { color: var(--color-text-muted-strong); }
 
     /* Recurring toggle + builder (mirrors doen-task.ts edit form) */
     .recurring-toggle {
       display: flex; align-items: center; gap: 8px;
-      font-size: 12px; color: rgba(232,234,240,0.5);
+      font-size: 12px; color: var(--color-text-muted);
       cursor: pointer; user-select: none;
       min-height: 44px;
     }
@@ -164,7 +164,7 @@ export class DoenTaskForm extends LitElement {
       background: rgba(255,255,255,0.12);
       border-radius: 9px; transition: background 150ms; cursor: pointer;
     }
-    .recurring-toggle input:checked ~ .toggle-track { background: #6366f1; }
+    .recurring-toggle input:checked ~ .toggle-track { background: var(--color-accent); }
     .toggle-thumb {
       position: absolute; top: 3px; left: 3px;
       width: 12px; height: 12px; background: white; border-radius: 50%;
@@ -182,10 +182,10 @@ export class DoenTaskForm extends LitElement {
     }
     .rb-row {
       display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-      font-size: 12px; color: rgba(232,234,240,0.7);
+      font-size: 12px; color: var(--color-text-muted-strong);
     }
     .rb-row select, .rb-row input {
-      font-size: 12px; padding: 5px 8px; border-radius: 6px;
+      font-size: 12px; padding: 5px 8px; border-radius: var(--radius-xs);
     }
     .rb-row input[type="number"] { width: 56px; }
     .rb-row input[type="time"] { width: 90px; }
@@ -194,23 +194,23 @@ export class DoenTaskForm extends LitElement {
     .weekday-chip {
       padding: 10px 12px;
       min-height: 36px;
-      border-radius: 999px;
+      border-radius: var(--radius-pill);
       font-size: 11px;
       background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.14);
-      color: rgba(232,234,240,0.6);
+      color: var(--color-text-muted-strong);
       cursor: pointer; user-select: none;
-      transition: background 120ms, border-color 120ms, color 120ms;
+      transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
     }
     .weekday-chip.active {
       background: rgba(99,102,241,0.28);
-      border-color: #6366f1;
-      color: #e8eaf0;
+      border-color: var(--color-accent);
+      color: var(--color-text);
     }
     .weekday-chip:hover { border-color: rgba(255,255,255,0.28); }
 
     .rb-preview {
-      font-size: 11px; color: rgba(232,234,240,0.55);
+      font-size: 11px; color: var(--color-text-muted-strong);
       font-style: italic;
     }
   `];

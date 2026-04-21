@@ -132,9 +132,9 @@ export class DoenViewCalendar extends LitElement {
       width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
     }
     .pill .dot.p-none { background: rgba(255,255,255,0.25); }
-    .pill .dot.p-low { background: #10b981; }
-    .pill .dot.p-medium { background: #f59e0b; }
-    .pill .dot.p-high { background: #ef4444; }
+    .pill .dot.p-low { background: var(--color-priority-low); }
+    .pill .dot.p-medium { background: var(--color-priority-medium); }
+    .pill .dot.p-high { background: var(--color-priority-high); }
     .pill .pill-title {
       flex: 1;
       overflow: hidden;

@@ -73,7 +73,7 @@ export class PageInvite extends LitElement {
       background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.22);
       border-radius: 10px; padding: 11px 14px; font-size: 13px; color: #fca5a5;
     }
-    .muted { font-size: 12px; color: rgba(232,234,240,0.5); margin-top: 6px; }
+    .muted { font-size: 12px; color: var(--color-text-muted); margin-top: 6px; }
   `];
 
   async connectedCallback() {
