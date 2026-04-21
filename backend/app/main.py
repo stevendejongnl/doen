@@ -1,11 +1,13 @@
+import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from app.api import api_keys, auth, groups, ha, invitations, projects, sse, tasks
@@ -13,11 +15,20 @@ from app.config import settings
 from app.db.session import engine
 from app.models import *  # noqa: F401, F403 — register all models with metadata
 from app.scheduler.setup import create_scheduler, set_scheduler
+from app.services.telegram_service import TelegramNotificationService
+
+logger = logging.getLogger(__name__)
+
+telegram = TelegramNotificationService(
+    bot_token=settings.telegram_bot_token,
+    chat_id=settings.telegram_chat_id,
+    app_name=settings.app_name,
+    app_url=settings.app_base_url or None,
+)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
-    # Create tables if they don't exist (dev convenience; prod uses Alembic)
     from app.db.migrate import migrate_recurring_rules_to_structured
     from app.db.session import Base
     async with engine.begin() as conn:
@@ -29,14 +40,37 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     set_scheduler(scheduler)
     scheduler.start()
 
-    yield
+    await telegram.send_startup(version=settings.app_version, pod_name=settings.pod_name or None)
 
-    scheduler.shutdown(wait=False)
+    shutdown_reason = "graceful"
+    try:
+        yield
+    except BaseException as e:
+        shutdown_reason = f"error: {type(e).__name__}"
+        try:
+            await telegram.send_crash(
+                error=e,
+                version=settings.app_version,
+                pod_name=settings.pod_name or None,
+            )
+        except Exception:
+            logger.exception("Failed to send crash notification")
+        raise
+    finally:
+        scheduler.shutdown(wait=False)
+        try:
+            await telegram.send_shutdown(
+                version=settings.app_version,
+                pod_name=settings.pod_name or None,
+                reason=shutdown_reason,
+            )
+        except Exception:
+            logger.exception("Failed to send shutdown notification")
 
 
 app = FastAPI(
     title=settings.app_name,
-    version="0.1.0",
+    version=settings.app_version,
     lifespan=lifespan,
 )
 
@@ -58,9 +92,27 @@ app.include_router(sse.router)
 app.include_router(ha.router)
 
 
-@app.get("/health")
-async def health() -> dict:
-    return {"status": "ok", "app": settings.app_name}
+@app.get("/health", response_model=None)
+async def health() -> JSONResponse | dict:
+    try:
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+    except Exception as e:
+        reason = f"db ping failed: {type(e).__name__}"
+        logger.error(reason, exc_info=True)
+        try:
+            await telegram.send_health_failure(
+                reason=reason,
+                version=settings.app_version,
+                pod_name=settings.pod_name or None,
+            )
+        except Exception:
+            logger.exception("Failed to send health failure notification")
+        return JSONResponse(
+            status_code=503,
+            content={"status": "unhealthy", "app": settings.app_name, "database": "disconnected"},
+        )
+    return {"status": "ok", "app": settings.app_name, "version": settings.app_version}
 
 
 # Serve frontend SPA — must be last so API routes take priority.

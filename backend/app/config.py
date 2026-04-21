@@ -37,5 +37,11 @@ class Settings(BaseSettings):
     smtp_use_tls: bool = False
     mail_invite_expires_days: int = 7
 
+    # Deployment identity & Telegram ops notifications
+    app_version: str = "0.0.0-dev"
+    pod_name: str = ""
+    telegram_bot_token: str = ""
+    telegram_chat_id: str = ""
+
 
 settings = Settings()

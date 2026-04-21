@@ -79,6 +79,44 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Notify Telegram — release created
+        if: steps.semantic.outputs.new_release_published == 'true'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          VERSION: ${{ steps.semantic.outputs.new_release_version }}
+          BRANCH: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          COMMIT: ${{ github.sha }}
+        run: |
+          chmod +x scripts/send-telegram-notification.sh
+          scripts/send-telegram-notification.sh \
+            --type release_success \
+            --version "$VERSION" \
+            --branch "$BRANCH" \
+            --run-url "$RUN_URL" \
+            --commit "$COMMIT" \
+            --repo "$REPO"
+
+      - name: Notify Telegram — no release needed
+        if: steps.semantic.outputs.new_release_published != 'true'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          BRANCH: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          COMMIT: ${{ github.sha }}
+        run: |
+          chmod +x scripts/send-telegram-notification.sh
+          scripts/send-telegram-notification.sh \
+            --type release_skip \
+            --branch "$BRANCH" \
+            --run-url "$RUN_URL" \
+            --commit "$COMMIT" \
+            --repo "$REPO"
+
   docker-publish:
     needs: release
     runs-on: ubuntu-latest
@@ -98,11 +136,15 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Determine tags and version
         id: tags
+        env:
+          OWNER: ${{ github.repository_owner }}
+          NEW_RELEASE: ${{ needs.release.outputs.new_release_published }}
+          NEW_VERSION: ${{ needs.release.outputs.new_release_version }}
         run: |
-          IMAGE="ghcr.io/${{ github.repository_owner }}/doen"
+          IMAGE="ghcr.io/${OWNER}/doen"
           TAGS="${IMAGE}:latest"
-          if [ "${{ needs.release.outputs.new_release_published }}" = "true" ]; then
-            VERSION="${{ needs.release.outputs.new_release_version }}"
+          if [ "$NEW_RELEASE" = "true" ]; then
+            VERSION="$NEW_VERSION"
           else
             VERSION=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo "0.0.0")
           fi
@@ -113,6 +155,7 @@ jobs:
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
           echo "version=v${VERSION}" >> $GITHUB_OUTPUT
       - uses: docker/build-push-action@v5
+        id: build
         with:
           context: .
           push: true
@@ -120,3 +163,64 @@ jobs:
           build-args: APP_VERSION=${{ steps.tags.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Notify Telegram — image pushed
+        if: success()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          VERSION: ${{ steps.tags.outputs.version }}
+          BRANCH: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          COMMIT: ${{ github.sha }}
+        run: |
+          chmod +x scripts/send-telegram-notification.sh
+          scripts/send-telegram-notification.sh \
+            --type docker_success \
+            --version "$VERSION" \
+            --branch "$BRANCH" \
+            --run-url "$RUN_URL" \
+            --commit "$COMMIT" \
+            --repo "$REPO"
+
+      - name: Notify Telegram — image build failed
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          BRANCH: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          COMMIT: ${{ github.sha }}
+        run: |
+          chmod +x scripts/send-telegram-notification.sh
+          scripts/send-telegram-notification.sh \
+            --type docker_failure \
+            --branch "$BRANCH" \
+            --run-url "$RUN_URL" \
+            --commit "$COMMIT" \
+            --repo "$REPO"
+
+  notify-ci-failure:
+    needs: [backend-test, backend-lint, frontend-build, release, docker-publish]
+    if: failure() && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Notify Telegram — CI failed on main
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          BRANCH: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          COMMIT: ${{ github.sha }}
+        run: |
+          chmod +x scripts/send-telegram-notification.sh
+          scripts/send-telegram-notification.sh \
+            --type ci_failure \
+            --branch "$BRANCH" \
+            --run-url "$RUN_URL" \
+            --commit "$COMMIT" \
+            --repo "$REPO"

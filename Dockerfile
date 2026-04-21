@@ -9,6 +9,8 @@ RUN VITE_APP_VERSION=$APP_VERSION npm run build
 
 # Stage 2: runtime
 FROM python:3.13-slim
+ARG APP_VERSION=0.0.0
+ENV APP_VERSION=${APP_VERSION}
 WORKDIR /app
 
 # tzdata so TZ=Europe/Amsterdam (set via ConfigMap) actually affects local time

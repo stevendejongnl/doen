@@ -39,6 +39,12 @@ spec:
                 name: doen-config
             - secretRef:
                 name: doen-secret
+          env:
+            # Identify the pod in Telegram notifications (pod name changes each roll).
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
           volumeMounts:
             - name: data
               mountPath: /app/data
