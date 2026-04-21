@@ -148,7 +148,15 @@ export class DoenViewKanban extends LitElement {
     }
 
     @media (max-width: 768px) {
-      .board { grid-template-columns: 1fr; grid-auto-rows: minmax(160px, 1fr); }
+      :host { overflow-y: auto; }
+      .board {
+        grid-template-columns: 1fr;
+        grid-auto-rows: auto;
+        height: auto;
+        overflow: visible;
+      }
+      .col { overflow: visible; }
+      .col-body { overflow-y: visible; padding: 6px 10px 14px; }
     }
   `];
 

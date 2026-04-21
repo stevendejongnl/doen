@@ -15,10 +15,15 @@ export class PageLogin extends LitElement {
   static styles = [...sharedStyles, css`
     :host {
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      width: 100%;
+      flex: 1;
       min-height: 100vh;
       padding: 20px;
+      gap: 16px;
+      box-sizing: border-box;
     }
 
     .card {
@@ -31,6 +36,11 @@ export class PageLogin extends LitElement {
       backdrop-filter: var(--glass-blur);
       -webkit-backdrop-filter: var(--glass-blur);
       box-shadow: 0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
+    }
+
+    @media (max-width: 480px) {
+      :host { padding: 16px; }
+      .card { padding: 28px 22px; border-radius: 20px; }
     }
 
     .brand {
@@ -125,7 +135,6 @@ export class PageLogin extends LitElement {
     .version {
       font-size: 11px;
       color: rgba(232,234,240,0.25);
-      margin-top: 12px;
     }
   `];
 

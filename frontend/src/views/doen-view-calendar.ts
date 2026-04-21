@@ -198,6 +198,39 @@ export class DoenViewCalendar extends LitElement {
     .expanded-task {
       margin-top: 6px;
     }
+
+    /* Mobile: week becomes a vertical day list; month shrinks cells */
+    @media (max-width: 640px) {
+      .grid.week {
+        grid-template-columns: 1fr;
+        grid-auto-rows: auto;
+      }
+      .grid.week .cell {
+        min-height: 64px;
+        padding: 10px 12px;
+      }
+      .grid.week .cell-head {
+        font-size: 12px;
+      }
+      .grid.week .cell-head .dom {
+        font-size: 16px;
+      }
+      .grid.month {
+        grid-auto-rows: minmax(68px, auto);
+        gap: 4px;
+      }
+      .grid.month .cell {
+        min-height: 68px;
+        padding: 6px 6px 5px;
+        gap: 3px;
+      }
+      .grid.month .cell-head .dom { font-size: 13px; }
+      .grid.month .cell-head .dow { display: none; }
+      .grid.month .pill { padding: 2px 5px; font-size: 10px; }
+      .grid.month .pill .pill-time { display: none; }
+
+      .unscheduled { max-height: 45%; }
+    }
   `];
 
   private _cellsForWeek(start: Date): Date[] {

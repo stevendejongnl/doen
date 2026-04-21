@@ -278,6 +278,43 @@ export class DoenTask extends LitElement {
       gap: 10px;
     }
 
+    @media (max-width: 640px) {
+      .modal-backdrop { padding: 0; align-items: flex-end; }
+      .modal-panel {
+        width: 100%;
+        max-width: 100%;
+        max-height: 92vh;
+        border-radius: 18px 18px 0 0;
+        border-bottom: none;
+        animation: panel-up 220ms cubic-bezier(0.2, 0.8, 0.3, 1);
+      }
+      @keyframes panel-up {
+        from { opacity: 0; transform: translateY(32px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      .modal-header { padding: 14px 14px 12px; }
+      .modal-body { padding: 14px; }
+      .modal-footer {
+        padding: 12px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+        flex-wrap: wrap;
+      }
+      .detail-row {
+        grid-template-columns: 1fr;
+        gap: 4px;
+      }
+      .detail-label {
+        padding-top: 0;
+      }
+      .edit-row { gap: 6px; }
+      .edit-row select,
+      .edit-row input[type="date"] {
+        flex: 1 1 120px;
+        min-width: 0;
+      }
+      .edit-title { flex: 1 1 100%; }
+      .btn-delete { order: 99; width: 100%; justify-content: center; margin-right: 0; }
+    }
+
     .edit-row { display: flex; gap: 8px; flex-wrap: wrap; }
 
     input, select, textarea {

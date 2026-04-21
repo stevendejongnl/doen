@@ -87,6 +87,26 @@ export class PageAdmin extends LitElement {
     @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 
     @media (max-width: 768px) { h1 { font-size: 20px; } }
+
+    @media (max-width: 480px) {
+      table, thead, tbody, tr, th, td { display: block; }
+      thead { display: none; }
+      tr {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: 10px 0;
+        border-top: 1px solid rgba(255,255,255,0.06);
+      }
+      tr:first-child { border-top: none; }
+      td { padding: 2px 4px; border-top: none; }
+      td:first-child { font-weight: 600; }
+      td:not(:first-child) {
+        font-size: 12px;
+        color: rgba(232,234,240,0.55);
+        padding-left: 38px;
+      }
+    }
   `];
 
   connectedCallback() {
