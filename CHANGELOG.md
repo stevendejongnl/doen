@@ -1,3 +1,10 @@
+# [1.16.0](https://github.com/stevendejongnl/doen/compare/v1.15.0...v1.16.0) (2026-04-21)
+
+
+### Features
+
+* **categories:** add task categories with hybrid scope ([948fbae](https://github.com/stevendejongnl/doen/commit/948fbae39de98eef21cd4e787ca0c9edf81c2c06))
+
 # [1.15.0](https://github.com/stevendejongnl/doen/compare/v1.14.0...v1.15.0) (2026-04-21)
 
 
