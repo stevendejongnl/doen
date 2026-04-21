@@ -1,3 +1,10 @@
+# [1.21.0](https://github.com/stevendejongnl/doen/compare/v1.20.0...v1.21.0) (2026-04-21)
+
+
+### Features
+
+* **ha:** group-based card filter, category/assignee in card data, points + per-group sensors ([6832cde](https://github.com/stevendejongnl/doen/commit/6832cdeed7ae59cc09736a5e3786c0bf3fb2873a))
+
 # [1.20.0](https://github.com/stevendejongnl/doen/compare/v1.19.0...v1.20.0) (2026-04-21)
 
 
