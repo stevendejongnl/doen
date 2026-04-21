@@ -15,6 +15,12 @@ import { sharedStyles } from '../styles/shared-styles';
 
 const DAY_LABELS = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
 
+function normalizeTime24(raw: string): string {
+  const digits = raw.replace(/\D/g, '').slice(0, 4);
+  if (digits.length <= 2) return digits;
+  return `${digits.slice(0, 2)}:${digits.slice(2)}`;
+}
+
 function weekdaysToCsv(s: Set<number>): string | null {
   if (s.size === 0) return null;
   return [...s].sort((a, b) => a - b).join(',');
@@ -376,9 +382,23 @@ export class DoenTaskForm extends LitElement {
             ` : ''}
             <div class="rb-row">
               <span>Om:</span>
-              <input type="time"
+              <input type="text"
+                inputmode="numeric"
+                pattern="[0-2][0-9]:[0-5][0-9]"
+                maxlength="5"
+                placeholder="08:00"
+                aria-label="Tijd in 24-uurs notatie"
                 .value=${this._timeOfDay}
-                @input=${(e: Event) => this._timeOfDay = (e.target as HTMLInputElement).value || '08:00'}
+                @input=${(e: Event) => {
+                  const t = e.target as HTMLInputElement;
+                  const next = normalizeTime24(t.value);
+                  this._timeOfDay = next;
+                  t.value = next;
+                }}
+                @blur=${(e: Event) => {
+                  const t = e.target as HTMLInputElement;
+                  if (!/^[0-2][0-9]:[0-5][0-9]$/.test(t.value)) this._timeOfDay = '08:00';
+                }}
               />
               <span style="margin-left:8px">Alleen</span>
               <select .value=${this._parity}

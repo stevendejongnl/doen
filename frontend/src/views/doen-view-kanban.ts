@@ -143,10 +143,6 @@ export class DoenViewKanban extends LitElement {
       flex-shrink: 0;
     }
 
-    .expanded-wrap {
-      margin-top: -4px;
-    }
-
     @media (max-width: 768px) {
       :host { overflow-y: auto; }
       .board {
@@ -224,9 +220,13 @@ export class DoenViewKanban extends LitElement {
     if (id) this._move(id, col);
   }
 
-  private _toggleOpen(id: string) {
-    this._openTaskId = this._openTaskId === id ? null : id;
+  private _openCard(id: string) {
+    this._openTaskId = id;
   }
+
+  private _closeCard = () => {
+    this._openTaskId = null;
+  };
 
   private _formatDue(due: string): { label: string; overdue: boolean } {
     const d = new Date(due);
@@ -274,19 +274,18 @@ export class DoenViewKanban extends LitElement {
         draggable="true"
         @dragstart=${(e: DragEvent) => this._onDragStart(e, t.id)}
         @dragend=${this._onDragEnd}
-        @click=${() => this._toggleOpen(t.id)}
+        @click=${() => this._openCard(t.id)}
       >
         ${this._renderCardBody(t)}
       </div>
-      ${this._openTaskId === t.id ? html`
-        <div class="expanded-wrap">
-          <doen-task .task=${t}></doen-task>
-        </div>
-      ` : ''}
     `;
   }
 
   render() {
+    const openTask = this._openTaskId
+      ? this.tasks.find(t => t.id === this._openTaskId)
+      : null;
+
     return html`
       <div class="board">
         ${COLUMNS.map(col => {
@@ -311,6 +310,15 @@ export class DoenViewKanban extends LitElement {
           `;
         })}
       </div>
+      ${openTask ? html`
+        <doen-task
+          .task=${openTask}
+          .hideRow=${true}
+          .autoOpen=${true}
+          @modal-closed=${this._closeCard}
+          @task-deleted=${this._closeCard}
+        ></doen-task>
+      ` : ''}
     `;
   }
 }
