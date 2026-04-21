@@ -1,3 +1,11 @@
+# [1.12.0](https://github.com/stevendejongnl/doen/compare/v1.11.1...v1.12.0) (2026-04-21)
+
+
+### Features
+
+* **task:** open task in modal with view/edit modes ([c2af10f](https://github.com/stevendejongnl/doen/commit/c2af10f82f859f685cb3200a03dc040585090599))
+* **ui:** mobile-first pass across login, calendar, kanban, admin, modal ([168abe9](https://github.com/stevendejongnl/doen/commit/168abe96ca7977cb738f2531454970430fe41238))
+
 ## [1.11.1](https://github.com/stevendejongnl/doen/compare/v1.11.0...v1.11.1) (2026-04-21)
 
 
