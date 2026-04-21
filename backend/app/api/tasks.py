@@ -12,11 +12,16 @@ from app.api.schemas import (
     TaskUpdate,
 )
 from app.exceptions import DoenError
+from app.models.task import Task
 from app.models.user import User
 from app.services.sse_bus import sse_bus
 from app.services.task_service import TaskService
 
 router = APIRouter(tags=["tasks"])
+
+
+def _task_payload(task: Task) -> dict:
+    return TaskOut.model_validate(task).model_dump(mode="json")
 
 
 @router.get("/projects/{project_id}/tasks", response_model=list[TaskOut])
@@ -55,9 +60,7 @@ async def create_task(
         )
     except DoenError as exc:
         raise_http(exc)
-    await sse_bus.publish_to_group(
-        member_ids, "task_created", {"id": task.id, "project_id": project_id}
-    )
+    await sse_bus.publish_to_group(member_ids, "task_created", _task_payload(task))
     return task
 
 
@@ -110,7 +113,7 @@ async def update_task(
         )
     except DoenError as exc:
         raise_http(exc)
-    await sse_bus.publish_to_group(member_ids, "task_updated", {"id": task.id})
+    await sse_bus.publish_to_group(member_ids, "task_updated", _task_payload(task))
     return task
 
 
@@ -137,11 +140,7 @@ async def complete_task(
         task, member_ids = await svc.complete_task(task_id)
     except DoenError as exc:
         raise_http(exc)
-    await sse_bus.publish_to_group(
-        member_ids,
-        "task_completed",
-        {"id": task.id, "title": task.title, "completed_at": task.completed_at.isoformat()},
-    )
+    await sse_bus.publish_to_group(member_ids, "task_completed", _task_payload(task))
     return task
 
 
@@ -155,11 +154,7 @@ async def reopen_task(
         task, member_ids = await svc.reopen_task(task_id)
     except DoenError as exc:
         raise_http(exc)
-    await sse_bus.publish_to_group(
-        member_ids,
-        "task_updated",
-        {"id": task.id, "title": task.title, "status": task.status},
-    )
+    await sse_bus.publish_to_group(member_ids, "task_updated", _task_payload(task))
     return task
 
 

@@ -122,11 +122,11 @@ class CategoryService:
 
     async def delete_category(
         self, category_id: str, user_id: str
-    ) -> tuple[str, list[str], list[str]]:
+    ) -> tuple[str, list[str], list[Task]]:
         """
         On delete, null-out tasks that reference this category so they remain
-        intact but uncategorized. Returns the orphaned task ids so the router
-        can emit task_updated SSE events.
+        intact but uncategorized. Returns the orphaned tasks (refetched with
+        relationships loaded) so the router can emit task_updated SSE events.
         """
         category = await self.get_category(category_id, user_id)
         member_ids = await self._member_ids(category)
@@ -137,6 +137,11 @@ class CategoryService:
             .values(category_id=None)
             .returning(Task.id)
         )
-        orphaned_task_ids = [row[0] for row in result.all()]
+        orphaned_ids = [row[0] for row in result.all()]
         await self._categories.delete(category)
-        return category_id, member_ids, orphaned_task_ids
+        orphaned_tasks: list[Task] = []
+        for tid in orphaned_ids:
+            fresh = await self._tasks.get_by_id(tid)
+            if fresh is not None:
+                orphaned_tasks.append(fresh)
+        return category_id, member_ids, orphaned_tasks

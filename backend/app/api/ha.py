@@ -8,7 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db, get_task_repo, raise_http
-from app.api.schemas import TokenResponse
+from app.api.schemas import TaskOut, TokenResponse
 from app.config import settings
 from app.exceptions import DoenError
 from app.models.task import Task
@@ -209,10 +209,9 @@ async def ha_webhook(
         raise HTTPException(status_code=404, detail="Task not found")
 
     if body.action == "complete":
-        await task_repo.complete(task)
-        await sse_bus.publish(user_id, "task_completed", {
-            "id": task.id, "status": "done", "project_id": task.project_id,
-        })
+        completed = await task_repo.complete(task)
+        payload = TaskOut.model_validate(completed).model_dump(mode="json")
+        await sse_bus.publish(user_id, "task_completed", payload)
         return {"result": "completed"}
 
     if body.action == "snooze":

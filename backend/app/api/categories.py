@@ -1,13 +1,18 @@
 from fastapi import APIRouter, Depends, status
 
 from app.api.deps import get_category_service, get_current_user, raise_http
-from app.api.schemas import CategoryCreate, CategoryOut, CategoryUpdate
+from app.api.schemas import CategoryCreate, CategoryOut, CategoryUpdate, TaskOut
 from app.exceptions import DoenError
+from app.models.category import Category
 from app.models.user import User
 from app.services.category_service import CategoryService
 from app.services.sse_bus import sse_bus
 
 router = APIRouter(prefix="/categories", tags=["categories"])
+
+
+def _category_payload(category: Category) -> dict:
+    return CategoryOut.model_validate(category).model_dump(mode="json")
 
 
 @router.get("", response_model=list[CategoryOut])
@@ -36,7 +41,7 @@ async def create_category(
     except DoenError as exc:
         raise_http(exc)
     await sse_bus.publish_to_group(
-        member_ids, "category_created", {"id": category.id}
+        member_ids, "category_created", _category_payload(category)
     )
     return category
 
@@ -71,7 +76,7 @@ async def update_category(
     except DoenError as exc:
         raise_http(exc)
     await sse_bus.publish_to_group(
-        member_ids, "category_updated", {"id": category.id}
+        member_ids, "category_updated", _category_payload(category)
     )
     return category
 
@@ -83,13 +88,12 @@ async def delete_category(
     svc: CategoryService = Depends(get_category_service),
 ) -> None:
     try:
-        cid, member_ids, orphaned_task_ids = await svc.delete_category(
+        cid, member_ids, orphaned_tasks = await svc.delete_category(
             category_id, current_user.id
         )
     except DoenError as exc:
         raise_http(exc)
     await sse_bus.publish_to_group(member_ids, "category_deleted", {"id": cid})
-    for task_id in orphaned_task_ids:
-        await sse_bus.publish_to_group(
-            member_ids, "task_updated", {"id": task_id, "category_id": None}
-        )
+    for task in orphaned_tasks:
+        payload = TaskOut.model_validate(task).model_dump(mode="json")
+        await sse_bus.publish_to_group(member_ids, "task_updated", payload)
