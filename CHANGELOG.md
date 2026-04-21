@@ -1,3 +1,10 @@
+## [1.16.2](https://github.com/stevendejongnl/doen/compare/v1.16.1...v1.16.2) (2026-04-21)
+
+
+### Bug Fixes
+
+* **sse:** send full task/category payloads so clients don't need a hard refresh ([8d773c3](https://github.com/stevendejongnl/doen/commit/8d773c353ab1188319fce09c2d9ce29bdb886e12))
+
 ## [1.16.1](https://github.com/stevendejongnl/doen/compare/v1.16.0...v1.16.1) (2026-04-21)
 
 
