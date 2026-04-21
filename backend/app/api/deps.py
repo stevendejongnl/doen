@@ -22,6 +22,7 @@ from app.repositories.api_key_repo import ApiKeyRepository
 from app.repositories.category_repo import CategoryRepository
 from app.repositories.group_invitation_repo import GroupInvitationRepository
 from app.repositories.group_repo import GroupRepository
+from app.repositories.household_points_repo import HouseholdPointsRepository
 from app.repositories.password_reset_repo import PasswordResetRepository
 from app.repositories.project_repo import ProjectRepository
 from app.repositories.task_repo import TaskRepository
@@ -32,6 +33,7 @@ from app.services.auth import AuthService
 from app.services.category_service import CategoryService
 from app.services.group_invitation_service import GroupInvitationService
 from app.services.group_service import GroupService
+from app.services.household_points_service import HouseholdPointsService
 from app.services.mail_service import MailService, get_mail_service
 from app.services.project_service import ProjectService
 from app.services.task_service import TaskService
@@ -97,6 +99,12 @@ def get_category_repo(db: AsyncSession = Depends(get_db)) -> CategoryRepository:
     return CategoryRepository(db)
 
 
+def get_household_points_repo(
+    db: AsyncSession = Depends(get_db),
+) -> HouseholdPointsRepository:
+    return HouseholdPointsRepository(db)
+
+
 # ── Service providers ─────────────────────────────────────────────────────────
 
 def get_auth_service(
@@ -138,13 +146,24 @@ def get_project_service(
     return ProjectService(project_repo, group_repo)
 
 
+def get_household_points_service(
+    points_repo: HouseholdPointsRepository = Depends(get_household_points_repo),
+    task_repo: TaskRepository = Depends(get_task_repo),
+    project_service: ProjectService = Depends(get_project_service),
+    group_repo: GroupRepository = Depends(get_group_repo),
+    user_repo: UserRepository = Depends(get_user_repo),
+) -> HouseholdPointsService:
+    return HouseholdPointsService(points_repo, task_repo, project_service, group_repo, user_repo)
+
+
 def get_task_service(
     task_repo: TaskRepository = Depends(get_task_repo),
     project_service: ProjectService = Depends(get_project_service),
     group_repo: GroupRepository = Depends(get_group_repo),
     category_repo: CategoryRepository = Depends(get_category_repo),
+    points_service: HouseholdPointsService = Depends(get_household_points_service),
 ) -> TaskService:
-    return TaskService(task_repo, project_service, group_repo, category_repo)
+    return TaskService(task_repo, project_service, group_repo, category_repo, points_service)
 
 
 def get_category_service(

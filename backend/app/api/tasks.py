@@ -137,7 +137,7 @@ async def complete_task(
     svc: TaskService = Depends(get_task_service),
 ):
     try:
-        task, member_ids = await svc.complete_task(task_id)
+        task, member_ids = await svc.complete_task(task_id, current_user.id)
     except DoenError as exc:
         raise_http(exc)
     await sse_bus.publish_to_group(member_ids, "task_completed", _task_payload(task))
@@ -151,7 +151,7 @@ async def reopen_task(
     svc: TaskService = Depends(get_task_service),
 ):
     try:
-        task, member_ids = await svc.reopen_task(task_id)
+        task, member_ids = await svc.reopen_task(task_id, current_user.id)
     except DoenError as exc:
         raise_http(exc)
     await sse_bus.publish_to_group(member_ids, "task_updated", _task_payload(task))

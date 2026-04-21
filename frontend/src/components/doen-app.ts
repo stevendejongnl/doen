@@ -194,15 +194,21 @@ export class DoenApp extends LitElement {
   private _handleSSE(event: string, task: Task) {
     const project = (this.shadowRoot?.querySelector('page-project') as any);
     const todo = (this.shadowRoot?.querySelector('page-todo') as any);
+    if (event === 'offer_created' || event === 'offer_updated') {
+      project?.reload?.();
+      return;
+    }
     if (event === 'task_created') {
       project?.addTask?.(task);
       todo?.addTask?.(task);
     } else if (event === 'task_updated' || event === 'task_completed') {
       project?.updateTask(task);
       todo?.updateTask?.(task);
+      project?.reload?.();
     } else if (event === 'task_deleted') {
       project?.removeTask((task as any).id);
       todo?.removeTask?.((task as any).id);
+      project?.reload?.();
     }
   }
 

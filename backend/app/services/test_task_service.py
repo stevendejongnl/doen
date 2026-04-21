@@ -3,18 +3,29 @@ import pytest
 from app.exceptions import AccessDeniedError, ConflictError, NotFoundError
 from app.repositories.category_repo import CategoryRepository
 from app.repositories.group_repo import GroupRepository
+from app.repositories.household_points_repo import HouseholdPointsRepository
 from app.repositories.project_repo import ProjectRepository
 from app.repositories.task_repo import TaskRepository
+from app.repositories.user_repo import UserRepository
+from app.services.household_points_service import HouseholdPointsService
 from app.services.project_service import ProjectService
 from app.services.task_service import TaskService
 
 
 def _service(db_session) -> TaskService:
+    points = HouseholdPointsService(
+        HouseholdPointsRepository(db_session),
+        TaskRepository(db_session),
+        ProjectService(ProjectRepository(db_session), GroupRepository(db_session)),
+        GroupRepository(db_session),
+        UserRepository(db_session),
+    )
     return TaskService(
         task_repo=TaskRepository(db_session),
         project_service=ProjectService(ProjectRepository(db_session), GroupRepository(db_session)),
         group_repo=GroupRepository(db_session),
         category_repo=CategoryRepository(db_session),
+        points_service=points,
     )
 
 
@@ -113,7 +124,7 @@ async def test_complete_task_sets_done_status(db_session, seed_data):
     svc = _service(db_session)
 
     # When completed
-    task, _ = await svc.complete_task(seed_data["todo_task"].id)
+    task, _ = await svc.complete_task(seed_data["todo_task"].id, seed_data["henk"].id)
 
     # Then status is done and completed_at is set
     assert task.status == "done"

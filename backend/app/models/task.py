@@ -45,6 +45,9 @@ class Task(Base, TimestampMixin):
     recurring_rule: Mapped["RecurringRule | None"] = relationship(
         "RecurringRule", back_populates="template_task", uselist=False, cascade="all, delete-orphan"
     )
+    offer: Mapped["TaskOffer | None"] = relationship(
+        "TaskOffer", back_populates="task", uselist=False, cascade="all, delete-orphan"
+    )
 
     @property
     def assignee_name(self) -> str | None:
@@ -57,6 +60,15 @@ class Task(Base, TimestampMixin):
     @property
     def category_color(self) -> str | None:
         return self.category.color if self.category else None
+
+    @property
+    def point_value(self) -> int:
+        return {
+            "none": 1,
+            "low": 2,
+            "medium": 3,
+            "high": 5,
+        }[self.priority]
 
 
 class Label(Base):
@@ -120,5 +132,6 @@ class RecurringRule(Base):
 
 
 from app.models.category import Category  # noqa: E402
+from app.models.household_points import TaskOffer  # noqa: E402
 from app.models.project import Project  # noqa: E402
 from app.models.user import User  # noqa: E402

@@ -1,7 +1,8 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import type { Project, Task } from '../services/types';
+import type { HouseholdBalance, Project, Task, TaskOffer } from '../services/types';
 import { api, ApiError } from '../services/api';
+import { getMe, type Me } from '../services/auth';
 import { toast } from '../components/doen-toast';
 import { sharedStyles } from '../styles/shared-styles';
 import '../components/doen-task';
@@ -18,6 +19,9 @@ export class PageProject extends LitElement {
   @state() private _editName = '';
   @state() private _editColor = '';
   @state() private _saving = false;
+  @state() private _balances: HouseholdBalance[] = [];
+  @state() private _offers: TaskOffer[] = [];
+  @state() private _me: Me | null = null;
 
   private static readonly COLORS = [
     '#6366f1', '#10b981', '#f59e0b', '#ef4444',
@@ -145,6 +149,100 @@ export class PageProject extends LitElement {
 
     .task-list { display: flex; flex-direction: column; gap: 5px; }
 
+    .household-panel {
+      margin-bottom: 18px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .panel-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: var(--color-text-muted);
+    }
+
+    .balance-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .balance-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--color-text);
+      font-size: 12px;
+    }
+
+    .balance-chip .value { font-weight: 700; }
+    .balance-chip.negative .value { color: #f87171; }
+    .balance-chip.positive .value { color: #4ade80; }
+
+    .offer-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .offer-card {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .offer-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .offer-task {
+      font-size: 13px;
+      color: var(--color-text);
+      font-weight: 600;
+    }
+
+    .offer-meta {
+      font-size: 11px;
+      color: var(--color-text-muted);
+    }
+
+    .offer-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .offer-actions button {
+      border: none;
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      color: white;
+      background: rgba(99,102,241,0.9);
+    }
+
+    .offer-actions button.secondary {
+      background: rgba(255,255,255,0.1);
+      color: var(--color-text);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
     .section-label {
       font-size: 11px;
       font-weight: 600;
@@ -218,16 +316,43 @@ export class PageProject extends LitElement {
   private async _load() {
     this._loading = true;
     try {
-      const [project, tasks] = await Promise.all([
+      const [project, tasks, me] = await Promise.all([
         api.get<Project>(`/projects/${this.projectId}`),
         api.get<Task[]>(`/projects/${this.projectId}/tasks`),
+        getMe(),
       ]);
       this._project = project;
       this._tasks = tasks;
+      this._me = me;
+      await this._loadHousehold(project);
     } catch (e) {
       if (e instanceof ApiError) toast.error(`Laden mislukt: ${e.message}`);
     } finally {
       this._loading = false;
+    }
+  }
+
+  reload() {
+    return this._load();
+  }
+
+  private async _loadHousehold(project: Project) {
+    if (!project.group_id) {
+      this._balances = [];
+      this._offers = [];
+      return;
+    }
+    const [balances, offers] = await Promise.all([
+      api.get<HouseholdBalance[]>(`/households/${project.group_id}/balances`),
+      api.get<TaskOffer[]>(`/households/${project.group_id}/offers`),
+    ]);
+    this._balances = balances;
+    this._offers = offers;
+  }
+
+  private async _refreshHousehold() {
+    if (this._project) {
+      await this._loadHousehold(this._project);
     }
   }
 
@@ -251,6 +376,37 @@ export class PageProject extends LitElement {
 
   private _active() { return this._tasks.filter(t => t.status !== 'done'); }
   private _done() { return this._tasks.filter(t => t.status === 'done'); }
+
+  private async _acceptOffer(offer: TaskOffer) {
+    try {
+      await api.post(`/offers/${offer.id}/accept`, {});
+      await this._load();
+      toast.success('Aanbod geaccepteerd');
+    } catch (e) {
+      if (e instanceof ApiError) toast.error(`Accepteren mislukt: ${e.message}`);
+    }
+  }
+
+  private async _decideOffer(offer: TaskOffer, approved: boolean) {
+    try {
+      const reopen = approved ? true : confirm('Na afwijzen opnieuw openzetten?');
+      await api.post(`/offers/${offer.id}/decision`, { approved, reopen });
+      await this._load();
+      toast.success(approved ? 'Aanbod goedgekeurd' : 'Aanbod afgewezen');
+    } catch (e) {
+      if (e instanceof ApiError) toast.error(`Beoordelen mislukt: ${e.message}`);
+    }
+  }
+
+  private async _withdrawOffer(offer: TaskOffer) {
+    try {
+      await api.delete(`/offers/${offer.id}`);
+      await this._load();
+      toast.success('Aanbod ingetrokken');
+    } catch (e) {
+      if (e instanceof ApiError) toast.error(`Intrekken mislukt: ${e.message}`);
+    }
+  }
 
   private _startEdit() {
     if (!this._project) return;
@@ -353,11 +509,62 @@ export class PageProject extends LitElement {
         `}
       </div>
 
+      ${this._project?.group_id ? html`
+        <div class="household-panel">
+          <div class="panel-title">Huishoudsaldo</div>
+          <div class="balance-row">
+            ${this._balances.map(b => html`
+              <span class="balance-chip ${b.balance < 0 ? 'negative' : 'positive'}">
+                ${b.name}
+                <span class="value">${b.balance}</span>
+              </span>
+            `)}
+          </div>
+          <div class="panel-title">Aanbiedingen</div>
+          <div class="offer-list">
+            ${this._offers.length === 0 ? html`
+              <div class="offer-meta">Nog geen openstaande aanbiedingen.</div>
+            ` : this._offers.map(offer => {
+              const mine = this._me?.id === offer.owner_id;
+              const canAccept = !mine && offer.status === 'open';
+              const canDecide = mine && offer.status === 'requested';
+              const canWithdraw = mine && offer.status === 'open';
+              return html`
+                <div class="offer-card">
+                  <div class="offer-top">
+                    <div>
+                      <div class="offer-task">${offer.task_title}</div>
+                      <div class="offer-meta">
+                        ${offer.point_value} pt · ${offer.owner_name}
+                        ${offer.reward_note ? html` · ${offer.reward_note}` : ''}
+                        · ${offer.status}
+                      </div>
+                    </div>
+                    <div class="offer-actions">
+                      ${canAccept ? html`<button @click=${() => this._acceptOffer(offer)}>Accepteren</button>` : ''}
+                      ${canDecide ? html`
+                        <button @click=${() => this._decideOffer(offer, true)}>Goedkeuren</button>
+                        <button class="secondary" @click=${() => this._decideOffer(offer, false)}>Afwijzen</button>
+                      ` : ''}
+                      ${canWithdraw ? html`<button class="secondary" @click=${() => this._withdrawOffer(offer)}>Intrekken</button>` : ''}
+                    </div>
+                  </div>
+                </div>
+              `;
+            })}
+          </div>
+        </div>
+      ` : ''}
+
       <div class="add-card">
         <doen-task-form .project=${this._project}></doen-task-form>
       </div>
 
-      <div class="task-list">
+      <div class="task-list"
+        @offer-created=${() => this._refreshHousehold()}
+        @offer-updated=${() => this._refreshHousehold()}
+        @task-updated=${(e: CustomEvent<Task>) => { this.updateTask(e.detail); void this._refreshHousehold(); }}
+        >
         ${active.length === 0 && done.length === 0 ? html`
           <div class="empty-state">
             <i class="fa-solid fa-clipboard-list"></i>

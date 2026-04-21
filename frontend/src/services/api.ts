@@ -78,6 +78,7 @@ export function sseConnect(onEvent: (name: string, data: unknown) => void): Even
   };
   for (const ev of [
     'task_created', 'task_updated', 'task_completed', 'task_deleted',
+    'offer_created', 'offer_updated',
     'category_created', 'category_updated', 'category_deleted',
   ]) {
     src.addEventListener(ev, handle(ev) as EventListener);

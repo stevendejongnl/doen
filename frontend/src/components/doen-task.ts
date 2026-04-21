@@ -9,6 +9,7 @@ import type {
   RecurringRule,
   RecurrenceUnit,
   RecurrenceParity,
+  TaskOffer,
 } from '../services/types';
 import { api, ApiError } from '../services/api';
 import { toast } from './doen-toast';
@@ -76,6 +77,7 @@ export class DoenTask extends LitElement {
   @state() private _members: GroupMember[] = [];
   @state() private _categories: Category[] = [];
   @state() private _saving = false;
+  @state() private _project: Project | null = null;
 
   static styles = [...sharedStyles, css`
     :host { display: block; }
@@ -538,6 +540,7 @@ export class DoenTask extends LitElement {
   private async _loadMembers() {
     try {
       const project = await api.get<Project>(`/projects/${this.task.project_id}`);
+      this._project = project;
       if (project.group_id) {
         this._members = await api.get<GroupMember[]>(`/groups/${project.group_id}/members`);
       } else {
@@ -545,7 +548,25 @@ export class DoenTask extends LitElement {
       }
       await this._loadCategories(project);
     } catch {
+      this._project = null;
       this._members = [];
+    }
+  }
+
+  private async _offerTask() {
+    if (!this._project?.group_id) {
+      toast.error('Alleen taken in een huishouden kunnen worden aangeboden.');
+      return;
+    }
+    const reward = window.prompt('Wat krijg je terug? (optioneel, bijvoorbeeld pizza of bier)');
+    try {
+      await api.post<TaskOffer>(`/tasks/${this.task.id}/offer`, {
+        reward_note: reward?.trim() || null,
+      });
+      toast.success('Aanbod geplaatst');
+      this.dispatchEvent(new CustomEvent('offer-created', { bubbles: true, composed: true }));
+    } catch (e) {
+      if (e instanceof ApiError) toast.error(`Aanbieden mislukt: ${e.message}`);
     }
   }
 
@@ -874,6 +895,12 @@ export class DoenTask extends LitElement {
           </span>
         </div>
         <div class="detail-row">
+          <span class="detail-label">Punten</span>
+          <span class="detail-value">
+            <span class="detail-chip">${this.task.point_value} punt${this.task.point_value === 1 ? '' : 'en'}</span>
+          </span>
+        </div>
+        <div class="detail-row">
           <span class="detail-label">Deadline</span>
           ${due
             ? html`<span class="detail-value">
@@ -955,6 +982,11 @@ export class DoenTask extends LitElement {
               <button type="button" class="btn-cancel-edit" @click=${this._closeModal}>
                 Sluiten
               </button>
+              ${this._project?.group_id ? html`
+                <button type="button" class="btn-cancel-edit" @click=${this._offerTask}>
+                  <i class="fa-solid fa-handshake"></i> Offeren
+                </button>
+              ` : ''}
               <button type="button" class="btn-edit-modal" @click=${() => this._modalMode = 'edit'}>
                 <i class="fa-solid fa-pen"></i> Bewerken
               </button>
@@ -988,6 +1020,7 @@ export class DoenTask extends LitElement {
         <span class="priority-dot p-${this.task.priority}"></span>
 
         <span class="task-title ${isDone ? 'done-text' : ''}">${this.task.title}</span>
+        <span class="detail-chip" style="font-size:10px">${this.task.point_value} pt</span>
 
         <span class="task-meta">
           ${this.task.category_name ? html`

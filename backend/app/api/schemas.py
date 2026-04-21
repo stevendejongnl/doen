@@ -247,6 +247,7 @@ class TaskOut(BaseModel):
     assignee_name: str | None = None
     status: str
     priority: str
+    point_value: int
     due_date: datetime | None
     completed_at: datetime | None
     created_at: datetime
@@ -293,3 +294,40 @@ class RecurringRuleOut(BaseModel):
     active: bool
 
     model_config = {"from_attributes": True}
+
+
+# ── Household points ──────────────────────────────────────────────────────────
+
+class HouseholdBalanceOut(BaseModel):
+    user_id: str
+    name: str
+    balance: int
+
+
+class TaskOfferCreate(BaseModel):
+    reward_note: str | None = None
+
+
+class TaskOfferDecision(BaseModel):
+    approved: bool
+    reopen: bool = True
+
+
+class TaskOfferOut(BaseModel):
+    id: str
+    task_id: str
+    task_title: str
+    group_id: str
+    owner_id: str
+    owner_name: str
+    accepted_by_id: str | None = None
+    accepted_by_name: str | None = None
+    approved_by_id: str | None = None
+    approved_by_name: str | None = None
+    status: str
+    reward_note: str | None = None
+    point_value: int
+    accepted_at: datetime | None = None
+    decided_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime

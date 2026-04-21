@@ -5,6 +5,7 @@ from app.models.task import RecurringRule, Task
 from app.repositories.category_repo import CategoryRepository
 from app.repositories.group_repo import GroupRepository
 from app.repositories.task_repo import TaskRepository
+from app.services.household_points_service import HouseholdPointsService
 from app.services.project_service import ProjectService
 
 
@@ -15,11 +16,13 @@ class TaskService:
         project_service: ProjectService,
         group_repo: GroupRepository,
         category_repo: CategoryRepository,
+        points_service: HouseholdPointsService,
     ) -> None:
         self._tasks = task_repo
         self._projects = project_service
         self._groups = group_repo
         self._categories = category_repo
+        self._points = points_service
 
     async def _assert_category_usable(
         self,
@@ -129,14 +132,23 @@ class TaskService:
         member_ids = await self._member_ids_for_project(task.project_id)
         return updated, member_ids
 
-    async def complete_task(self, task_id: str) -> tuple[Task, list[str]]:
+    async def complete_task(self, task_id: str, requesting_user_id: str) -> tuple[Task, list[str]]:
         task = await self.get_task(task_id)
+        project = await self._projects.get_project_raw(task.project_id)
+        await self._projects.assert_access(project, requesting_user_id)
         completed = await self._tasks.complete(task)
+        await self._points.record_task_completion(task_id, requesting_user_id)
         member_ids = await self._member_ids_for_project(task.project_id)
         return completed, member_ids
 
-    async def reopen_task(self, task_id: str) -> tuple[Task, list[str]]:
+    async def reopen_task(
+        self, task_id: str, _requesting_user_id: str
+    ) -> tuple[Task, list[str]]:
         task = await self.get_task(task_id)
+        project = await self._projects.get_project_raw(task.project_id)
+        await self._projects.assert_access(project, _requesting_user_id)
+        if task.status == "done":
+            await self._points.reverse_task_completion(task_id)
         reopened = await self._tasks.update(task, {"status": "todo", "completed_at": None})
         member_ids = await self._member_ids_for_project(task.project_id)
         return reopened, member_ids
