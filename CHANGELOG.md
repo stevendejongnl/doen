@@ -1,3 +1,10 @@
+## [1.11.1](https://github.com/stevendejongnl/doen/compare/v1.11.0...v1.11.1) (2026-04-21)
+
+
+### Bug Fixes
+
+* **db:** add users.preferences column via runtime migration ([45ed283](https://github.com/stevendejongnl/doen/commit/45ed283f4777ea9f6f70dece0183581e6b91b18a))
+
 # [1.11.0](https://github.com/stevendejongnl/doen/compare/v1.10.0...v1.11.0) (2026-04-21)
 
 
