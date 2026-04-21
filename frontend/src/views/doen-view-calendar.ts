@@ -195,10 +195,6 @@ export class DoenViewCalendar extends LitElement {
       overflow-y: auto;
     }
 
-    .expanded-task {
-      margin-top: 6px;
-    }
-
     /* Mobile: week becomes a vertical day list; month shrinks cells */
     @media (max-width: 640px) {
       .grid.week {
@@ -280,23 +276,22 @@ export class DoenViewCalendar extends LitElement {
     return this.anchor.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' });
   }
 
-  private _togglePill(id: string) {
-    this._openTaskId = this._openTaskId === id ? null : id;
+  private _openPill(id: string) {
+    this._openTaskId = id;
   }
+
+  private _closePill = () => {
+    this._openTaskId = null;
+  };
 
   private _renderPill(t: Task) {
     const timeLabel = t.due_date ? this._formatTime(t.due_date) : '';
     return html`
-      <div class="pill ${t.status === 'done' ? 'done' : ''}" @click=${() => this._togglePill(t.id)}>
+      <div class="pill ${t.status === 'done' ? 'done' : ''}" @click=${() => this._openPill(t.id)}>
         <span class="dot p-${t.priority}"></span>
         <span class="pill-title">${t.title}</span>
         ${timeLabel ? html`<span class="pill-time">${timeLabel}</span>` : ''}
       </div>
-      ${this._openTaskId === t.id ? html`
-        <div class="expanded-task">
-          <doen-task .task=${t}></doen-task>
-        </div>
-      ` : ''}
     `;
   }
 
@@ -366,6 +361,10 @@ export class DoenViewCalendar extends LitElement {
       `;
     }
 
+    const openTask = this._openTaskId
+      ? this.tasks.find(t => t.id === this._openTaskId)
+      : null;
+
     return html`
       <div class="range-label">${this._rangeLabel()}</div>
       ${body}
@@ -379,6 +378,15 @@ export class DoenViewCalendar extends LitElement {
             ${unscheduled.map(t => html`<doen-task .task=${t}></doen-task>`)}
           </div>
         </div>
+      ` : ''}
+      ${openTask ? html`
+        <doen-task
+          .task=${openTask}
+          .hideRow=${true}
+          .autoOpen=${true}
+          @modal-closed=${this._closePill}
+          @task-deleted=${this._closePill}
+        ></doen-task>
       ` : ''}
     `;
   }

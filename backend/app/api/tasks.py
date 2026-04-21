@@ -140,6 +140,24 @@ async def complete_task(
     return task
 
 
+@router.post("/tasks/{task_id}/reopen", response_model=TaskOut)
+async def reopen_task(
+    task_id: str,
+    current_user: User = Depends(get_current_user),
+    svc: TaskService = Depends(get_task_service),
+):
+    try:
+        task, member_ids = await svc.reopen_task(task_id)
+    except DoenError as exc:
+        raise_http(exc)
+    await sse_bus.publish_to_group(
+        member_ids,
+        "task_updated",
+        {"id": task.id, "title": task.title, "status": task.status},
+    )
+    return task
+
+
 @router.post("/tasks/{task_id}/recurring", response_model=RecurringRuleOut, status_code=201)
 async def create_recurring_rule(
     task_id: str,

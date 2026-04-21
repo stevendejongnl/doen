@@ -96,6 +96,12 @@ class TaskService:
         member_ids = await self._member_ids_for_project(task.project_id)
         return completed, member_ids
 
+    async def reopen_task(self, task_id: str) -> tuple[Task, list[str]]:
+        task = await self.get_task(task_id)
+        reopened = await self._tasks.update(task, {"status": "todo", "completed_at": None})
+        member_ids = await self._member_ids_for_project(task.project_id)
+        return reopened, member_ids
+
     async def delete_task(self, task_id: str) -> tuple[str, list[str]]:
         task = await self.get_task(task_id)
         member_ids = await self._member_ids_for_project(task.project_id)

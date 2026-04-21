@@ -47,6 +47,8 @@ export function describeRule(rule: RecurringRule): string {
 @customElement('doen-task')
 export class DoenTask extends LitElement {
   @property({ type: Object }) task!: Task;
+  @property({ type: Boolean }) hideRow = false;
+  @property({ type: Boolean }) autoOpen = false;
   @state() private _completing = false;
   @state() private _done = false;
   @state() private _modalOpen = false;
@@ -100,8 +102,9 @@ export class DoenTask extends LitElement {
 
     .check-btn:hover { border-color: #10b981; transform: scale(1.1); }
     .check-btn.completing { border-color: #10b981; background: rgba(16,185,129,0.15); }
+    .check-btn.done { border-color: #10b981; background: rgba(16,185,129,0.2); }
     .check-btn i { font-size: 10px; opacity: 0; transition: opacity 120ms; }
-    .check-btn.completing i { opacity: 1; }
+    .check-btn.completing i, .check-btn.done i { opacity: 1; }
 
     .priority-dot {
       width: 7px; height: 7px;
@@ -261,6 +264,9 @@ export class DoenTask extends LitElement {
     }
     .detail-chip.overdue { color: #ef4444; border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.08); }
     .detail-chip.done { color: #10b981; border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.08); }
+    .detail-chip.toggle { cursor: pointer; transition: background 120ms, border-color 120ms; }
+    .detail-chip.toggle:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.22); }
+    .detail-chip.toggle.done:hover { background: rgba(16,185,129,0.16); border-color: rgba(16,185,129,0.45); }
 
     .btn-edit-modal {
       background: #6366f1; color: white; border: none;
@@ -463,19 +469,29 @@ export class DoenTask extends LitElement {
     }
   `];
 
-  private async _complete() {
-    if (this._completing || this.task.status === 'done') return;
+  private async _complete(e?: Event) {
+    e?.stopPropagation();
+    if (this._completing) return;
     this._completing = true;
+    const isDone = this.task.status === 'done';
     const prevStatus = this.task.status;
-    this.task = { ...this.task, status: 'done' };
+    this.task = { ...this.task, status: isDone ? 'todo' : 'done' };
     try {
-      await api.post(`/tasks/${this.task.id}/complete`, {});
-      setTimeout(() => { this._done = true; }, 280);
-      toast.success('Gedaan!');
-    } catch (e) {
+      const endpoint = isDone ? 'reopen' : 'complete';
+      const updated = await api.post<Task>(`/tasks/${this.task.id}/${endpoint}`, {});
+      this.task = updated;
+      if (isDone) {
+        this._completing = false;
+        toast.success('Heropend');
+      } else {
+        setTimeout(() => { this._done = true; }, 280);
+        toast.success('Gedaan!');
+      }
+      this.dispatchEvent(new CustomEvent('task-updated', { detail: this.task, bubbles: true, composed: true }));
+    } catch (err) {
       this.task = { ...this.task, status: prevStatus };
       this._completing = false;
-      if (e instanceof ApiError) toast.error(`Mislukt: ${e.message}`);
+      if (err instanceof ApiError) toast.error(`Mislukt: ${err.message}`);
     }
   }
 
@@ -519,6 +535,7 @@ export class DoenTask extends LitElement {
   private _closeModal = () => {
     this._modalOpen = false;
     this._modalMode = 'view';
+    this.dispatchEvent(new CustomEvent('modal-closed', { bubbles: true, composed: true }));
   };
 
   private _onBackdropClick(e: MouseEvent) {
@@ -537,6 +554,12 @@ export class DoenTask extends LitElement {
   disconnectedCallback() {
     super.disconnectedCallback();
     document.removeEventListener('keydown', this._onKeydown);
+  }
+
+  firstUpdated() {
+    if (this.autoOpen && !this._modalOpen && this.task) {
+      this._openModal('view');
+    }
   }
 
   private _toggleWeekday(n: number) {
@@ -753,8 +776,12 @@ export class DoenTask extends LitElement {
           <span class="detail-label">Status</span>
           <span class="detail-value">
             ${isDone
-              ? html`<span class="detail-chip done"><i class="fa-solid fa-check"></i> Klaar</span>`
-              : html`<span class="detail-chip"><i class="fa-regular fa-circle"></i> Open</span>`}
+              ? html`<span class="detail-chip toggle done" @click=${this._complete} title="Markeer als te doen">
+                  <i class="fa-solid fa-check"></i> Klaar
+                </span>`
+              : html`<span class="detail-chip toggle" @click=${this._complete} title="Markeer als klaar">
+                  <i class="fa-regular fa-circle"></i> Open
+                </span>`}
           </span>
         </div>
         <div class="detail-row">
@@ -852,13 +879,16 @@ export class DoenTask extends LitElement {
   }
 
   render() {
+    if (this.hideRow) return this._renderModal();
+
     const isDone = this.task.status === 'done';
     const due = this._formatDue(this.task.due_date);
 
     return html`
       <div class="task-row ${this._done ? 'done-anim' : ''}" @click=${this._onRowClick}>
-        <button class="check-btn ${this._completing ? 'completing' : ''}"
-          @click=${this._complete} title="Markeer als klaar">
+        <button class="check-btn ${this._completing ? 'completing' : ''} ${isDone ? 'done' : ''}"
+          @click=${this._complete}
+          title=${isDone ? 'Markeer als te doen' : 'Markeer als klaar'}>
           <i class="fa-solid fa-check"></i>
         </button>
 
