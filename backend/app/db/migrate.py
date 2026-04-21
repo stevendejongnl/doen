@@ -82,6 +82,23 @@ async def migrate_recurring_rules_to_structured(engine: AsyncEngine) -> None:
                 pass
 
 
+async def migrate_add_task_category_id(engine: AsyncEngine) -> None:
+    """Add the `tasks.category_id` FK if it doesn't exist yet.
+
+    The `categories` table itself is created by Base.metadata.create_all; only
+    the column on the existing tasks table needs an ALTER.
+    """
+    async with engine.begin() as conn:
+        columns = await conn.run_sync(
+            lambda sync_conn: inspect(sync_conn).get_columns("tasks")
+        )
+        if any(c["name"] == "category_id" for c in columns):
+            return
+        await conn.execute(
+            text("ALTER TABLE tasks ADD COLUMN category_id VARCHAR REFERENCES categories(id)")
+        )
+
+
 async def migrate_add_user_preferences(engine: AsyncEngine) -> None:
     """Add the `users.preferences` JSON column if it doesn't exist yet.
 

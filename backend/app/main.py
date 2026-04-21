@@ -29,12 +29,17 @@ telegram = TelegramNotificationService(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
-    from app.db.migrate import migrate_add_user_preferences, migrate_recurring_rules_to_structured
+    from app.db.migrate import (
+        migrate_add_task_category_id,
+        migrate_add_user_preferences,
+        migrate_recurring_rules_to_structured,
+    )
     from app.db.session import Base
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     await migrate_recurring_rules_to_structured(engine)
     await migrate_add_user_preferences(engine)
+    await migrate_add_task_category_id(engine)
 
     Session = async_sessionmaker(engine, expire_on_commit=False)
     scheduler = create_scheduler(Session)
