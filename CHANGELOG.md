@@ -1,3 +1,12 @@
+# [1.18.0](https://github.com/stevendejongnl/doen/compare/v1.17.0...v1.18.0) (2026-04-21)
+
+
+### Features
+
+* **points:** add household ledger history and transfers ([6c8fbd8](https://github.com/stevendejongnl/doen/commit/6c8fbd84817c2d5df431a85774bbdd0a75715b29))
+* **points:** add household notification inbox ([4051990](https://github.com/stevendejongnl/doen/commit/40519906e1fa092fd6e871377190a111dbdee70e))
+* **points:** add household points core ([0d2c206](https://github.com/stevendejongnl/doen/commit/0d2c2060d0b3a5c6ed204b5b4a47dd54c0c5de1c))
+
 # [1.17.0](https://github.com/stevendejongnl/doen/compare/v1.16.2...v1.17.0) (2026-04-21)
 
 
