@@ -1,3 +1,10 @@
+# [1.15.0](https://github.com/stevendejongnl/doen/compare/v1.14.0...v1.15.0) (2026-04-21)
+
+
+### Features
+
+* **groups:** add project + per group in sidebar and inline rename ([c526355](https://github.com/stevendejongnl/doen/commit/c526355fe6d377e4591168e9cdc55cd01efb10b0))
+
 # [1.14.0](https://github.com/stevendejongnl/doen/compare/v1.13.1...v1.14.0) (2026-04-21)
 
 
