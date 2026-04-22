@@ -1,7 +1,7 @@
 {
   "domain": "doen",
   "name": "Doen",
-  "version": "1.22.0",
+  "version": "1.23.0",
   "documentation": "https://github.com/stevendejong/doen",
   "issue_tracker": "https://github.com/stevendejong/doen/issues",
   "dependencies": [],

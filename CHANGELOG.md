@@ -1,3 +1,10 @@
+# [1.23.0](https://github.com/stevendejongnl/doen/compare/v1.22.0...v1.23.0) (2026-04-22)
+
+
+### Features
+
+* **groups:** per-group admin settings page with offer cleanup, point correction, and category management ([065bb7c](https://github.com/stevendejongnl/doen/commit/065bb7c9df63b76168004a4029f7bb069f40de02))
+
 # [1.22.0](https://github.com/stevendejongnl/doen/compare/v1.21.1...v1.22.0) (2026-04-22)
 
 
