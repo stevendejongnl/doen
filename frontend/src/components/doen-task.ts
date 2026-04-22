@@ -635,7 +635,7 @@ export class DoenTask extends LitElement {
           const created = await api.post<Category>('/categories', {
             name: name,
             color: '#a855f7',
-            project_id: this.task.project_id,
+            ...(this._project?.group_id ? { group_id: this._project.group_id } : {}),
           });
           this._categories = [...this._categories, created];
           this._editCategoryId = created.id;
@@ -655,10 +655,18 @@ export class DoenTask extends LitElement {
   }
 
   private async _openModal(mode: 'view' | 'edit' = 'view') {
-    this._resetEditState();
-    this._modalMode = mode;
     this._modalOpen = true;
+    this._modalMode = 'view';
+    try {
+      this.task = await api.get<Task>(`/tasks/${this.task.id}`);
+    } catch {
+      // fall through with whatever this.task already is
+    }
     await this._loadMembers();
+    if (mode === 'edit') {
+      this._resetEditState();
+      this._modalMode = 'edit';
+    }
   }
 
   private _closeModal = () => {

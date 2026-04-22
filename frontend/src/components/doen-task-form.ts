@@ -244,7 +244,7 @@ export class DoenTaskForm extends LitElement {
           const created = await api.post<Category>('/categories', {
             name: name,
             color: '#a855f7',
-            project_id: this.project.id,
+            ...(this.project.group_id ? { group_id: this.project.group_id } : {}),
           });
           this._categories = [...this._categories, created];
           this._categoryId = created.id;
