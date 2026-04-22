@@ -1,3 +1,10 @@
+## [1.23.3](https://github.com/stevendejongnl/doen/compare/v1.23.2...v1.23.3) (2026-04-22)
+
+
+### Bug Fixes
+
+* **tasks:** use .selected= on options to fix assignee/category not showing in edit ([7631431](https://github.com/stevendejongnl/doen/commit/7631431feb1c66d0e2efa6e6b6db26b86ba6c825))
+
 ## [1.23.2](https://github.com/stevendejongnl/doen/compare/v1.23.1...v1.23.2) (2026-04-22)
 
 
