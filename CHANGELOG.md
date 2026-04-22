@@ -1,3 +1,10 @@
+## [1.23.1](https://github.com/stevendejongnl/doen/compare/v1.23.0...v1.23.1) (2026-04-22)
+
+
+### Bug Fixes
+
+* **categories:** show group-admin categories created via task form and prefill edit modal fields ([acdce73](https://github.com/stevendejongnl/doen/commit/acdce734041a8e099587d015bc370cb2af691d86))
+
 # [1.23.0](https://github.com/stevendejongnl/doen/compare/v1.22.0...v1.23.0) (2026-04-22)
 
 
