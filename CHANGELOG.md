@@ -1,3 +1,10 @@
+## [1.21.1](https://github.com/stevendejongnl/doen/compare/v1.21.0...v1.21.1) (2026-04-22)
+
+
+### Bug Fixes
+
+* **spa:** catch-all route serves index.html for deep links instead of 404 ([876f618](https://github.com/stevendejongnl/doen/commit/876f618a79905b89f436784ba857fee3ca742149))
+
 # [1.21.0](https://github.com/stevendejongnl/doen/compare/v1.20.0...v1.21.0) (2026-04-21)
 
 
