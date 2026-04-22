@@ -1,3 +1,10 @@
+## [1.23.2](https://github.com/stevendejongnl/doen/compare/v1.23.1...v1.23.2) (2026-04-22)
+
+
+### Bug Fixes
+
+* **tasks:** run category backfill at startup and prefill edit form from view modal ([8b2a0fe](https://github.com/stevendejongnl/doen/commit/8b2a0fe466fd04df82c599cfe87ef87c00f04189))
+
 ## [1.23.1](https://github.com/stevendejongnl/doen/compare/v1.23.0...v1.23.1) (2026-04-22)
 
 
