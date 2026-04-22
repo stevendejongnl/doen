@@ -5,7 +5,6 @@ description = "Doen — planning & task app backend"
 requires-python = ">=3.13"
 dependencies = [
     "aiosqlite>=0.22.1",
-    "alembic>=1.18.4",
     "apscheduler>=3.11.2",
     "asyncpg>=0.31.0",
     "fastapi>=0.136.0",
