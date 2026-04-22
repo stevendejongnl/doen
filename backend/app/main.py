@@ -6,7 +6,6 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
@@ -140,13 +139,10 @@ async def health() -> JSONResponse | dict:
 # Falls back gracefully if static/ doesn't exist (dev without a build).
 _static = Path(__file__).parent.parent / "static"
 if _static.exists():
-    # SPA deep-links need to serve index.html — StaticFiles would 404.
-    @app.get("/invite/{token}", include_in_schema=False)
-    async def _spa_invite_fallback(token: str) -> FileResponse:
+    # Serve real asset files directly; fall back to index.html for all SPA routes.
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def _spa_catchall(full_path: str) -> FileResponse:
+        candidate = _static / full_path
+        if candidate.is_file():
+            return FileResponse(str(candidate))
         return FileResponse(str(_static / "index.html"))
-
-    @app.get("/reset/{token}", include_in_schema=False)
-    async def _spa_reset_fallback(token: str) -> FileResponse:
-        return FileResponse(str(_static / "index.html"))
-
-    app.mount("/", StaticFiles(directory=str(_static), html=True), name="static")
