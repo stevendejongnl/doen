@@ -1,3 +1,10 @@
+# [1.22.0](https://github.com/stevendejongnl/doen/compare/v1.21.1...v1.22.0) (2026-04-22)
+
+
+### Features
+
+* **ui:** shared Lit form primitives with full a11y ([abd7c62](https://github.com/stevendejongnl/doen/commit/abd7c622b7cbfecc37b75ba7ee3b38fab57028db))
+
 ## [1.21.1](https://github.com/stevendejongnl/doen/compare/v1.21.0...v1.21.1) (2026-04-22)
 
 
