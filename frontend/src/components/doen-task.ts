@@ -823,21 +823,21 @@ export class DoenTask extends LitElement {
             @input=${(e: Event) => this._editDue = (e.target as HTMLInputElement).value}
           />
           ${this._members.length > 1 ? html`
-            <select .value=${this._editAssignee}
+            <select
               @change=${(e: Event) => this._editAssignee = (e.target as HTMLSelectElement).value}>
-              <option value="">Niemand toegewezen</option>
-              ${this._members.map(m => html`
-                <option value=${m.user_id}>${m.name}</option>
+              <option value="" .selected=${this._editAssignee === ''}>Niemand toegewezen</option>
+              ${this._members.map(member => html`
+                <option value=${member.user_id} .selected=${this._editAssignee === member.user_id}>${member.name}</option>
               `)}
             </select>
           ` : ''}
-          <select .value=${this._editCategoryId}
+          <select
             @change=${(e: Event) => this._onEditCategoryChange((e.target as HTMLSelectElement).value)}>
-            <option value="">Geen categorie</option>
-            ${this._categories.map(c => html`
-              <option value=${c.id}>${c.name}</option>
+            <option value="" .selected=${this._editCategoryId === ''}>Geen categorie</option>
+            ${this._categories.map(category => html`
+              <option value=${category.id} .selected=${this._editCategoryId === category.id}>${category.name}</option>
             `)}
-            <option value="__new__">+ Nieuwe categorie…</option>
+            <option value="__new__" .selected=${false}>+ Nieuwe categorie…</option>
           </select>
         </div>
         <textarea
