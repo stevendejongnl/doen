@@ -28,8 +28,34 @@ export const sharedStyles = [faSelectors, css`
     background: rgba(255,255,255,0.07);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-sm);
+    padding: var(--space-sm) var(--space-md);
     outline: none;
     -webkit-appearance: none;
     appearance: none;
+    transition: border-color var(--transition-fast), background var(--transition-fast);
+    box-sizing: border-box;
+  }
+
+  input:focus-visible, textarea:focus-visible, select:focus-visible {
+    border-color: var(--color-accent);
+    background: rgba(255,255,255,0.1);
+  }
+
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px #1a1f35 inset !important;
+    -webkit-text-fill-color: var(--color-text) !important;
+    border-color: var(--color-accent) !important;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.6);
+    cursor: pointer;
+  }
+
+  select option {
+    background: var(--color-surface-solid);
+    color: var(--color-text);
   }
 `];

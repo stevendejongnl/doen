@@ -15,6 +15,10 @@ import { toast } from '../components/doen-toast';
 import { sharedStyles } from '../styles/shared-styles';
 import '../components/doen-task';
 import '../components/doen-task-form';
+import '../components/ui/doen-input';
+import '../components/ui/doen-select';
+import type { SelectOption } from '../components/ui/doen-select';
+import '../components/ui/doen-button';
 
 @customElement('page-project')
 export class PageProject extends LitElement {
@@ -241,20 +245,8 @@ export class PageProject extends LitElement {
       flex-wrap: wrap;
     }
 
-    .offer-actions button {
-      border: none;
-      border-radius: 8px;
-      padding: 7px 10px;
-      font-size: 12px;
-      cursor: pointer;
-      color: white;
-      background: rgba(99,102,241,0.9);
-    }
-
-    .offer-actions button.secondary {
-      background: rgba(255,255,255,0.1);
-      color: var(--color-text);
-      border: 1px solid rgba(255,255,255,0.12);
+    .offer-actions doen-button {
+      flex-shrink: 0;
     }
 
     .inbox-list {
@@ -295,20 +287,8 @@ export class PageProject extends LitElement {
       flex-wrap: wrap;
     }
 
-    .inbox-actions button {
-      border: none;
-      border-radius: 8px;
-      padding: 7px 10px;
-      font-size: 12px;
-      cursor: pointer;
-      color: white;
-      background: rgba(99,102,241,0.9);
-    }
-
-    .inbox-actions button.secondary {
-      background: rgba(255,255,255,0.1);
-      color: var(--color-text);
-      border: 1px solid rgba(255,255,255,0.12);
+    .inbox-actions doen-button {
+      flex-shrink: 0;
     }
 
     .transaction-list {
@@ -652,8 +632,8 @@ export class PageProject extends LitElement {
                   <div class="inbox-meta">${item.message}</div>
                   ${item.actionable && offer ? html`
                     <div class="inbox-actions">
-                      <button @click=${() => this._handleInboxAction(offer, true)}>Goedkeuren</button>
-                      <button class="secondary" @click=${() => this._handleInboxAction(offer, false)}>Afwijzen</button>
+                      <doen-button variant="primary" size="sm" @click=${() => this._handleInboxAction(offer, true)}>Goedkeuren</doen-button>
+                      <doen-button variant="neutral" size="sm" @click=${() => this._handleInboxAction(offer, false)}>Afwijzen</doen-button>
                     </div>
                   ` : ''}
                 </div>
@@ -690,12 +670,16 @@ export class PageProject extends LitElement {
                       </div>
                     </div>
                     <div class="offer-actions">
-                      ${canAccept ? html`<button @click=${() => this._acceptOffer(offer)}>Accepteren</button>` : ''}
-                      ${canDecide ? html`
-                        <button @click=${() => this._decideOffer(offer, true)}>Goedkeuren</button>
-                        <button class="secondary" @click=${() => this._decideOffer(offer, false)}>Afwijzen</button>
+                      ${canAccept ? html`
+                        <doen-button variant="primary" size="sm" @click=${() => this._acceptOffer(offer)}>Accepteren</doen-button>
                       ` : ''}
-                      ${canWithdraw ? html`<button class="secondary" @click=${() => this._withdrawOffer(offer)}>Intrekken</button>` : ''}
+                      ${canDecide ? html`
+                        <doen-button variant="primary" size="sm" @click=${() => this._decideOffer(offer, true)}>Goedkeuren</doen-button>
+                        <doen-button variant="neutral" size="sm" @click=${() => this._decideOffer(offer, false)}>Afwijzen</doen-button>
+                      ` : ''}
+                      ${canWithdraw ? html`
+                        <doen-button variant="neutral" size="sm" @click=${() => this._withdrawOffer(offer)}>Intrekken</doen-button>
+                      ` : ''}
                     </div>
                   </div>
                 </div>
@@ -706,28 +690,44 @@ export class PageProject extends LitElement {
           <div class="offer-card">
             <div class="offer-meta">Stuur punten naar iemand anders als debt payment of onderlinge verrekening.</div>
             <div class="offer-actions">
-              <select .value=${this._transferTo}
-                @change=${(e: Event) => this._transferTo = (e.target as HTMLSelectElement).value}>
-                <option value="">Kies iemand</option>
-                ${this._members.filter(m => m.user_id !== this._me?.id).map(m => html`
-                  <option value=${m.user_id}>${m.name}</option>
-                `)}
-              </select>
-              <input
+              <doen-select
+                label="Ontvanger"
+                .value=${this._transferTo}
+                .options=${[
+                  { value: '', label: 'Kies iemand' } as SelectOption,
+                  ...this._members
+                    .filter((member) => member.user_id !== this._me?.id)
+                    .map((member): SelectOption => ({ value: member.user_id, label: member.name })),
+                ]}
+                @doen-change=${(changeEvent: CustomEvent<{ value: string }>) => { this._transferTo = changeEvent.detail.value; }}
+                required
+              ></doen-select>
+              <doen-input
+                label="Punten"
                 type="number"
+                inputmode="numeric"
                 min="1"
+                style="max-width: 110px;"
                 .value=${String(this._transferAmount)}
-                @input=${(e: Event) => this._transferAmount = Math.max(1, parseInt((e.target as HTMLInputElement).value, 10) || 1)}
-                style="max-width: 90px;"
-              />
-              <input
-                type="text"
-                placeholder="Notitie"
-                .value=${this._transferNote}
-                @input=${(e: Event) => this._transferNote = (e.target as HTMLInputElement).value}
+                @doen-input=${(inputEvent: CustomEvent<{ value: string }>) => {
+                  this._transferAmount = Math.max(1, parseInt(inputEvent.detail.value, 10) || 1);
+                }}
+                required
+              ></doen-input>
+              <doen-input
+                label="Notitie"
+                placeholder="Optioneel"
                 style="flex:1;min-width:160px"
-              />
-              <button @click=${this._transferPoints} ?disabled=${!this._transferTo || this._transferAmount <= 0}>Versturen</button>
+                .value=${this._transferNote}
+                @doen-input=${(inputEvent: CustomEvent<{ value: string }>) => { this._transferNote = inputEvent.detail.value; }}
+              ></doen-input>
+              <doen-button
+                variant="primary"
+                size="sm"
+                style="align-self: flex-end;"
+                ?disabled=${!this._transferTo || this._transferAmount <= 0}
+                @click=${this._transferPoints}
+              >Versturen</doen-button>
             </div>
           </div>
           <div class="panel-title">Recente transacties</div>

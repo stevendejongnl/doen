@@ -13,6 +13,11 @@ import type {
 import { api, ApiError } from '../services/api';
 import { toast } from './doen-toast';
 import { sharedStyles } from '../styles/shared-styles';
+import './ui/doen-input';
+import './ui/doen-select';
+import type { SelectOption } from './ui/doen-select';
+import './ui/doen-textarea';
+import './ui/doen-button';
 import './ui/doen-prompt-dialog';
 import type { DoenPromptDialog } from './ui/doen-prompt-dialog';
 
@@ -85,56 +90,32 @@ export class DoenTaskForm extends LitElement {
 
     .row { display: flex; gap: 8px; flex-wrap: wrap; }
 
-    input, select, textarea {
+    .recurrence-builder input,
+    .recurrence-builder select {
       font: inherit;
       color: var(--color-text);
       background: rgba(255,255,255,0.07);
       border: 1px solid rgba(255,255,255,0.14);
-      border-radius: var(--radius-btn);
-      padding: 10px 14px;
+      border-radius: var(--radius-xs);
+      padding: 5px 8px;
+      font-size: 12px;
       outline: none;
       -webkit-appearance: none;
       appearance: none;
       transition: border-color var(--transition-fast), background var(--transition-fast);
+      box-sizing: border-box;
     }
 
-    input:focus, select:focus, textarea:focus {
+    .recurrence-builder input:focus-visible,
+    .recurrence-builder select:focus-visible {
       border-color: var(--color-accent);
       background: rgba(255,255,255,0.1);
     }
 
-    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
-    select option { background: var(--color-surface-solid); color: var(--color-text); }
-
-    textarea {
-      width: 100%;
-      min-height: 72px;
-      resize: vertical;
-      box-sizing: border-box;
-      font-size: 13px;
-      line-height: 1.5;
+    .recurrence-builder select option {
+      background: var(--color-surface-solid);
+      color: var(--color-text);
     }
-
-    .btn-add {
-      background: var(--color-accent);
-      color: white;
-      border: none;
-      border-radius: 10px;
-      padding: 10px 18px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background var(--transition-fast), transform var(--transition-fast);
-      white-space: nowrap;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      flex-shrink: 0;
-    }
-
-    .btn-add:hover:not(:disabled) { background: var(--color-accent-hover); }
-    .btn-add:active:not(:disabled) { transform: scale(0.97); }
-    .btn-add:disabled { opacity: 0.45; cursor: not-allowed; }
 
     .btn-notes-toggle {
       background: none;
@@ -185,9 +166,6 @@ export class DoenTaskForm extends LitElement {
     .rb-row {
       display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
       font-size: 12px; color: var(--color-text-muted-strong);
-    }
-    .rb-row select, .rb-row input {
-      font-size: 12px; padding: 5px 8px; border-radius: var(--radius-xs);
     }
     .rb-row input[type="number"] { width: 56px; }
     .rb-row input[type="time"] { width: 90px; }
@@ -347,60 +325,80 @@ export class DoenTaskForm extends LitElement {
     return html`
       <form @submit=${this._submit}>
         <div class="row">
-          <input
-            type="text"
+          <doen-input
+            aria-label="Nieuwe taak toevoegen"
             placeholder="Nieuwe taak toevoegen..."
+            style="flex:1"
             .value=${this._title}
-            @input=${(e: Event) => this._title = (e.target as HTMLInputElement).value}
+            @doen-input=${(inputEvent: CustomEvent<{ value: string }>) => { this._title = inputEvent.detail.value; }}
             ?disabled=${this._submitting}
-          />
-          <button class="btn-add" type="submit" ?disabled=${this._submitting || !this._title.trim()}>
-            <i class="fa-solid fa-${this._submitting ? 'spinner fa-spin' : 'plus'}"></i>
+          ></doen-input>
+          <doen-button
+            variant="primary"
+            ?disabled=${this._submitting || !this._title.trim()}
+            ?loading=${this._submitting}
+            @click=${this._submit}
+          >
+            ${this._submitting ? '' : html`<i class="fa-solid fa-plus"></i>`}
             ${this._submitting ? 'Bezig...' : 'Toevoegen'}
-          </button>
+          </doen-button>
         </div>
         <div class="row">
-          <select .value=${this._priority}
-            @change=${(e: Event) => this._priority = (e.target as HTMLSelectElement).value as TaskPriority}>
-            <option value="none">Geen prioriteit</option>
-            <option value="low">Laag</option>
-            <option value="medium">Middel</option>
-            <option value="high">Hoog</option>
-          </select>
-          <input
+          <doen-select
+            aria-label="Prioriteit"
+            .value=${this._priority}
+            .options=${[
+              { value: 'none', label: 'Geen prioriteit' } as SelectOption,
+              { value: 'low', label: 'Laag' },
+              { value: 'medium', label: 'Middel' },
+              { value: 'high', label: 'Hoog' },
+            ]}
+            @doen-change=${(changeEvent: CustomEvent<{ value: string }>) => {
+              this._priority = changeEvent.detail.value as TaskPriority;
+            }}
+          ></doen-select>
+          <doen-input
             type="date"
+            aria-label="Deadline"
             .value=${this._dueDate}
-            @input=${(e: Event) => this._dueDate = (e.target as HTMLInputElement).value}
-          />
+            @doen-change=${(changeEvent: CustomEvent<{ value: string }>) => { this._dueDate = changeEvent.detail.value; }}
+          ></doen-input>
           ${this._members.length > 1 ? html`
-            <select .value=${this._assigneeId}
-              @change=${(e: Event) => this._assigneeId = (e.target as HTMLSelectElement).value}>
-              <option value="">Niemand toegewezen</option>
-              ${this._members.map(m => html`
-                <option value=${m.user_id}>${m.name}</option>
-              `)}
-            </select>
+            <doen-select
+              aria-label="Toegewezen aan"
+              .value=${this._assigneeId}
+              .options=${[
+                { value: '', label: 'Niemand toegewezen' } as SelectOption,
+                ...this._members.map((member): SelectOption => ({ value: member.user_id, label: member.name })),
+              ]}
+              @doen-change=${(changeEvent: CustomEvent<{ value: string }>) => { this._assigneeId = changeEvent.detail.value; }}
+            ></doen-select>
           ` : ''}
-          <select .value=${this._categoryId}
-            @change=${(e: Event) => this._onCategoryChange((e.target as HTMLSelectElement).value)}>
-            <option value="">Geen categorie</option>
-            ${this._categories.map(c => html`
-              <option value=${c.id}>${c.name}</option>
-            `)}
-            <option value="__new__">+ Nieuwe categorie…</option>
-          </select>
+          <doen-select
+            aria-label="Categorie"
+            .value=${this._categoryId}
+            .options=${[
+              { value: '', label: 'Geen categorie' } as SelectOption,
+              ...this._categories.map((category): SelectOption => ({ value: category.id, label: category.name })),
+              { value: '__new__', label: '+ Nieuwe categorie…' },
+            ]}
+            @doen-change=${(changeEvent: CustomEvent<{ value: string }>) => {
+              this._onCategoryChange(changeEvent.detail.value);
+            }}
+          ></doen-select>
           <button type="button" class="btn-notes-toggle" @click=${() => this._showNotes = !this._showNotes}>
             <i class="fa-solid fa-${this._showNotes ? 'chevron-up' : 'plus'}"></i>
             ${this._showNotes ? 'Notitie verbergen' : 'Notitie toevoegen'}
           </button>
         </div>
         ${this._showNotes ? html`
-          <textarea
+          <doen-textarea
             placeholder="Notities, context, links..."
+            aria-label="Notities"
             .value=${this._notes}
-            @input=${(e: Event) => this._notes = (e.target as HTMLTextAreaElement).value}
+            @doen-input=${(inputEvent: CustomEvent<{ value: string }>) => { this._notes = inputEvent.detail.value; }}
             ?disabled=${this._submitting}
-          ></textarea>
+          ></doen-textarea>
         ` : ''}
         <div class="row">
           <label class="recurring-toggle">
