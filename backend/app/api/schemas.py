@@ -361,3 +361,21 @@ class HouseholdNotificationOut(BaseModel):
     task_id: str | None = None
     actionable: bool = False
     created_at: datetime
+
+
+class OfferPurgeRequest(BaseModel):
+    statuses: list[str]
+
+
+class OfferPurgeResult(BaseModel):
+    deleted_offer_ids: list[str]
+
+
+class BalanceResetRequest(BaseModel):
+    user_ids: list[str] | None = None
+
+
+class BalanceAdjustRequest(BaseModel):
+    user_id: str
+    delta: int
+    note: str | None = None

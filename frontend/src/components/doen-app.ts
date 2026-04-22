@@ -10,6 +10,7 @@ import '../pages/page-login';
 import '../pages/page-todo';
 import '../pages/page-project';
 import '../pages/page-groups';
+import '../pages/page-group-settings';
 import '../pages/page-admin';
 import '../pages/page-account';
 import '../pages/page-invite';
@@ -19,6 +20,7 @@ type Route =
   | { type: 'todo' }
   | { type: 'project'; projectId: string }
   | { type: 'groups' }
+  | { type: 'group-settings'; groupId: string }
   | { type: 'admin' }
   | { type: 'account' };
 
@@ -46,6 +48,8 @@ export class DoenApp extends LitElement {
     const path = window.location.pathname;
     const projectMatch = path.match(/^\/project\/([^/]+)/);
     if (projectMatch) return { type: 'project', projectId: projectMatch[1] };
+    const groupSettingsMatch = path.match(/^\/groups\/([^/]+)\/settings/);
+    if (groupSettingsMatch) return { type: 'group-settings', groupId: groupSettingsMatch[1] };
     if (path.startsWith('/groups')) return { type: 'groups' };
     if (path.startsWith('/admin')) return { type: 'admin' };
     if (path.startsWith('/account')) return { type: 'account' };
@@ -54,11 +58,12 @@ export class DoenApp extends LitElement {
 
   private _pathFromRoute(route: Route): string {
     switch (route.type) {
-      case 'todo':    return '/';
-      case 'project': return `/project/${route.projectId}`;
-      case 'groups':  return '/groups';
-      case 'admin':   return '/admin';
-      case 'account': return '/account';
+      case 'todo':           return '/';
+      case 'project':        return `/project/${route.projectId}`;
+      case 'groups':         return '/groups';
+      case 'group-settings': return `/groups/${route.groupId}/settings`;
+      case 'admin':          return '/admin';
+      case 'account':        return '/account';
     }
   }
 
@@ -227,12 +232,18 @@ export class DoenApp extends LitElement {
   private _handleSSE(event: string, task: Task) {
     const project = (this.shadowRoot?.querySelector('page-project') as any);
     const todo = (this.shadowRoot?.querySelector('page-todo') as any);
+    const groupSettings = (this.shadowRoot?.querySelector('page-group-settings') as any);
     if (event === 'offer_created' || event === 'offer_updated') {
       project?.reload?.();
       return;
     }
+    if (event === 'offers_purged') {
+      groupSettings?.reload?.();
+      return;
+    }
     if (event === 'points_updated') {
       project?.reload?.();
+      groupSettings?.reload?.();
       return;
     }
     if (event === 'task_created') {
@@ -265,11 +276,12 @@ export class DoenApp extends LitElement {
     (this.shadowRoot?.querySelector('doen-sidebar') as any)?.reload();
   }
 
-  private _onNavigate(e: CustomEvent<{ projectId?: string; page?: string }>) {
-    const { projectId, page } = e.detail;
+  private _onNavigate(e: CustomEvent<{ projectId?: string; page?: string; groupId?: string }>) {
+    const { projectId, page, groupId } = e.detail;
     if (projectId) this._setRoute({ type: 'project', projectId });
     else if (page === 'todo') this._setRoute({ type: 'todo' });
     else if (page === 'groups') this._setRoute({ type: 'groups' });
+    else if (page === 'group-settings' && groupId) this._setRoute({ type: 'group-settings', groupId });
     else if (page === 'admin') this._setRoute({ type: 'admin' });
     else if (page === 'account') this._setRoute({ type: 'account' });
     else this._sidebarOpen = false;
@@ -283,6 +295,8 @@ export class DoenApp extends LitElement {
         return html`<page-project .projectId=${this._route.projectId}></page-project>`;
       case 'groups':
         return html`<page-groups></page-groups>`;
+      case 'group-settings':
+        return html`<page-group-settings .groupId=${this._route.groupId}></page-group-settings>`;
       case 'admin':
         return html`<page-admin .me=${this._user}></page-admin>`;
       case 'account':

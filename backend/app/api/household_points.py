@@ -2,8 +2,12 @@ from fastapi import APIRouter, Depends, status
 
 from app.api.deps import get_current_user, get_household_points_service, raise_http
 from app.api.schemas import (
+    BalanceAdjustRequest,
+    BalanceResetRequest,
     HouseholdBalanceOut,
     HouseholdNotificationOut,
+    OfferPurgeRequest,
+    OfferPurgeResult,
     PointTransactionOut,
     PointTransferCreate,
     TaskOfferCreate,
@@ -179,3 +183,69 @@ async def withdraw_offer(
         raise_http(exc)
     member_ids = await svc._groups.list_member_ids(offer.group_id)
     await sse_bus.publish_to_group(member_ids, "offer_updated", _offer_payload(offer))
+
+
+@router.post(
+    "/households/{group_id}/admin/offers/purge",
+    response_model=OfferPurgeResult,
+)
+async def admin_purge_offers(
+    group_id: str,
+    body: OfferPurgeRequest,
+    current_user: User = Depends(get_current_user),
+    svc: HouseholdPointsService = Depends(get_household_points_service),
+) -> dict:
+    try:
+        deleted_ids = await svc.admin_purge_offers(group_id, current_user.id, body.statuses)
+    except DoenError as exc:
+        raise_http(exc)
+    member_ids = await svc._groups.list_member_ids(group_id)
+    await sse_bus.publish_to_group(
+        member_ids,
+        "offers_purged",
+        {"group_id": group_id, "deleted_offer_ids": deleted_ids},
+    )
+    return {"deleted_offer_ids": deleted_ids}
+
+
+@router.post(
+    "/households/{group_id}/admin/points/reset",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def admin_reset_balances(
+    group_id: str,
+    body: BalanceResetRequest,
+    current_user: User = Depends(get_current_user),
+    svc: HouseholdPointsService = Depends(get_household_points_service),
+) -> None:
+    try:
+        await svc.admin_reset_balances(group_id, current_user.id, body.user_ids)
+    except DoenError as exc:
+        raise_http(exc)
+    member_ids = await svc._groups.list_member_ids(group_id)
+    await sse_bus.publish_to_group(member_ids, "points_updated", {"group_id": group_id})
+
+
+@router.post(
+    "/households/{group_id}/admin/points/adjust",
+    response_model=PointTransactionOut,
+)
+async def admin_adjust_balance(
+    group_id: str,
+    body: BalanceAdjustRequest,
+    current_user: User = Depends(get_current_user),
+    svc: HouseholdPointsService = Depends(get_household_points_service),
+):
+    try:
+        transaction = await svc.admin_adjust_balance(
+            group_id=group_id,
+            requesting_user_id=current_user.id,
+            user_id=body.user_id,
+            delta=body.delta,
+            note=body.note,
+        )
+    except DoenError as exc:
+        raise_http(exc)
+    member_ids = await svc._groups.list_member_ids(group_id)
+    await sse_bus.publish_to_group(member_ids, "points_updated", {"group_id": group_id})
+    return _transaction_payload(transaction)

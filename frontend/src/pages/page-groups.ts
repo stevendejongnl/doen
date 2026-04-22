@@ -64,7 +64,7 @@ export class PageGroups extends LitElement {
       display: flex; align-items: center; gap: 8px;
     }
 
-    .rename-btn {
+    .rename-btn, .settings-btn {
       background: transparent; border: none;
       color: var(--color-text-muted);
       width: 26px; height: 26px; border-radius: var(--radius-xs);
@@ -74,8 +74,9 @@ export class PageGroups extends LitElement {
       opacity: 0;
       transition: background var(--transition-fast), color var(--transition-fast), opacity var(--transition-fast);
     }
-    .card-header:hover .rename-btn { opacity: 1; }
-    .rename-btn:hover { background: rgba(255,255,255,0.08); color: var(--color-text); }
+    .card-header:hover .rename-btn,
+    .card-header:hover .settings-btn { opacity: 1; }
+    .rename-btn:hover, .settings-btn:hover { background: rgba(255,255,255,0.08); color: var(--color-text); }
 
     .group-name-input {
       font-size: 16px; font-weight: 700; color: var(--color-text);
@@ -343,6 +344,14 @@ export class PageGroups extends LitElement {
     }
   }
 
+  private _goToSettings(group: Group) {
+    this.dispatchEvent(new CustomEvent('navigate', {
+      detail: { page: 'group-settings', groupId: group.id },
+      bubbles: true,
+      composed: true,
+    }));
+  }
+
   private _startRename(g: Group) {
     this._editingGroupId = g.id;
     this._editingGroupName = g.name;
@@ -407,6 +416,10 @@ export class PageGroups extends LitElement {
           <button class="rename-btn" title="Naam wijzigen"
             @click=${() => this._startRename(g)}>
             <i class="fa-solid fa-pen"></i>
+          </button>
+          <button class="settings-btn" title="Groepsbeheer"
+            @click=${() => this._goToSettings(g)}>
+            <i class="fa-solid fa-gear"></i>
           </button>
         ` : ''}
       </div>

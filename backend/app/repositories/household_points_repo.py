@@ -1,4 +1,4 @@
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -164,3 +164,26 @@ class HouseholdPointsRepository:
             )
         )
         return result.scalar_one_or_none()
+
+    async def delete_offers_by_group(
+        self, group_id: str, statuses: list[str]
+    ) -> list[str]:
+        id_result = await self._session.execute(
+            select(TaskOffer.id).where(
+                TaskOffer.group_id == group_id,
+                TaskOffer.status.in_(statuses),
+            )
+        )
+        offer_ids = list(id_result.scalars().all())
+        if not offer_ids:
+            return []
+        await self._session.execute(
+            update(PointTransaction)
+            .where(PointTransaction.offer_id.in_(offer_ids))
+            .values(offer_id=None)
+        )
+        await self._session.execute(
+            delete(TaskOffer).where(TaskOffer.id.in_(offer_ids))
+        )
+        await self._session.commit()
+        return offer_ids

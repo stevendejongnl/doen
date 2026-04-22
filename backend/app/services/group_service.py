@@ -62,6 +62,11 @@ class GroupService:
         if not membership or membership.role != "admin":
             raise AccessDeniedError("Admin access required")
 
+    async def require_admin(self, group_id: str, user_id: str) -> Group:
+        group = await self.get_group(group_id)
+        await self._require_admin(group, user_id)
+        return group
+
     async def update_group(
         self,
         group_id: str,

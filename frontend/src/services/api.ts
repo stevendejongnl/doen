@@ -70,6 +70,38 @@ export const api = {
   delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
 };
 
+export function purgeOffers(
+  groupId: string,
+  statuses: string[],
+): Promise<{ deleted_offer_ids: string[] }> {
+  return request(`/households/${groupId}/admin/offers/purge`, {
+    method: 'POST',
+    body: JSON.stringify({ statuses }),
+  });
+}
+
+export function resetBalances(
+  groupId: string,
+  userIds: string[] | null,
+): Promise<void> {
+  return request(`/households/${groupId}/admin/points/reset`, {
+    method: 'POST',
+    body: JSON.stringify({ user_ids: userIds }),
+  });
+}
+
+export function adjustBalance(
+  groupId: string,
+  userId: string,
+  delta: number,
+  note: string | null,
+): Promise<import('./types').PointTransaction> {
+  return request(`/households/${groupId}/admin/points/adjust`, {
+    method: 'POST',
+    body: JSON.stringify({ user_id: userId, delta, note }),
+  });
+}
+
 export function sseConnect(onEvent: (name: string, data: unknown) => void): EventSource {
   const token = localStorage.getItem('access_token');
   const src = new EventSource(`${BASE}/events?token=${token}`);
@@ -78,7 +110,7 @@ export function sseConnect(onEvent: (name: string, data: unknown) => void): Even
   };
   for (const ev of [
     'task_created', 'task_updated', 'task_completed', 'task_deleted',
-    'offer_created', 'offer_updated',
+    'offer_created', 'offer_updated', 'offers_purged',
     'points_updated',
     'category_created', 'category_updated', 'category_deleted',
   ]) {

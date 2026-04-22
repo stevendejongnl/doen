@@ -129,6 +129,10 @@ export interface PointTransaction {
   created_at: string;
 }
 
+export interface OfferPurgeResult {
+  deleted_offer_ids: string[];
+}
+
 export interface HouseholdNotification {
   id: string;
   kind: string;

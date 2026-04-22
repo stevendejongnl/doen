@@ -297,6 +297,94 @@ class HouseholdPointsService:
             reverses_transaction_id=completion.id,
         )
 
+    async def _require_group_admin(self, group_id: str, user_id: str) -> None:
+        group = await self._groups.get_by_id(group_id)
+        if group is None:
+            raise NotFoundError("Group", group_id)
+        if group.owner_id == user_id:
+            return
+        membership = await self._groups.get_membership(group_id, user_id)
+        if not membership or membership.role != "admin":
+            raise AccessDeniedError("Admin access required")
+
+    async def admin_purge_offers(
+        self,
+        group_id: str,
+        requesting_user_id: str,
+        statuses: list[str],
+    ) -> list[str]:
+        await self._require_group_admin(group_id, requesting_user_id)
+        valid_statuses = {"open", "requested", "approved", "rejected", "withdrawn", "closed"}
+        invalid = set(statuses) - valid_statuses
+        if invalid:
+            raise ConflictError(f"Invalid offer statuses: {', '.join(sorted(invalid))}")
+        if not statuses:
+            raise ConflictError("At least one status must be specified")
+        return await self._points.delete_offers_by_group(group_id, statuses)
+
+    async def admin_reset_balances(
+        self,
+        group_id: str,
+        requesting_user_id: str,
+        user_ids: list[str] | None,
+    ) -> None:
+        await self._require_group_admin(group_id, requesting_user_id)
+        balances = await self._points.list_balances(group_id)
+        if user_ids is not None:
+            target_ids = user_ids
+        else:
+            members = await self._groups.list_members(group_id)
+            target_ids = [user.id for user, _role in members]
+        for target_user_id in target_ids:
+            balance = balances.get(target_user_id, 0)
+            if balance != 0:
+                await self._points.add_transaction(
+                    group_id=group_id,
+                    user_id=target_user_id,
+                    amount=-balance,
+                    kind="manual",
+                    note="Admin reset to zero",
+                )
+
+    async def admin_adjust_balance(
+        self,
+        group_id: str,
+        requesting_user_id: str,
+        user_id: str,
+        delta: int,
+        note: str | None,
+    ) -> dict:
+        await self._require_group_admin(group_id, requesting_user_id)
+        if delta == 0:
+            raise ConflictError("Delta must be non-zero")
+        group = await self._groups.get_by_id(group_id)
+        if group is None:
+            raise NotFoundError("Group", group_id)
+        membership = await self._groups.get_membership(group_id, user_id)
+        if not membership and group.owner_id != user_id:
+            raise AccessDeniedError("Target user is not a member of this group")
+        user = await self._users.get_by_id(user_id)
+        user_name = user.name if user else "Onbekend"
+        transaction = await self._points.add_transaction(
+            group_id=group_id,
+            user_id=user_id,
+            amount=delta,
+            kind="manual",
+            note=note,
+        )
+        return {
+            "id": transaction.id,
+            "group_id": transaction.group_id,
+            "user_id": transaction.user_id,
+            "user_name": user_name,
+            "amount": transaction.amount,
+            "kind": transaction.kind,
+            "task_id": transaction.task_id,
+            "offer_id": transaction.offer_id,
+            "note": transaction.note,
+            "created_at": transaction.created_at,
+        }
+
     async def transfer_points(
         self,
         group_id: str,
