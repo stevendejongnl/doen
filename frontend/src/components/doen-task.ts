@@ -1052,7 +1052,7 @@ export class DoenTask extends LitElement {
                   <i class="fa-solid fa-handshake"></i> Offeren
                 </button>
               ` : ''}
-              <button type="button" class="btn-edit-modal" @click=${() => this._modalMode = 'edit'}>
+              <button type="button" class="btn-edit-modal" @click=${() => { this._resetEditState(); this._modalMode = 'edit'; }}>
                 <i class="fa-solid fa-pen"></i> Bewerken
               </button>
             `}

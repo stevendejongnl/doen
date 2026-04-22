@@ -153,6 +153,27 @@ async def migrate_add_user_preferences(engine: AsyncEngine) -> None:
         )
 
 
+async def migrate_backfill_category_group(engine: AsyncEngine) -> None:
+    """Promote project-scoped categories to group scope.
+
+    Categories created inline from the task form were stored with project_id only,
+    leaving group_id null. The group-admin category management panel filters by
+    group_id, so those categories never appeared there. Idempotent: after one
+    successful run, subsequent runs find no matching rows and do nothing.
+    """
+    async with engine.begin() as conn:
+        await conn.execute(
+            text(
+                "UPDATE categories "
+                "SET group_id = projects.group_id, project_id = NULL "
+                "FROM projects "
+                "WHERE categories.project_id = projects.id "
+                "  AND categories.group_id IS NULL "
+                "  AND projects.group_id IS NOT NULL"
+            )
+        )
+
+
 def _cron_to_structured(cron: str | None) -> dict:
     """Parse a 5-field cron expression into structured fields. Falls back to weekly-Mon-08:00."""
     default = {
