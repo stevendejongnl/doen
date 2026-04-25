@@ -1,3 +1,15 @@
+# [1.25.0](https://github.com/stevendejongnl/doen/compare/v1.24.0...v1.25.0) (2026-04-25)
+
+
+### Bug Fixes
+
+* **pwa:** add .npmrc to allow vite-plugin-pwa peer dep on Vite 8 ([5f8dc90](https://github.com/stevendejongnl/doen/commit/5f8dc909d73d8137be3585185508f9dba32b2788))
+
+
+### Features
+
+* **pwa:** add full PWA with service worker, precaching, and icons ([a43c186](https://github.com/stevendejongnl/doen/commit/a43c1869c3e6d808fc1956f9954a47637bf7671b))
+
 # [1.24.0](https://github.com/stevendejongnl/doen/compare/v1.23.3...v1.24.0) (2026-04-25)
 
 
