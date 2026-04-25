@@ -1,3 +1,10 @@
+## [1.25.1](https://github.com/stevendejongnl/doen/compare/v1.25.0...v1.25.1) (2026-04-25)
+
+
+### Bug Fixes
+
+* **docker:** copy .npmrc before npm ci so legacy-peer-deps applies ([50716dd](https://github.com/stevendejongnl/doen/commit/50716dd3b957438edfb876b7c20553db8a400223))
+
 # [1.25.0](https://github.com/stevendejongnl/doen/compare/v1.24.0...v1.25.0) (2026-04-25)
 
 
