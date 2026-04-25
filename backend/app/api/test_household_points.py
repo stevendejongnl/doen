@@ -84,3 +84,38 @@ async def test_notifications_show_owner_action(seeded_client, seed_data):
     assert notifications.status_code == 200
     data = notifications.json()
     assert any(item["actionable"] for item in data)
+
+
+@pytest.mark.asyncio
+async def test_create_offer_blocked_when_offers_disabled(seeded_client, seed_data):
+    await seeded_client.put(
+        f"/projects/{seed_data['gezamenlijke_ellende'].id}",
+        json={"offers_enabled": False},
+        headers=_headers(seed_data["henk"]),
+    )
+    resp = await seeded_client.post(
+        f"/tasks/{seed_data['group_task'].id}/offer",
+        json={"reward_note": "pizza"},
+        headers=_headers(seed_data["henk"]),
+    )
+    assert resp.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_create_offer_allowed_after_reenabling(seeded_client, seed_data):
+    await seeded_client.put(
+        f"/projects/{seed_data['gezamenlijke_ellende'].id}",
+        json={"offers_enabled": False},
+        headers=_headers(seed_data["henk"]),
+    )
+    await seeded_client.put(
+        f"/projects/{seed_data['gezamenlijke_ellende'].id}",
+        json={"offers_enabled": True},
+        headers=_headers(seed_data["henk"]),
+    )
+    resp = await seeded_client.post(
+        f"/tasks/{seed_data['group_task'].id}/offer",
+        json={"reward_note": "pizza"},
+        headers=_headers(seed_data["henk"]),
+    )
+    assert resp.status_code == 201

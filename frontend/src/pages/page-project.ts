@@ -610,7 +610,7 @@ export class PageProject extends LitElement {
                 <label class="offers-toggle">
                   <input type="checkbox"
                     .checked=${this._editOffersEnabled}
-                    @change=${(e: Event) => this._editOffersEnabled = (e.target as HTMLInputElement).checked}
+                    @click=${(e: Event) => { e.stopPropagation(); this._editOffersEnabled = (e.target as HTMLInputElement).checked; }}
                   />
                   Aanbiedingen toestaan
                 </label>

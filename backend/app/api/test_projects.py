@@ -97,3 +97,43 @@ async def test_delete_project_by_non_owner_returns_403(seeded_client, seed_data)
         f"/projects/{seed_data['gezamenlijke_ellende'].id}", headers=_headers(seed_data["piet"])
     )
     assert resp.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_create_project_defaults_offers_enabled_true(seeded_client, seed_data):
+    resp = await seeded_client.post(
+        "/projects",
+        json={"name": "Test", "color": "#ff0000"},
+        headers=_headers(seed_data["henk"]),
+    )
+    assert resp.status_code == 201
+    assert resp.json()["offers_enabled"] is True
+
+
+@pytest.mark.asyncio
+async def test_update_project_disables_offers(seeded_client, seed_data):
+    resp = await seeded_client.put(
+        f"/projects/{seed_data['gezamenlijke_ellende'].id}",
+        json={"offers_enabled": False},
+        headers=_headers(seed_data["henk"]),
+    )
+    assert resp.status_code == 200
+    assert resp.json()["offers_enabled"] is False
+
+
+@pytest.mark.asyncio
+async def test_update_project_reenables_offers(seeded_client, seed_data):
+    # disable first
+    await seeded_client.put(
+        f"/projects/{seed_data['gezamenlijke_ellende'].id}",
+        json={"offers_enabled": False},
+        headers=_headers(seed_data["henk"]),
+    )
+    # re-enable
+    resp = await seeded_client.put(
+        f"/projects/{seed_data['gezamenlijke_ellende'].id}",
+        json={"offers_enabled": True},
+        headers=_headers(seed_data["henk"]),
+    )
+    assert resp.status_code == 200
+    assert resp.json()["offers_enabled"] is True
