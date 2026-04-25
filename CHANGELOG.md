@@ -1,3 +1,10 @@
+# [1.24.0](https://github.com/stevendejongnl/doen/compare/v1.23.3...v1.24.0) (2026-04-25)
+
+
+### Features
+
+* **projects:** add per-project offers_enabled toggle ([8a14fbc](https://github.com/stevendejongnl/doen/commit/8a14fbcf42dbc617f648883993280d621c34c50a))
+
 ## [1.23.3](https://github.com/stevendejongnl/doen/compare/v1.23.2...v1.23.3) (2026-04-22)
 
 
