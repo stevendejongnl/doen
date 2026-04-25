@@ -2,7 +2,7 @@
 FROM node:lts-alpine AS frontend-builder
 ARG APP_VERSION=0.0.0
 WORKDIR /app/frontend
-COPY frontend/package*.json ./
+COPY frontend/package*.json frontend/.npmrc* ./
 RUN npm ci
 COPY frontend/ ./
 RUN VITE_APP_VERSION=$APP_VERSION npm run build
