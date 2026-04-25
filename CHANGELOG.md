@@ -1,3 +1,10 @@
+## [1.25.2](https://github.com/stevendejongnl/doen/compare/v1.25.1...v1.25.2) (2026-04-25)
+
+
+### Bug Fixes
+
+* **projects:** use [@click](https://github.com/click) on offers toggle checkbox, add missing tests ([96a770d](https://github.com/stevendejongnl/doen/commit/96a770d8629d358bebbdbdfe9d8daeca38b91409))
+
 ## [1.25.1](https://github.com/stevendejongnl/doen/compare/v1.25.0...v1.25.1) (2026-04-25)
 
 
