@@ -153,6 +153,19 @@ async def migrate_add_user_preferences(engine: AsyncEngine) -> None:
         )
 
 
+async def migrate_add_project_offers_enabled(engine: AsyncEngine) -> None:
+    """Add `projects.offers_enabled` (default TRUE) if it doesn't exist yet."""
+    async with engine.begin() as conn:
+        columns = await conn.run_sync(
+            lambda sync_conn: inspect(sync_conn).get_columns("projects")
+        )
+        if any(c["name"] == "offers_enabled" for c in columns):
+            return
+        await conn.execute(
+            text("ALTER TABLE projects ADD COLUMN offers_enabled BOOLEAN NOT NULL DEFAULT 1")
+        )
+
+
 async def migrate_backfill_category_group(engine: AsyncEngine) -> None:
     """Promote project-scoped categories to group scope.
 

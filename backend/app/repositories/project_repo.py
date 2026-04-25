@@ -35,6 +35,7 @@ class ProjectRepository:
         color: str,
         group_id: str | None,
         owner_id: str,
+        offers_enabled: bool = True,
     ) -> Project:
         project = Project(
             id=new_uuid(),
@@ -43,6 +44,7 @@ class ProjectRepository:
             color=color,
             group_id=group_id,
             owner_id=owner_id,
+            offers_enabled=offers_enabled,
         )
         self._session.add(project)
         await self._session.commit()
@@ -55,6 +57,7 @@ class ProjectRepository:
         name: str | None,
         description: str | None,
         color: str | None,
+        offers_enabled: bool | None = None,
     ) -> Project:
         if name is not None:
             project.name = name
@@ -62,6 +65,8 @@ class ProjectRepository:
             project.description = description
         if color is not None:
             project.color = color
+        if offers_enabled is not None:
+            project.offers_enabled = offers_enabled
         await self._session.commit()
         await self._session.refresh(project)
         return project

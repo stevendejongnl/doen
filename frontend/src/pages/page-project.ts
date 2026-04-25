@@ -30,6 +30,7 @@ export class PageProject extends LitElement {
   @state() private _editing = false;
   @state() private _editName = '';
   @state() private _editColor = '';
+  @state() private _editOffersEnabled = true;
   @state() private _saving = false;
   @state() private _balances: HouseholdBalance[] = [];
   @state() private _offers: TaskOffer[] = [];
@@ -138,6 +139,16 @@ export class PageProject extends LitElement {
     }
     .swatch:hover { transform: scale(1.1); }
     .swatch.active { border-color: #fff; }
+
+    .offers-toggle {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 12px; color: var(--color-text-muted);
+      cursor: pointer; user-select: none;
+    }
+    .offers-toggle input[type="checkbox"] {
+      accent-color: var(--color-accent);
+      width: 15px; height: 15px; cursor: pointer;
+    }
 
     .btn {
       display: inline-flex; align-items: center; gap: 6px;
@@ -521,6 +532,7 @@ export class PageProject extends LitElement {
     if (!this._project) return;
     this._editName = this._project.name;
     this._editColor = this._project.color;
+    this._editOffersEnabled = this._project.offers_enabled ?? true;
     this._editing = true;
   }
 
@@ -535,7 +547,8 @@ export class PageProject extends LitElement {
 
     const nameChanged = name !== this._project.name;
     const colorChanged = this._editColor !== this._project.color;
-    if (!nameChanged && !colorChanged) {
+    const offersChanged = this._editOffersEnabled !== (this._project.offers_enabled ?? true);
+    if (!nameChanged && !colorChanged && !offersChanged) {
       this._editing = false;
       return;
     }
@@ -545,6 +558,7 @@ export class PageProject extends LitElement {
       const updated = await api.put<Project>(`/projects/${this._project.id}`, {
         name,
         color: this._editColor,
+        offers_enabled: this._editOffersEnabled,
       });
       this._project = updated;
       this._editing = false;
@@ -592,6 +606,15 @@ export class PageProject extends LitElement {
                   ></div>
                 `)}
               </div>
+              ${this._project?.group_id ? html`
+                <label class="offers-toggle">
+                  <input type="checkbox"
+                    .checked=${this._editOffersEnabled}
+                    @change=${(e: Event) => this._editOffersEnabled = (e.target as HTMLInputElement).checked}
+                  />
+                  Aanbiedingen toestaan
+                </label>
+              ` : ''}
               <button class="btn btn-primary"
                 ?disabled=${this._saving || !this._editName.trim()}
                 @click=${this._saveEdit}>
@@ -618,7 +641,7 @@ export class PageProject extends LitElement {
         `}
       </div>
 
-      ${this._project?.group_id ? html`
+      ${this._project?.group_id && this._project.offers_enabled ? html`
         <div class="household-panel">
           <div class="panel-title">Inbox</div>
           <div class="inbox-list">

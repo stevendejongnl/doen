@@ -20,6 +20,7 @@ export class PageGroups extends LitElement {
   @state() private _inviting = false;
   @state() private _newProjectGroupId = '';
   @state() private _newProjectName = '';
+  @state() private _newProjectOffersEnabled = true;
   @state() private _creatingProject = false;
   @state() private _removingUserId = '';
   @state() private _editingGroupId = '';
@@ -93,7 +94,17 @@ export class PageGroups extends LitElement {
       letter-spacing: 0.7px; color: var(--color-text-muted); margin-bottom: 10px;
     }
 
-    .invite-row { display: flex; gap: 8px; }
+    .invite-row { display: flex; gap: 8px; align-items: center; }
+
+    .offers-toggle-inline {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 12px; color: var(--color-text-muted);
+      white-space: nowrap; cursor: pointer; user-select: none;
+    }
+    .offers-toggle-inline input[type="checkbox"] {
+      accent-color: var(--color-accent);
+      width: 14px; height: 14px; cursor: pointer;
+    }
 
     .member-list { display: flex; flex-direction: column; gap: 6px; }
     .member-row {
@@ -332,9 +343,12 @@ export class PageGroups extends LitElement {
     try {
       const colors = ['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899'];
       const color = colors[Math.floor(Math.random() * colors.length)];
-      await api.post<Project>('/projects', { name, color, group_id: groupId });
+      await api.post<Project>('/projects', {
+        name, color, group_id: groupId, offers_enabled: this._newProjectOffersEnabled,
+      });
       this._newProjectName = '';
       this._newProjectGroupId = '';
+      this._newProjectOffersEnabled = true;
       this.dispatchEvent(new CustomEvent('project-created', { bubbles: true, composed: true }));
       toast.success(`Project "${name}" aangemaakt!`);
     } catch (e) {
@@ -518,9 +532,18 @@ export class PageGroups extends LitElement {
           <form class="invite-row" @submit=${(e: Event) => this._createProject(g.id, e)}>
             <input type="text" placeholder="Projectnaam"
               .value=${this._newProjectGroupId === g.id ? this._newProjectName : ''}
-              @focus=${() => this._newProjectGroupId = g.id}
+              @focus=${() => { this._newProjectGroupId = g.id; this._newProjectOffersEnabled = true; }}
               @input=${(e: Event) => this._newProjectName = (e.target as HTMLInputElement).value}
             />
+            ${g.type === 'household' ? html`
+              <label class="offers-toggle-inline">
+                <input type="checkbox"
+                  .checked=${this._newProjectGroupId === g.id ? this._newProjectOffersEnabled : true}
+                  @change=${(e: Event) => { this._newProjectGroupId = g.id; this._newProjectOffersEnabled = (e.target as HTMLInputElement).checked; }}
+                />
+                Aanbiedingen
+              </label>
+            ` : ''}
             <button type="submit" class="btn btn-primary"
               ?disabled=${this._creatingProject || this._newProjectGroupId !== g.id || !this._newProjectName.trim()}>
               <i class="fa-solid fa-${this._creatingProject && this._newProjectGroupId === g.id ? 'spinner fa-spin' : 'plus'}"></i>

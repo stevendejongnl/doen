@@ -575,7 +575,7 @@ export class DoenTask extends LitElement {
   }
 
   private _offerTask() {
-    if (!this._project?.group_id) {
+    if (!this._project?.group_id || !this._project.offers_enabled) {
       toast.error('Alleen taken in een huishouden kunnen worden aangeboden.');
       return;
     }
@@ -1047,7 +1047,7 @@ export class DoenTask extends LitElement {
               <button type="button" class="btn-cancel-edit" @click=${this._closeModal}>
                 Sluiten
               </button>
-              ${this._project?.group_id ? html`
+              ${this._project?.group_id && this._project.offers_enabled ? html`
                 <button type="button" class="btn-cancel-edit" @click=${this._offerTask}>
                   <i class="fa-solid fa-handshake"></i> Offeren
                 </button>

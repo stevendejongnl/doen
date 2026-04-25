@@ -168,6 +168,8 @@ class HouseholdPointsService:
         group_id = await self._household_group_id(project)
         if group_id is None:
             raise AccessDeniedError("Household points are only available for household projects")
+        if not project.offers_enabled:
+            raise AccessDeniedError("Offers are disabled for this project")
         await self._projects.assert_access(project, requesting_user_id)
         existing = await self._points.get_offer_for_task(task_id)
         if existing and existing.status in {"open", "requested", "approved"}:

@@ -164,12 +164,14 @@ class ProjectCreate(BaseModel):
     description: str | None = None
     color: str = "#6366f1"
     group_id: str | None = None
+    offers_enabled: bool = True
 
 
 class ProjectUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
     color: str | None = None
+    offers_enabled: bool | None = None
 
 
 class ProjectOut(BaseModel):
@@ -181,6 +183,7 @@ class ProjectOut(BaseModel):
     owner_id: str
     archived_at: datetime | None
     created_at: datetime
+    offers_enabled: bool
 
     model_config = {"from_attributes": True}
 

@@ -40,6 +40,7 @@ telegram = TelegramNotificationService(
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     from app.db.migrate import (
+        migrate_add_project_offers_enabled,
         migrate_add_task_category_id,
         migrate_add_user_admin_fields,
         migrate_add_user_preferences,
@@ -53,6 +54,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     await migrate_add_user_preferences(engine)
     await migrate_add_user_admin_fields(engine)
     await migrate_add_task_category_id(engine)
+    await migrate_add_project_offers_enabled(engine)
     await migrate_backfill_category_group(engine)
 
     Session = async_sessionmaker(engine, expire_on_commit=False)

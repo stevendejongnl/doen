@@ -20,6 +20,7 @@ class ProjectService:
         color: str,
         group_id: str | None,
         owner_id: str,
+        offers_enabled: bool = True,
     ) -> Project:
         return await self._projects.create(
             name=name,
@@ -27,6 +28,7 @@ class ProjectService:
             color=color,
             group_id=group_id,
             owner_id=owner_id,
+            offers_enabled=offers_enabled,
         )
 
     async def get_project(self, project_id: str, requesting_user_id: str) -> Project:
@@ -60,9 +62,12 @@ class ProjectService:
         name: str | None,
         description: str | None,
         color: str | None,
+        offers_enabled: bool | None = None,
     ) -> Project:
         project = await self.get_project(project_id, requesting_user_id)
-        return await self._projects.update(project, name=name, description=description, color=color)
+        return await self._projects.update(
+            project, name=name, description=description, color=color, offers_enabled=offers_enabled
+        )
 
     async def archive_project(self, project_id: str, requesting_user_id: str) -> Project:
         project = await self.get_project(project_id, requesting_user_id)

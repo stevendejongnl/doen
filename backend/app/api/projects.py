@@ -24,7 +24,8 @@ async def create_project(
     svc: ProjectService = Depends(get_project_service),
 ):
     return await svc.create_project(
-        body.name, body.description, body.color, body.group_id, current_user.id
+        body.name, body.description, body.color, body.group_id, current_user.id,
+        offers_enabled=body.offers_enabled,
     )
 
 
@@ -49,7 +50,8 @@ async def update_project(
 ):
     try:
         return await svc.update_project(
-            project_id, current_user.id, body.name, body.description, body.color
+            project_id, current_user.id, body.name, body.description, body.color,
+            offers_enabled=body.offers_enabled,
         )
     except DoenError as exc:
         raise_http(exc)

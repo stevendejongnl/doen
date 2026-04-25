@@ -22,6 +22,7 @@ export interface Project {
   group_id?: string;
   owner_id: string;
   archived_at?: string;
+  offers_enabled: boolean;
 }
 
 export type TaskStatus = 'todo' | 'in_progress' | 'done';

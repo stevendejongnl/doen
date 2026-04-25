@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String
+from sqlalchemy import Boolean, DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, new_uuid
@@ -18,6 +18,7 @@ class Project(Base, TimestampMixin):
     )
     owner_id: Mapped[str] = mapped_column(String, ForeignKey("users.id"), nullable=False)
     archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    offers_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     group: Mapped["Group | None"] = relationship("Group", back_populates="projects")
     tasks: Mapped[list["Task"]] = relationship(
