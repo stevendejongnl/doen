@@ -21,7 +21,7 @@ export const sharedStyles = [faSelectors, css`
     appearance: none;
   }
 
-  input, textarea, select {
+  input:not([type="checkbox"]):not([type="radio"]), textarea, select {
     font: inherit;
     font-size: 16px;
     color: var(--color-text);
@@ -36,14 +36,14 @@ export const sharedStyles = [faSelectors, css`
     box-sizing: border-box;
   }
 
-  input:focus-visible, textarea:focus-visible, select:focus-visible {
+  input:not([type="checkbox"]):not([type="radio"]):focus-visible, textarea:focus-visible, select:focus-visible {
     border-color: var(--color-accent);
     background: rgba(255,255,255,0.1);
   }
 
-  input:-webkit-autofill,
-  input:-webkit-autofill:hover,
-  input:-webkit-autofill:focus {
+  input:not([type="checkbox"]):not([type="radio"]):-webkit-autofill,
+  input:not([type="checkbox"]):not([type="radio"]):-webkit-autofill:hover,
+  input:not([type="checkbox"]):not([type="radio"]):-webkit-autofill:focus {
     -webkit-box-shadow: 0 0 0 1000px #1a1f35 inset !important;
     -webkit-text-fill-color: var(--color-text) !important;
     border-color: var(--color-accent) !important;
