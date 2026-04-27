@@ -1,3 +1,10 @@
+## [1.25.3](https://github.com/stevendejongnl/doen/compare/v1.25.2...v1.25.3) (2026-04-27)
+
+
+### Bug Fixes
+
+* **styles:** exclude checkboxes and radios from shared input appearance reset ([d7f9408](https://github.com/stevendejongnl/doen/commit/d7f9408dcccf3a41af404d03b722e8c36c7173ca))
+
 ## [1.25.2](https://github.com/stevendejongnl/doen/compare/v1.25.1...v1.25.2) (2026-04-25)
 
 
