@@ -1,3 +1,10 @@
+# [1.26.0](https://github.com/stevendejongnl/doen/compare/v1.25.3...v1.26.0) (2026-04-27)
+
+
+### Features
+
+* **offers:** custom toggle styling and delete points/offers on disable ([4618670](https://github.com/stevendejongnl/doen/commit/4618670ba0ad54427c9638a71106346ec865a0bc))
+
 ## [1.25.3](https://github.com/stevendejongnl/doen/compare/v1.25.2...v1.25.3) (2026-04-27)
 
 
