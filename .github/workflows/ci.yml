@@ -48,8 +48,23 @@ jobs:
       - run: npm ci
       - run: npm run build
 
+  frontend-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm test -- --run --coverage
+
   release:
-    needs: [backend-test, frontend-build]
+    needs: [backend-test, frontend-build, frontend-test]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     permissions:
@@ -203,7 +218,7 @@ jobs:
             --repo "$REPO"
 
   notify-ci-failure:
-    needs: [backend-test, backend-lint, frontend-build, release, docker-publish]
+    needs: [backend-test, backend-lint, frontend-build, frontend-test, release, docker-publish]
     if: failure() && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
