@@ -102,10 +102,22 @@ export class PageGroups extends LitElement {
       font-size: 12px; color: var(--color-text-muted);
       white-space: nowrap; cursor: pointer; user-select: none;
     }
-    .offers-toggle-inline input[type="checkbox"] {
-      accent-color: var(--color-accent);
-      width: 14px; height: 14px; cursor: pointer;
+    .offers-toggle-inline .toggle {
+      position: relative; width: 32px; height: 18px; flex-shrink: 0;
     }
+    .offers-toggle-inline .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .offers-toggle-inline .toggle-track {
+      position: absolute; inset: 0;
+      background: rgba(255,255,255,0.12);
+      border-radius: 9px; transition: background 150ms; cursor: pointer;
+    }
+    .offers-toggle-inline .toggle input:checked ~ .toggle-track { background: var(--color-accent); }
+    .offers-toggle-inline .toggle-thumb {
+      position: absolute; top: 3px; left: 3px;
+      width: 12px; height: 12px; background: white; border-radius: 50%;
+      transition: transform 150ms; pointer-events: none;
+    }
+    .offers-toggle-inline .toggle input:checked ~ .toggle-thumb { transform: translateX(14px); }
 
     .member-list { display: flex; flex-direction: column; gap: 6px; }
     .member-row {
@@ -610,11 +622,15 @@ export class PageGroups extends LitElement {
             />
             ${g.type === 'household' ? html`
               <label class="offers-toggle-inline">
-                <input type="checkbox"
-                  .checked=${this._newProjectGroupId === g.id ? this._newProjectOffersEnabled : true}
-                  data-group-id=${g.id}
-                  @click=${this._onNewProjectOffersChange}
-                />
+                <span class="toggle">
+                  <input type="checkbox"
+                    .checked=${this._newProjectGroupId === g.id ? this._newProjectOffersEnabled : true}
+                    data-group-id=${g.id}
+                    @click=${this._onNewProjectOffersChange}
+                  />
+                  <span class="toggle-track"></span>
+                  <span class="toggle-thumb"></span>
+                </span>
                 Aanbiedingen
               </label>
             ` : ''}

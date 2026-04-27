@@ -1,5 +1,8 @@
 import pytest
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.household_points import PointTransaction, TaskOffer
 from app.services.auth import create_access_token
 
 
@@ -137,3 +140,74 @@ async def test_update_project_reenables_offers(seeded_client, seed_data):
     )
     assert resp.status_code == 200
     assert resp.json()["offers_enabled"] is True
+
+
+@pytest.mark.asyncio
+async def test_disabling_offers_deletes_point_transactions_and_offers(
+    seeded_client, seed_data, db_session: AsyncSession
+):
+    """When offers_enabled is set to False, all PointTransaction rows and
+    TaskOffer rows linked to tasks in that project must be removed."""
+    group_task_id = seed_data["group_task"].id
+    project_id = seed_data["gezamenlijke_ellende"].id
+
+    # 1. Create an offer for the group task
+    created = await seeded_client.post(
+        f"/tasks/{group_task_id}/offer",
+        json={"reward_note": "test reward"},
+        headers=_headers(seed_data["henk"]),
+    )
+    assert created.status_code == 201
+    offer_id = created.json()["id"]
+
+    # 2. Accept and approve the offer so PointTransaction rows are written
+    await seeded_client.post(
+        f"/offers/{offer_id}/accept",
+        headers=_headers(seed_data["piet"]),
+    )
+    decided = await seeded_client.post(
+        f"/offers/{offer_id}/decision",
+        json={"approved": True, "reopen": False},
+        headers=_headers(seed_data["henk"]),
+    )
+    assert decided.status_code == 200
+
+    # Confirm transactions exist before disabling
+    tx_before = (
+        await db_session.execute(
+            select(PointTransaction).where(PointTransaction.task_id == group_task_id)
+        )
+    ).scalars().all()
+    assert len(tx_before) >= 2, "Expected at least two offer transactions"
+
+    offer_before = (
+        await db_session.execute(
+            select(TaskOffer).where(TaskOffer.id == offer_id)
+        )
+    ).scalar_one_or_none()
+    assert offer_before is not None, "Offer should exist before disable"
+
+    # 3. Disable offers on the project
+    resp = await seeded_client.put(
+        f"/projects/{project_id}",
+        json={"offers_enabled": False},
+        headers=_headers(seed_data["henk"]),
+    )
+    assert resp.status_code == 200
+    assert resp.json()["offers_enabled"] is False
+
+    # 4. Verify all point transactions for the project's tasks are gone
+    tx_after = (
+        await db_session.execute(
+            select(PointTransaction).where(PointTransaction.task_id == group_task_id)
+        )
+    ).scalars().all()
+    assert tx_after == [], "PointTransaction rows should have been deleted"
+
+    # 5. Verify the offer is gone too
+    offer_after = (
+        await db_session.execute(
+            select(TaskOffer).where(TaskOffer.id == offer_id)
+        )
+    ).scalar_one_or_none()
+    assert offer_after is None, "TaskOffer should have been deleted"

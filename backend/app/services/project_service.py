@@ -1,13 +1,20 @@
 from app.exceptions import AccessDeniedError, NotFoundError
 from app.models.project import Project
 from app.repositories.group_repo import GroupRepository
+from app.repositories.household_points_repo import HouseholdPointsRepository
 from app.repositories.project_repo import ProjectRepository
 
 
 class ProjectService:
-    def __init__(self, project_repo: ProjectRepository, group_repo: GroupRepository) -> None:
+    def __init__(
+        self,
+        project_repo: ProjectRepository,
+        group_repo: GroupRepository,
+        points_repo: HouseholdPointsRepository | None = None,
+    ) -> None:
         self._projects = project_repo
         self._groups = group_repo
+        self._points = points_repo
 
     async def list_projects(self, user_id: str) -> list[Project]:
         group_ids = await self._groups.list_group_ids_for_user(user_id)
@@ -65,9 +72,16 @@ class ProjectService:
         offers_enabled: bool | None = None,
     ) -> Project:
         project = await self.get_project(project_id, requesting_user_id)
-        return await self._projects.update(
+        disabling_offers = (
+            offers_enabled is False and project.offers_enabled is True
+        )
+        updated = await self._projects.update(
             project, name=name, description=description, color=color, offers_enabled=offers_enabled
         )
+        if disabling_offers and self._points is not None:
+            await self._points.delete_offers_for_project(project_id)
+            await self._points.delete_transactions_for_project(project_id)
+        return updated
 
     async def archive_project(self, project_id: str, requesting_user_id: str) -> Project:
         project = await self.get_project(project_id, requesting_user_id)

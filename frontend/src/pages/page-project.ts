@@ -145,11 +145,24 @@ export class PageProject extends LitElement {
       display: flex; align-items: center; gap: 7px;
       font-size: 12px; color: var(--color-text-muted);
       cursor: pointer; user-select: none;
+      min-height: 44px;
     }
-    .offers-toggle input[type="checkbox"] {
-      accent-color: var(--color-accent);
-      width: 15px; height: 15px; cursor: pointer;
+    .offers-toggle .toggle {
+      position: relative; width: 32px; height: 18px; flex-shrink: 0;
     }
+    .offers-toggle .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .offers-toggle .toggle-track {
+      position: absolute; inset: 0;
+      background: rgba(255,255,255,0.12);
+      border-radius: 9px; transition: background 150ms; cursor: pointer;
+    }
+    .offers-toggle .toggle input:checked ~ .toggle-track { background: var(--color-accent); }
+    .offers-toggle .toggle-thumb {
+      position: absolute; top: 3px; left: 3px;
+      width: 12px; height: 12px; background: white; border-radius: 50%;
+      transition: transform 150ms; pointer-events: none;
+    }
+    .offers-toggle .toggle input:checked ~ .toggle-thumb { transform: translateX(14px); }
 
     .btn {
       display: inline-flex; align-items: center; gap: 6px;
@@ -674,10 +687,14 @@ export class PageProject extends LitElement {
               </div>
               ${this._project?.group_id ? html`
                 <label class="offers-toggle">
-                  <input type="checkbox"
-                    .checked=${this._editOffersEnabled}
-                    @click=${this._onEditOffersClick}
-                  />
+                  <span class="toggle">
+                    <input type="checkbox"
+                      .checked=${this._editOffersEnabled}
+                      @click=${this._onEditOffersClick}
+                    />
+                    <span class="toggle-track"></span>
+                    <span class="toggle-thumb"></span>
+                  </span>
                   Aanbiedingen toestaan
                 </label>
               ` : ''}

@@ -187,3 +187,54 @@ class HouseholdPointsRepository:
         )
         await self._session.commit()
         return offer_ids
+
+    async def delete_transactions_for_project(self, project_id: str) -> int:
+        """Delete all PointTransaction rows linked to tasks belonging to *project_id*.
+
+        Returns the number of rows deleted.
+        """
+        from app.models.task import Task  # local import to avoid circular deps
+
+        task_id_result = await self._session.execute(
+            select(Task.id).where(Task.project_id == project_id)
+        )
+        task_ids = list(task_id_result.scalars().all())
+        if not task_ids:
+            return 0
+        result = await self._session.execute(
+            delete(PointTransaction).where(PointTransaction.task_id.in_(task_ids))
+        )
+        await self._session.commit()
+        return result.rowcount  # type: ignore[return-value]
+
+    async def delete_offers_for_project(self, project_id: str) -> int:
+        """Delete all TaskOffer rows for tasks belonging to *project_id*.
+
+        Nullifies offer_id foreign keys on any linked PointTransaction rows first
+        to preserve referential integrity, then deletes the offers.
+        Returns the number of offers deleted.
+        """
+        from app.models.task import Task  # local import to avoid circular deps
+
+        task_id_result = await self._session.execute(
+            select(Task.id).where(Task.project_id == project_id)
+        )
+        task_ids = list(task_id_result.scalars().all())
+        if not task_ids:
+            return 0
+        offer_id_result = await self._session.execute(
+            select(TaskOffer.id).where(TaskOffer.task_id.in_(task_ids))
+        )
+        offer_ids = list(offer_id_result.scalars().all())
+        if not offer_ids:
+            return 0
+        await self._session.execute(
+            update(PointTransaction)
+            .where(PointTransaction.offer_id.in_(offer_ids))
+            .values(offer_id=None)
+        )
+        result = await self._session.execute(
+            delete(TaskOffer).where(TaskOffer.id.in_(offer_ids))
+        )
+        await self._session.commit()
+        return result.rowcount  # type: ignore[return-value]

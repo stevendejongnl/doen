@@ -142,8 +142,9 @@ def get_group_invitation_service(
 def get_project_service(
     project_repo: ProjectRepository = Depends(get_project_repo),
     group_repo: GroupRepository = Depends(get_group_repo),
+    points_repo: HouseholdPointsRepository = Depends(get_household_points_repo),
 ) -> ProjectService:
-    return ProjectService(project_repo, group_repo)
+    return ProjectService(project_repo, group_repo, points_repo)
 
 
 def get_household_points_service(
