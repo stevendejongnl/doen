@@ -276,6 +276,10 @@ export class DoenApp extends LitElement {
     (this.shadowRoot?.querySelector('doen-sidebar') as any)?.reload();
   }
 
+  private _onCloseSidebar = () => { this._sidebarOpen = false; };
+  private _onToggleSidebar = () => { this._sidebarOpen = !this._sidebarOpen; };
+  private _onResetNavigate = (e: CustomEvent) => { if (e.detail.page === 'login') this._resetToken = null; };
+
   private _onNavigate(e: CustomEvent<{ projectId?: string; page?: string; groupId?: string }>) {
     const { projectId, page, groupId } = e.detail;
     if (projectId) this._setRoute({ type: 'project', projectId });
@@ -317,7 +321,7 @@ export class DoenApp extends LitElement {
     if (this._resetToken) {
       return html`
         <page-reset .token=${this._resetToken}
-          @navigate=${(e: CustomEvent) => { if (e.detail.page === 'login') this._resetToken = null; }}>
+          @navigate=${this._onResetNavigate}>
         </page-reset>
         <doen-toast></doen-toast>
       `;
@@ -335,7 +339,7 @@ export class DoenApp extends LitElement {
     return html`
       <div class="layout" @navigate=${this._onNavigate} @project-created=${this._onProjectCreated}>
         <div class="backdrop ${this._sidebarOpen ? 'open' : ''}"
-             @click=${() => this._sidebarOpen = false}></div>
+             @click=${this._onCloseSidebar}></div>
 
         <doen-sidebar
           class="${this._sidebarOpen ? 'open' : ''}"
@@ -345,7 +349,7 @@ export class DoenApp extends LitElement {
 
         <div class="main">
           <div class="topbar">
-            <button class="menu-btn" @click=${() => this._sidebarOpen = !this._sidebarOpen}>
+            <button class="menu-btn" @click=${this._onToggleSidebar}>
               <i class="fa-solid fa-bars"></i>
             </button>
             <span class="topbar-title">Doen</span>

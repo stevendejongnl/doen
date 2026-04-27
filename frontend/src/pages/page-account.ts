@@ -4,6 +4,8 @@ import { api, ApiError, logout } from '../services/api';
 import { getMe } from '../services/auth';
 import { toast } from '../components/doen-toast';
 import { sharedStyles } from '../styles/shared-styles';
+import { inputValue } from '../utils/form';
+import { formatApiKeyExpiry, toEndOfDayIso } from '../utils/dates';
 
 interface ApiKey {
   id: string;
@@ -193,9 +195,7 @@ export class PageAccount extends LitElement {
     try {
       const body: Record<string, unknown> = { name };
       if (this._newKeyExpiry) {
-        // HTML date input gives YYYY-MM-DD; interpret as end of day UTC so keys
-        // last the full day a user picked, not expire at midnight local.
-        body.expires_at = new Date(`${this._newKeyExpiry}T23:59:59Z`).toISOString();
+        body.expires_at = toEndOfDayIso(this._newKeyExpiry);
       }
       const resp = await api.post<ApiKeyCreateResponse>('/auth/api-keys', body);
       this._justCreated = resp;
@@ -229,6 +229,18 @@ export class PageAccount extends LitElement {
     );
   }
 
+  private _onCurrentPwInput = (e: Event) => { this._currentPw = inputValue(e); };
+  private _onNewPwInput = (e: Event) => { this._newPw = inputValue(e); };
+  private _onNewPw2Input = (e: Event) => { this._newPw2 = inputValue(e); };
+  private _onNewKeyNameInput = (e: Event) => { this._newKeyName = inputValue(e); };
+  private _onNewKeyExpiryInput = (e: Event) => { this._newKeyExpiry = inputValue(e); };
+  private _onDismissCreated = () => { this._justCreated = null; };
+
+  private _onRevokeKeyClick = (e: Event) => {
+    const id = (e.currentTarget as HTMLElement).dataset.keyId!;
+    this._revokeKey(id);
+  };
+
   private async _deleteAccount() {
     if (!confirm('Je account permanent verwijderen? Als je nog projecten of groepen bezit, wordt je account uitgeschakeld in plaats van verwijderd.')) return;
     if (!confirm('Weet je het zeker? Dit is onomkeerbaar.')) return;
@@ -244,7 +256,7 @@ export class PageAccount extends LitElement {
 
   private _fmtDate(iso: string | null): string {
     if (!iso) return '—';
-    return new Date(iso).toLocaleString('nl-NL', { dateStyle: 'short', timeStyle: 'short' });
+    return formatApiKeyExpiry(iso);
   }
 
   render() {
@@ -266,19 +278,19 @@ export class PageAccount extends LitElement {
           <label>Huidig wachtwoord
             <input type="password" autocomplete="current-password" required
               .value=${this._currentPw}
-              @input=${(e: Event) => this._currentPw = (e.target as HTMLInputElement).value}
+              @input=${this._onCurrentPwInput}
               ?disabled=${this._changingPw} />
           </label>
           <label>Nieuw wachtwoord
             <input type="password" autocomplete="new-password" required minlength="6"
               .value=${this._newPw}
-              @input=${(e: Event) => this._newPw = (e.target as HTMLInputElement).value}
+              @input=${this._onNewPwInput}
               ?disabled=${this._changingPw} />
           </label>
           <label>Nieuw wachtwoord (nogmaals)
             <input type="password" autocomplete="new-password" required minlength="6"
               .value=${this._newPw2}
-              @input=${(e: Event) => this._newPw2 = (e.target as HTMLInputElement).value}
+              @input=${this._onNewPw2Input}
               ?disabled=${this._changingPw} />
           </label>
           <button class="btn btn-primary" type="submit"
@@ -302,7 +314,7 @@ export class PageAccount extends LitElement {
               <button class="btn btn-primary" @click=${this._copyToken}>
                 <i class="fa-solid fa-copy"></i> Kopieer
               </button>
-              <button class="btn btn-danger" @click=${() => this._justCreated = null}>
+              <button class="btn btn-danger" @click=${this._onDismissCreated}>
                 <i class="fa-solid fa-xmark"></i>
               </button>
             </div>
@@ -314,13 +326,13 @@ export class PageAccount extends LitElement {
             <label>Naam
               <input type="text" placeholder="bv. ha-integration" required
                 .value=${this._newKeyName}
-                @input=${(e: Event) => this._newKeyName = (e.target as HTMLInputElement).value}
+                @input=${this._onNewKeyNameInput}
                 ?disabled=${this._creatingKey} />
             </label>
             <label>Verloopt op (optioneel)
               <input type="date"
                 .value=${this._newKeyExpiry}
-                @input=${(e: Event) => this._newKeyExpiry = (e.target as HTMLInputElement).value}
+                @input=${this._onNewKeyExpiryInput}
                 ?disabled=${this._creatingKey} />
             </label>
             <button class="btn btn-primary" type="submit"
@@ -346,7 +358,7 @@ export class PageAccount extends LitElement {
                   ${k.expires_at ? html`· verloopt ${this._fmtDate(k.expires_at)}` : ''}
                 </div>
               </div>
-              <button class="btn btn-danger" @click=${() => this._revokeKey(k.id)}>
+              <button class="btn btn-danger" data-key-id=${k.id} @click=${this._onRevokeKeyClick}>
                 <i class="fa-solid fa-trash"></i> Intrekken
               </button>
             </div>

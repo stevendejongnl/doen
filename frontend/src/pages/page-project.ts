@@ -19,6 +19,7 @@ import '../components/ui/doen-input';
 import '../components/ui/doen-select';
 import type { SelectOption } from '../components/ui/doen-select';
 import '../components/ui/doen-button';
+import { inputValue, customInputValue } from '../utils/form';
 
 @customElement('page-project')
 export class PageProject extends LitElement {
@@ -540,6 +541,73 @@ export class PageProject extends LitElement {
     this._editing = false;
   }
 
+  private _onEditNameInput = (e: Event) => { this._editName = inputValue(e); };
+
+  private _onEditNameKeydown = (e: KeyboardEvent) => {
+    if (e.key === 'Enter') this._saveEdit();
+    if (e.key === 'Escape') this._cancelEdit();
+  };
+
+  private _onEditColorClick = (e: Event) => {
+    const c = (e.currentTarget as HTMLElement).dataset.color!;
+    this._editColor = c;
+  };
+
+  private _onEditOffersClick = (e: Event) => {
+    e.stopPropagation();
+    this._editOffersEnabled = (e.target as HTMLInputElement).checked;
+  };
+
+  private _onToggleShowDone = () => { this._showDone = !this._showDone; };
+
+  private _onInboxApproveClick = (e: Event) => {
+    const offerId = (e.currentTarget as HTMLElement).dataset.offerId!;
+    const offer = this._offers.find(o => o.id === offerId);
+    if (offer) void this._handleInboxAction(offer, true);
+  };
+
+  private _onInboxRejectClick = (e: Event) => {
+    const offerId = (e.currentTarget as HTMLElement).dataset.offerId!;
+    const offer = this._offers.find(o => o.id === offerId);
+    if (offer) void this._handleInboxAction(offer, false);
+  };
+
+  private _onAcceptOfferClick = (e: Event) => {
+    const offerId = (e.currentTarget as HTMLElement).dataset.offerId!;
+    const offer = this._offers.find(o => o.id === offerId);
+    if (offer) void this._acceptOffer(offer);
+  };
+
+  private _onApproveOfferClick = (e: Event) => {
+    const offerId = (e.currentTarget as HTMLElement).dataset.offerId!;
+    const offer = this._offers.find(o => o.id === offerId);
+    if (offer) void this._decideOffer(offer, true);
+  };
+
+  private _onRejectOfferClick = (e: Event) => {
+    const offerId = (e.currentTarget as HTMLElement).dataset.offerId!;
+    const offer = this._offers.find(o => o.id === offerId);
+    if (offer) void this._decideOffer(offer, false);
+  };
+
+  private _onWithdrawOfferClick = (e: Event) => {
+    const offerId = (e.currentTarget as HTMLElement).dataset.offerId!;
+    const offer = this._offers.find(o => o.id === offerId);
+    if (offer) void this._withdrawOffer(offer);
+  };
+
+  private _onTransferToChange = (e: Event) => { this._transferTo = customInputValue(e); };
+
+  private _onTransferAmountInput = (e: Event) => {
+    this._transferAmount = Math.max(1, parseInt(customInputValue(e), 10) || 1);
+  };
+
+  private _onTransferNoteInput = (e: Event) => { this._transferNote = customInputValue(e); };
+
+  private _onOfferCreated = () => { void this._refreshHousehold(); };
+  private _onOfferUpdated = () => { void this._refreshHousehold(); };
+  private _onTaskUpdatedFromList = (e: CustomEvent<Task>) => { this.updateTask(e.detail); void this._refreshHousehold(); };
+
   private async _saveEdit() {
     if (!this._project) return;
     const name = this._editName.trim();
@@ -590,11 +658,8 @@ export class PageProject extends LitElement {
           <div class="color-dot" style="background:${this._editColor};color:${this._editColor}"></div>
           <div class="edit-row">
             <input type="text" .value=${this._editName}
-              @input=${(e: Event) => this._editName = (e.target as HTMLInputElement).value}
-              @keydown=${(e: KeyboardEvent) => {
-                if (e.key === 'Enter') this._saveEdit();
-                if (e.key === 'Escape') this._cancelEdit();
-              }}
+              @input=${this._onEditNameInput}
+              @keydown=${this._onEditNameKeydown}
               placeholder="Projectnaam"
             />
             <div class="edit-actions">
@@ -602,7 +667,8 @@ export class PageProject extends LitElement {
                 ${PageProject.COLORS.map(c => html`
                   <div class="swatch ${c === this._editColor ? 'active' : ''}"
                     style="background:${c}"
-                    @click=${() => this._editColor = c}
+                    data-color=${c}
+                    @click=${this._onEditColorClick}
                   ></div>
                 `)}
               </div>
@@ -610,7 +676,7 @@ export class PageProject extends LitElement {
                 <label class="offers-toggle">
                   <input type="checkbox"
                     .checked=${this._editOffersEnabled}
-                    @click=${(e: Event) => { e.stopPropagation(); this._editOffersEnabled = (e.target as HTMLInputElement).checked; }}
+                    @click=${this._onEditOffersClick}
                   />
                   Aanbiedingen toestaan
                 </label>
@@ -633,7 +699,7 @@ export class PageProject extends LitElement {
             <i class="fa-solid fa-pen"></i>
           </button>
           ${done.length > 0 ? html`
-            <button class="toggle-done" @click=${() => this._showDone = !this._showDone}>
+            <button class="toggle-done" @click=${this._onToggleShowDone}>
               <i class="fa-solid fa-${this._showDone ? 'eye-slash' : 'eye'}"></i>
               ${done.length} gedaan
             </button>
@@ -655,8 +721,8 @@ export class PageProject extends LitElement {
                   <div class="inbox-meta">${item.message}</div>
                   ${item.actionable && offer ? html`
                     <div class="inbox-actions">
-                      <doen-button variant="primary" size="sm" @click=${() => this._handleInboxAction(offer, true)}>Goedkeuren</doen-button>
-                      <doen-button variant="neutral" size="sm" @click=${() => this._handleInboxAction(offer, false)}>Afwijzen</doen-button>
+                      <doen-button variant="primary" size="sm" data-offer-id=${offer.id} @click=${this._onInboxApproveClick}>Goedkeuren</doen-button>
+                      <doen-button variant="neutral" size="sm" data-offer-id=${offer.id} @click=${this._onInboxRejectClick}>Afwijzen</doen-button>
                     </div>
                   ` : ''}
                 </div>
@@ -694,14 +760,14 @@ export class PageProject extends LitElement {
                     </div>
                     <div class="offer-actions">
                       ${canAccept ? html`
-                        <doen-button variant="primary" size="sm" @click=${() => this._acceptOffer(offer)}>Accepteren</doen-button>
+                        <doen-button variant="primary" size="sm" data-offer-id=${offer.id} @click=${this._onAcceptOfferClick}>Accepteren</doen-button>
                       ` : ''}
                       ${canDecide ? html`
-                        <doen-button variant="primary" size="sm" @click=${() => this._decideOffer(offer, true)}>Goedkeuren</doen-button>
-                        <doen-button variant="neutral" size="sm" @click=${() => this._decideOffer(offer, false)}>Afwijzen</doen-button>
+                        <doen-button variant="primary" size="sm" data-offer-id=${offer.id} @click=${this._onApproveOfferClick}>Goedkeuren</doen-button>
+                        <doen-button variant="neutral" size="sm" data-offer-id=${offer.id} @click=${this._onRejectOfferClick}>Afwijzen</doen-button>
                       ` : ''}
                       ${canWithdraw ? html`
-                        <doen-button variant="neutral" size="sm" @click=${() => this._withdrawOffer(offer)}>Intrekken</doen-button>
+                        <doen-button variant="neutral" size="sm" data-offer-id=${offer.id} @click=${this._onWithdrawOfferClick}>Intrekken</doen-button>
                       ` : ''}
                     </div>
                   </div>
@@ -722,7 +788,7 @@ export class PageProject extends LitElement {
                     .filter((member) => member.user_id !== this._me?.id)
                     .map((member): SelectOption => ({ value: member.user_id, label: member.name })),
                 ]}
-                @doen-change=${(changeEvent: CustomEvent<{ value: string }>) => { this._transferTo = changeEvent.detail.value; }}
+                @doen-change=${this._onTransferToChange}
                 required
               ></doen-select>
               <doen-input
@@ -732,9 +798,7 @@ export class PageProject extends LitElement {
                 min="1"
                 style="max-width: 110px;"
                 .value=${String(this._transferAmount)}
-                @doen-input=${(inputEvent: CustomEvent<{ value: string }>) => {
-                  this._transferAmount = Math.max(1, parseInt(inputEvent.detail.value, 10) || 1);
-                }}
+                @doen-input=${this._onTransferAmountInput}
                 required
               ></doen-input>
               <doen-input
@@ -742,7 +806,7 @@ export class PageProject extends LitElement {
                 placeholder="Optioneel"
                 style="flex:1;min-width:160px"
                 .value=${this._transferNote}
-                @doen-input=${(inputEvent: CustomEvent<{ value: string }>) => { this._transferNote = inputEvent.detail.value; }}
+                @doen-input=${this._onTransferNoteInput}
               ></doen-input>
               <doen-button
                 variant="primary"
@@ -777,9 +841,9 @@ export class PageProject extends LitElement {
       </div>
 
       <div class="task-list"
-        @offer-created=${() => this._refreshHousehold()}
-        @offer-updated=${() => this._refreshHousehold()}
-        @task-updated=${(e: CustomEvent<Task>) => { this.updateTask(e.detail); void this._refreshHousehold(); }}
+        @offer-created=${this._onOfferCreated}
+        @offer-updated=${this._onOfferUpdated}
+        @task-updated=${this._onTaskUpdatedFromList}
         >
         ${active.length === 0 && done.length === 0 ? html`
           <div class="empty-state">

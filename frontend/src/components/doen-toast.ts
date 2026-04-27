@@ -81,10 +81,15 @@ export class DoenToast extends LitElement {
     this.toasts = this.toasts.filter(t => t.id !== id);
   }
 
+  private _onToastClick = (e: Event) => {
+    const id = Number((e.currentTarget as HTMLElement).dataset.toastId);
+    this._remove(id);
+  };
+
   render() {
     const icons = { success: 'circle-check', error: 'circle-xmark', info: 'circle-info' };
     return html`${this.toasts.map(t => html`
-      <div class="toast ${t.type}" @click=${() => this._remove(t.id)}>
+      <div class="toast ${t.type}" data-toast-id=${t.id} @click=${this._onToastClick}>
         <i class="fa-solid fa-${icons[t.type]} icon"></i>
         <span>${t.message}</span>
       </div>

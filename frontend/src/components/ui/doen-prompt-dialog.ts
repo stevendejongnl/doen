@@ -154,6 +154,8 @@ export class DoenPromptDialog extends LitElement {
     this.dispatchEvent(new CustomEvent('doen-cancel', { bubbles: true, composed: true }));
   }
 
+  private _onValueInput = (e: Event) => { this._value = (e.target as HTMLInputElement).value; };
+
   private _onBackdropClick(e: MouseEvent) {
     if (e.target === e.currentTarget) this._cancel();
   }
@@ -175,7 +177,7 @@ export class DoenPromptDialog extends LitElement {
               type="text"
               .value=${this._value}
               placeholder=${this.placeholder}
-              @input=${(e: Event) => this._value = (e.target as HTMLInputElement).value}
+              @input=${this._onValueInput}
               @keydown=${this._onInputKeydown}
             />
           </div>

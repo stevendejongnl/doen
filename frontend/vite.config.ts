@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import { VitePWA } from 'vite-plugin-pwa';
 import { execSync } from 'child_process';
 
@@ -28,8 +28,32 @@ export default defineConfig({
   build: {
     target: 'es2022',
   },
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./test/setup.ts'],
+    include: ['src/**/*.test.ts', 'test/**/*.test.ts'],
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.ts'],
+      exclude: [
+        'src/main.ts',
+        'src/env.d.ts',
+        'src/**/*.test.ts',
+        'src/styles/**',
+        'src/services/api.ts',
+        'src/services/auth.ts',
+      ],
+      thresholds: {
+        lines: 100,
+        branches: 100,
+        functions: 100,
+        statements: 100,
+      },
+      reporter: ['text', 'html'],
+    },
+  },
   plugins: [
-    VitePWA({
+    ...(!process.env.VITEST ? [VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
@@ -63,6 +87,6 @@ export default defineConfig({
           },
         ],
       },
-    }),
+    })] : []),
   ],
 });

@@ -211,6 +211,18 @@ export class PageTodo extends LitElement {
     this._savePreferences({ calendar_range: r });
   }
 
+  private _onNudgePrev = () => { this._nudge(-1); };
+  private _onNudgeToday = () => { this._nudge(0); };
+  private _onNudgeNext = () => { this._nudge(1); };
+  private _onSetRangeDay = () => { this._setRange('day'); };
+  private _onSetRangeWeek = () => { this._setRange('week'); };
+  private _onSetRangeMonth = () => { this._setRange('month'); };
+  private _onSetViewList = () => { this._setView('list'); };
+  private _onSetViewKanban = () => { this._setView('kanban'); };
+  private _onSetViewCalendar = () => { this._setView('calendar'); };
+  private _onTaskDeleted = (e: CustomEvent<string>) => { this.removeTask(e.detail); };
+  private _onTaskUpdated = (e: CustomEvent<Task>) => { this.updateTask(e.detail); };
+
   private _nudge(dir: -1 | 0 | 1) {
     if (dir === 0) { this._anchor = new Date(); return; }
     const d = new Date(this._anchor);
@@ -233,28 +245,28 @@ export class PageTodo extends LitElement {
         <div class="switchers">
           ${this._view === 'calendar' ? html`
             <div class="nav-pill">
-              <button title="Vorige" @click=${() => this._nudge(-1)}>
+              <button title="Vorige" @click=${this._onNudgePrev}>
                 <i class="fa-solid fa-chevron-left"></i>
               </button>
-              <button class="today-btn" @click=${() => this._nudge(0)}>Nu</button>
-              <button title="Volgende" @click=${() => this._nudge(1)}>
+              <button class="today-btn" @click=${this._onNudgeToday}>Nu</button>
+              <button title="Volgende" @click=${this._onNudgeNext}>
                 <i class="fa-solid fa-chevron-right"></i>
               </button>
             </div>
             <div class="seg">
-              <button class=${this._range === 'day' ? 'active' : ''} @click=${() => this._setRange('day')}>Dag</button>
-              <button class=${this._range === 'week' ? 'active' : ''} @click=${() => this._setRange('week')}>Week</button>
-              <button class=${this._range === 'month' ? 'active' : ''} @click=${() => this._setRange('month')}>Maand</button>
+              <button class=${this._range === 'day' ? 'active' : ''} @click=${this._onSetRangeDay}>Dag</button>
+              <button class=${this._range === 'week' ? 'active' : ''} @click=${this._onSetRangeWeek}>Week</button>
+              <button class=${this._range === 'month' ? 'active' : ''} @click=${this._onSetRangeMonth}>Maand</button>
             </div>
           ` : ''}
           <div class="seg">
-            <button class=${this._view === 'list' ? 'active' : ''} @click=${() => this._setView('list')}>
+            <button class=${this._view === 'list' ? 'active' : ''} @click=${this._onSetViewList}>
               <i class="fa-solid fa-list"></i> Lijst
             </button>
-            <button class=${this._view === 'kanban' ? 'active' : ''} @click=${() => this._setView('kanban')}>
+            <button class=${this._view === 'kanban' ? 'active' : ''} @click=${this._onSetViewKanban}>
               <i class="fa-solid fa-columns"></i> Kanban
             </button>
-            <button class=${this._view === 'calendar' ? 'active' : ''} @click=${() => this._setView('calendar')}>
+            <button class=${this._view === 'calendar' ? 'active' : ''} @click=${this._onSetViewCalendar}>
               <i class="fa-solid fa-calendar"></i> Kalender
             </button>
           </div>
@@ -286,8 +298,8 @@ export class PageTodo extends LitElement {
     return html`
       ${this._renderHeader()}
       <div class="view-container"
-        @task-deleted=${(e: CustomEvent<string>) => this.removeTask(e.detail)}
-        @task-updated=${(e: CustomEvent<Task>) => this.updateTask(e.detail)}
+        @task-deleted=${this._onTaskDeleted}
+        @task-updated=${this._onTaskUpdated}
       >
         ${this._renderView()}
       </div>

@@ -3,6 +3,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { confirmPasswordReset } from '../services/auth';
 import { ApiError } from '../services/api';
 import { sharedStyles } from '../styles/shared-styles';
+import { inputValue } from '../utils/form';
 
 @customElement('page-reset')
 export class PageReset extends LitElement {
@@ -92,6 +93,9 @@ export class PageReset extends LitElement {
     .link-btn:hover { color: var(--color-accent-hover); }
   `];
 
+  private _onPasswordInput = (e: Event) => { this._password = inputValue(e); };
+  private _onPassword2Input = (e: Event) => { this._password2 = inputValue(e); };
+
   private async _submit(e: Event) {
     e.preventDefault();
     if (this._loading) return;
@@ -137,13 +141,13 @@ export class PageReset extends LitElement {
             <label>Nieuw wachtwoord
               <input type="password" autocomplete="new-password" minlength="6"
                 .value=${this._password}
-                @input=${(e: Event) => this._password = (e.target as HTMLInputElement).value}
+                @input=${this._onPasswordInput}
                 ?disabled=${this._loading} required />
             </label>
             <label>Herhaal wachtwoord
               <input type="password" autocomplete="new-password" minlength="6"
                 .value=${this._password2}
-                @input=${(e: Event) => this._password2 = (e.target as HTMLInputElement).value}
+                @input=${this._onPassword2Input}
                 ?disabled=${this._loading} required />
             </label>
             ${this._error ? html`<div class="error"><i class="fa-solid fa-circle-exclamation"></i>${this._error}</div>` : ''}

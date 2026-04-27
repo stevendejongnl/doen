@@ -225,6 +225,31 @@ export class DoenViewKanban extends LitElement {
     this._openTaskId = id;
   }
 
+  private _onCardDragStart = (e: DragEvent) => {
+    const id = (e.currentTarget as HTMLElement).dataset.taskId!;
+    this._onDragStart(e, id);
+  };
+
+  private _onCardClick = (e: Event) => {
+    const id = (e.currentTarget as HTMLElement).dataset.taskId!;
+    this._openCard(id);
+  };
+
+  private _onColDragOverHandler = (e: DragEvent) => {
+    const col = (e.currentTarget as HTMLElement).dataset.colId! as TaskStatus;
+    this._onColDragOver(e, col);
+  };
+
+  private _onColDragLeaveHandler = (e: Event) => {
+    const col = (e.currentTarget as HTMLElement).dataset.colId! as TaskStatus;
+    this._onColDragLeave(col);
+  };
+
+  private _onColDropHandler = (e: DragEvent) => {
+    const col = (e.currentTarget as HTMLElement).dataset.colId! as TaskStatus;
+    this._onColDrop(e, col);
+  };
+
   private _closeCard = () => {
     this._openTaskId = null;
   };
@@ -273,9 +298,10 @@ export class DoenViewKanban extends LitElement {
       <div class="card ${this._dragId === t.id ? 'dragging' : ''} ${t.status === 'done' ? 'done' : ''}"
         style=${`--accent:${this._accentFor(t)}`}
         draggable="true"
-        @dragstart=${(e: DragEvent) => this._onDragStart(e, t.id)}
+        data-task-id=${t.id}
+        @dragstart=${this._onCardDragStart}
         @dragend=${this._onDragEnd}
-        @click=${() => this._openCard(t.id)}
+        @click=${this._onCardClick}
       >
         ${this._renderCardBody(t)}
       </div>
@@ -293,9 +319,10 @@ export class DoenViewKanban extends LitElement {
           const tasks = this._byStatus(col.id);
           return html`
             <div class="col ${this._dropCol === col.id ? 'drop-target' : ''}"
-              @dragover=${(e: DragEvent) => this._onColDragOver(e, col.id)}
-              @dragleave=${() => this._onColDragLeave(col.id)}
-              @drop=${(e: DragEvent) => this._onColDrop(e, col.id)}
+              data-col-id=${col.id}
+              @dragover=${this._onColDragOverHandler}
+              @dragleave=${this._onColDragLeaveHandler}
+              @drop=${this._onColDropHandler}
             >
               <div class="col-head" style=${`color:${col.accent}`}>
                 <i class="fa-solid ${col.icon}"></i>

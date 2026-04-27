@@ -287,6 +287,11 @@ export class DoenViewCalendar extends LitElement {
     this._openTaskId = id;
   }
 
+  private _onPillClick = (e: Event) => {
+    const id = (e.currentTarget as HTMLElement).dataset.taskId!;
+    this._openPill(id);
+  };
+
   private _closePill = () => {
     this._openTaskId = null;
   };
@@ -294,7 +299,7 @@ export class DoenViewCalendar extends LitElement {
   private _renderPill(t: Task) {
     const timeLabel = t.due_date ? this._formatTime(t.due_date) : '';
     return html`
-      <div class="pill ${t.status === 'done' ? 'done' : ''}" @click=${() => this._openPill(t.id)}>
+      <div class="pill ${t.status === 'done' ? 'done' : ''}" data-task-id=${t.id} @click=${this._onPillClick}>
         <span class="dot p-${t.priority}"></span>
         <span class="pill-title">${t.title}</span>
         ${timeLabel ? html`<span class="pill-time">${timeLabel}</span>` : ''}

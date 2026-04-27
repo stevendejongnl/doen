@@ -3,6 +3,7 @@ import { customElement, state, property } from 'lit/decorators.js';
 import { api, ApiError } from '../services/api';
 import { isLoggedIn, getMe } from '../services/auth';
 import { sharedStyles } from '../styles/shared-styles';
+import { inputValue } from '../utils/form';
 
 interface InvitationDetails {
   group_id: string;
@@ -123,6 +124,9 @@ export class PageInvite extends LitElement {
     }
   }
 
+  private _onNameInput = (e: Event) => { this._name = inputValue(e); };
+  private _onPasswordInput = (e: Event) => { this._password = inputValue(e); };
+
   private async _acceptWithSignup(e: Event) {
     e.preventDefault();
     if (!this._details || !this._name.trim() || this._password.length < 6) return;
@@ -213,14 +217,14 @@ export class PageInvite extends LitElement {
             Je naam
             <input type="text" required autocomplete="name"
               .value=${this._name}
-              @input=${(e: Event) => this._name = (e.target as HTMLInputElement).value}
+              @input=${this._onNameInput}
               ?disabled=${this._submitting} />
           </label>
           <label>
             Wachtwoord
             <input type="password" required minlength="6" autocomplete="new-password"
               .value=${this._password}
-              @input=${(e: Event) => this._password = (e.target as HTMLInputElement).value}
+              @input=${this._onPasswordInput}
               ?disabled=${this._submitting} />
           </label>
           ${this._error ? html`<div class="error">${this._error}</div>` : ''}

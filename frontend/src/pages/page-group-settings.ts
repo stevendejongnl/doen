@@ -5,6 +5,7 @@ import { api, ApiError, purgeOffers, resetBalances, adjustBalance } from '../ser
 import { getMe, type Me } from '../services/auth';
 import { toast } from '../components/doen-toast';
 import { sharedStyles } from '../styles/shared-styles';
+import { inputValue } from '../utils/form';
 
 const PROJECT_COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899'];
 
@@ -483,6 +484,97 @@ export class PageGroupSettings extends LitElement {
     }
   }
 
+  // Offers handlers
+  private _onStatusCheckboxClick = (e: Event) => {
+    const status = (e.currentTarget as HTMLElement).dataset.status!;
+    this._toggleStatus(status);
+  };
+
+  private _onConfirmPurge = () => { this._confirmPurge = true; };
+  private _onCancelPurge = () => { this._confirmPurge = false; };
+  private _onDoPurge = () => { void this._doPurgeOffers(); };
+
+  // Points handlers
+  private _onDeltaInput = (e: Event) => {
+    const userId = (e.currentTarget as HTMLElement).dataset.userId!;
+    this._pointDeltas = { ...this._pointDeltas, [userId]: inputValue(e) };
+  };
+
+  private _onNoteInput = (e: Event) => {
+    const userId = (e.currentTarget as HTMLElement).dataset.userId!;
+    this._pointNotes = { ...this._pointNotes, [userId]: inputValue(e) };
+  };
+
+  private _onAdjustClick = (e: Event) => {
+    const userId = (e.currentTarget as HTMLElement).dataset.userId!;
+    const member = this._members.find(m => m.user_id === userId);
+    if (member) void this._doAdjust(member);
+  };
+
+  private _onConfirmResetOneClick = (e: Event) => {
+    const userId = (e.currentTarget as HTMLElement).dataset.userId!;
+    this._confirmResetUserId = userId;
+  };
+
+  private _onCancelResetOne = () => { this._confirmResetUserId = ''; };
+
+  private _onDoResetOneClick = (e: Event) => {
+    const userId = (e.currentTarget as HTMLElement).dataset.userId!;
+    void this._doResetOne(userId);
+  };
+
+  private _onConfirmResetAll = () => { this._confirmResetAll = true; };
+  private _onCancelResetAll = () => { this._confirmResetAll = false; };
+  private _onDoResetAll = () => { void this._doResetAll(); };
+
+  // Categories handlers
+  private _onNewCategoryNameInput = (e: Event) => { this._newCategoryName = inputValue(e); };
+
+  private _onNewCategoryColorClick = (e: Event) => {
+    const color = (e.currentTarget as HTMLElement).dataset.color!;
+    this._newCategoryColor = color;
+  };
+
+  private _onColorSwatchClick = (e: Event) => {
+    const id = (e.currentTarget as HTMLElement).dataset.categoryId!;
+    const category = this._categories.find(c => c.id === id);
+    if (category) void this._updateCategoryColor(category);
+  };
+
+  private _onEditCategoryNameInput = (e: Event) => { this._editingCategoryName = inputValue(e); };
+
+  private _onEditCategoryKeydown = (e: KeyboardEvent) => {
+    const id = (e.currentTarget as HTMLElement).dataset.categoryId!;
+    const category = this._categories.find(c => c.id === id);
+    if (!category) return;
+    if (e.key === 'Enter') { e.preventDefault(); void this._commitEditCategory(category); }
+    else if (e.key === 'Escape') { e.preventDefault(); this._cancelEditCategory(); }
+  };
+
+  private _onEditCategoryBlur = (e: Event) => {
+    const id = (e.currentTarget as HTMLElement).dataset.categoryId!;
+    const category = this._categories.find(c => c.id === id);
+    if (category) void this._commitEditCategory(category);
+  };
+
+  private _onStartEditCategoryClick = (e: Event) => {
+    const id = (e.currentTarget as HTMLElement).dataset.categoryId!;
+    const category = this._categories.find(c => c.id === id);
+    if (category) this._startEditCategory(category);
+  };
+
+  private _onConfirmDeleteCategoryClick = (e: Event) => {
+    const id = (e.currentTarget as HTMLElement).dataset.categoryId!;
+    this._confirmDeleteCategoryId = id;
+  };
+
+  private _onCancelDeleteCategory = () => { this._confirmDeleteCategoryId = ''; };
+
+  private _onDeleteCategoryClick = (e: Event) => {
+    const id = (e.currentTarget as HTMLElement).dataset.categoryId!;
+    void this._deleteCategory(id);
+  };
+
   private _renderOffersCard() {
     const allStatuses = ['open', 'requested', 'approved', 'rejected', 'withdrawn', 'closed'];
     const selectedCount = this._selectedCount();
@@ -504,7 +596,8 @@ export class PageGroupSettings extends LitElement {
               <label class="status-check ${selected ? 'selected' : ''}">
                 <input type="checkbox"
                   .checked=${selected}
-                  @change=${() => this._toggleStatus(status)}
+                  data-status=${status}
+                  @click=${this._onStatusCheckboxClick}
                 />
                 <span class="status-label">${OFFER_STATUS_LABELS[status]}</span>
                 <span class="status-count">${count}</span>
@@ -521,18 +614,18 @@ export class PageGroupSettings extends LitElement {
             </span>
             <button class="btn btn-danger btn-sm"
               ?disabled=${this._purging}
-              @click=${() => this._doPurgeOffers()}>
+              @click=${this._onDoPurge}>
               <i class="fa-solid fa-${this._purging ? 'spinner fa-spin' : 'trash'}"></i>
               Bevestigen
             </button>
-            <button class="btn btn-outline btn-sm" @click=${() => this._confirmPurge = false}>
+            <button class="btn btn-outline btn-sm" @click=${this._onCancelPurge}>
               Annuleren
             </button>
           </div>
         ` : html`
           <button class="btn btn-danger"
             ?disabled=${selectedCount === 0 || this._purging}
-            @click=${() => this._confirmPurge = true}>
+            @click=${this._onConfirmPurge}>
             <i class="fa-solid fa-trash"></i>
             Verwijder ${selectedCount > 0 ? selectedCount : ''} aanbieding(en)
           </button>
@@ -569,38 +662,39 @@ export class PageGroupSettings extends LitElement {
                 <div class="adjust-controls">
                   <input type="number" placeholder="Δ"
                     .value=${delta}
-                    @input=${(event: Event) => {
-                      this._pointDeltas = { ...this._pointDeltas, [member.user_id]: (event.target as HTMLInputElement).value };
-                    }}
+                    data-user-id=${member.user_id}
+                    @input=${this._onDeltaInput}
                   />
                   <input type="text" class="note-input" placeholder="Reden (optioneel)"
                     .value=${note}
-                    @input=${(event: Event) => {
-                      this._pointNotes = { ...this._pointNotes, [member.user_id]: (event.target as HTMLInputElement).value };
-                    }}
+                    data-user-id=${member.user_id}
+                    @input=${this._onNoteInput}
                   />
                   <button class="btn btn-outline btn-sm"
                     ?disabled=${!delta || isAdjusting}
-                    @click=${() => this._doAdjust(member)}>
+                    data-user-id=${member.user_id}
+                    @click=${this._onAdjustClick}>
                     <i class="fa-solid fa-${isAdjusting ? 'spinner fa-spin' : 'check'}"></i>
                     Toepassen
                   </button>
                   ${this._confirmResetUserId === member.user_id ? html`
                     <button class="btn btn-danger btn-sm"
                       ?disabled=${isResetting}
-                      @click=${() => this._doResetOne(member.user_id)}>
+                      data-user-id=${member.user_id}
+                      @click=${this._onDoResetOneClick}>
                       <i class="fa-solid fa-${isResetting ? 'spinner fa-spin' : 'rotate-left'}"></i>
                       Bevestigen
                     </button>
                     <button class="btn btn-outline btn-sm"
-                      @click=${() => this._confirmResetUserId = ''}>
+                      @click=${this._onCancelResetOne}>
                       Annuleren
                     </button>
                   ` : html`
                     <button class="btn btn-outline btn-sm"
                       ?disabled=${isResetting}
                       title="Reset naar 0"
-                      @click=${() => this._confirmResetUserId = member.user_id}>
+                      data-user-id=${member.user_id}
+                      @click=${this._onConfirmResetOneClick}>
                       <i class="fa-solid fa-rotate-left"></i>
                     </button>
                   `}
@@ -623,18 +717,18 @@ export class PageGroupSettings extends LitElement {
                 </span>
                 <button class="btn btn-danger btn-sm"
                   ?disabled=${this._resettingAll}
-                  @click=${() => this._doResetAll()}>
+                  @click=${this._onDoResetAll}>
                   <i class="fa-solid fa-${this._resettingAll ? 'spinner fa-spin' : 'rotate-left'}"></i>
                   Bevestigen
                 </button>
-                <button class="btn btn-outline btn-sm" @click=${() => this._confirmResetAll = false}>
+                <button class="btn btn-outline btn-sm" @click=${this._onCancelResetAll}>
                   Annuleren
                 </button>
               </div>
             ` : html`
               <button class="btn btn-danger"
                 ?disabled=${this._resettingAll}
-                @click=${() => this._confirmResetAll = true}>
+                @click=${this._onConfirmResetAll}>
                 <i class="fa-solid fa-rotate-left"></i>
                 Reset alle saldi naar nul
               </button>
@@ -657,13 +751,14 @@ export class PageGroupSettings extends LitElement {
         <form class="new-category-form" @submit=${this._createCategory}>
           <input type="text" placeholder="Naam"
             .value=${this._newCategoryName}
-            @input=${(event: Event) => this._newCategoryName = (event.target as HTMLInputElement).value}
+            @input=${this._onNewCategoryNameInput}
           />
           <div class="color-row">
             ${PROJECT_COLORS.map(color => html`
               <div class="color-option ${this._newCategoryColor === color ? 'active' : ''}"
                 style="background:${color}"
-                @click=${() => this._newCategoryColor = color}
+                data-color=${color}
+                @click=${this._onNewCategoryColorClick}
                 title="${color}"
               ></div>
             `)}
@@ -689,17 +784,16 @@ export class PageGroupSettings extends LitElement {
                   <div class="color-swatch"
                     style="background:${category.color}"
                     title="Klik om kleur te wijzigen"
-                    @click=${() => this._updateCategoryColor(category)}
+                    data-category-id=${category.id}
+                    @click=${this._onColorSwatchClick}
                   ></div>
                   ${isEditing ? html`
                     <input class="category-name-input" type="text"
                       .value=${this._editingCategoryName}
-                      @input=${(event: Event) => this._editingCategoryName = (event.target as HTMLInputElement).value}
-                      @keydown=${(event: KeyboardEvent) => {
-                        if (event.key === 'Enter') { event.preventDefault(); void this._commitEditCategory(category); }
-                        else if (event.key === 'Escape') { event.preventDefault(); this._cancelEditCategory(); }
-                      }}
-                      @blur=${() => this._commitEditCategory(category)}
+                      data-category-id=${category.id}
+                      @input=${this._onEditCategoryNameInput}
+                      @keydown=${this._onEditCategoryKeydown}
+                      @blur=${this._onEditCategoryBlur}
                       autofocus
                     />
                   ` : html`
@@ -709,25 +803,28 @@ export class PageGroupSettings extends LitElement {
                   ${!isEditing ? html`
                     <button class="icon-btn" title="Naam wijzigen"
                       ?disabled=${isSaving}
-                      @click=${() => this._startEditCategory(category)}>
+                      data-category-id=${category.id}
+                      @click=${this._onStartEditCategoryClick}>
                       <i class="fa-solid fa-pen"></i>
                     </button>
                   ` : ''}
                   ${confirmingDelete ? html`
                     <button class="btn btn-danger btn-sm"
                       ?disabled=${isDeleting}
-                      @click=${() => this._deleteCategory(category.id)}>
+                      data-category-id=${category.id}
+                      @click=${this._onDeleteCategoryClick}>
                       <i class="fa-solid fa-${isDeleting ? 'spinner fa-spin' : 'check'}"></i>
                       Bevestigen
                     </button>
                     <button class="btn btn-outline btn-sm"
-                      @click=${() => this._confirmDeleteCategoryId = ''}>
+                      @click=${this._onCancelDeleteCategory}>
                       Annuleren
                     </button>
                   ` : html`
                     <button class="icon-btn danger" title="Verwijderen"
                       ?disabled=${isDeleting}
-                      @click=${() => this._confirmDeleteCategoryId = category.id}>
+                      data-category-id=${category.id}
+                      @click=${this._onConfirmDeleteCategoryClick}>
                       <i class="fa-solid fa-${isDeleting ? 'spinner fa-spin' : 'trash'}"></i>
                     </button>
                   `}

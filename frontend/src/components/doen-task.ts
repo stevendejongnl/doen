@@ -19,42 +19,11 @@ import './ui/doen-prompt-dialog';
 import type { DoenConfirmDialog } from './ui/doen-confirm-dialog';
 import type { DoenPromptDialog } from './ui/doen-prompt-dialog';
 
-const DAY_LABELS = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
-
-function normalizeTime24(raw: string): string {
-  const digits = raw.replace(/\D/g, '').slice(0, 4);
-  if (digits.length <= 2) return digits;
-  return `${digits.slice(0, 2)}:${digits.slice(2)}`;
-}
-
-function parseWeekdays(csv: string | null | undefined): Set<number> {
-  if (!csv) return new Set();
-  return new Set(csv.split(',').map(s => parseInt(s, 10)).filter(n => !isNaN(n) && n >= 0 && n <= 6));
-}
-
-function weekdaysToCsv(s: Set<number>): string | null {
-  if (s.size === 0) return null;
-  return [...s].sort((a, b) => a - b).join(',');
-}
-
-export function describeRule(rule: RecurringRule): string {
-  const interval = Math.max(1, rule.interval ?? 1);
-  let base = '';
-  if (rule.unit === 'day') {
-    base = interval > 1 ? `Elke ${interval} dagen` : 'Dagelijks';
-  } else if (rule.unit === 'week') {
-    const days = [...parseWeekdays(rule.weekdays)].sort((a, b) => a - b).map(n => DAY_LABELS[n]).join(', ');
-    const prefix = interval > 1 ? `Elke ${interval} weken` : 'Wekelijks';
-    base = days ? `${prefix} op ${days}` : prefix;
-  } else if (rule.unit === 'month') {
-    const dayBit = rule.month_day ? ` op dag ${rule.month_day}` : '';
-    base = interval > 1 ? `Elke ${interval} maanden${dayBit}` : `Maandelijks${dayBit}`;
-  }
-  let suffix = '';
-  if (rule.parity === 'odd') suffix = rule.unit === 'week' ? ' · oneven weken' : ' · oneven';
-  if (rule.parity === 'even') suffix = rule.unit === 'week' ? ' · even weken' : ' · even';
-  return `${base}${suffix} · ${rule.time_of_day ?? '08:00'}`;
-}
+import {
+  toggleWeekday, weekdaysToCsv, parseWeekdays, describeRule,
+} from '../utils/recurrence';
+import { inputValue, selectValue, checkboxChecked, clampedInt, normalizeTime24, isValidTime24 } from '../utils/form';
+import { formatShortDate, isOverdue } from '../utils/dates';
 
 @customElement('doen-task')
 export class DoenTask extends LitElement {
@@ -700,11 +669,41 @@ export class DoenTask extends LitElement {
   }
 
   private _toggleWeekday(n: number) {
-    const next = new Set(this._editWeekdays);
-    if (next.has(n)) next.delete(n);
-    else next.add(n);
-    this._editWeekdays = next;
+    this._editWeekdays = toggleWeekday(this._editWeekdays, n);
   }
+
+  private _onEditTitleInput = (e: Event) => { this._editTitle = inputValue(e); };
+  private _onEditPriorityChange = (e: Event) => { this._editPriority = selectValue(e) as TaskPriority; };
+  private _onEditDueInput = (e: Event) => { this._editDue = inputValue(e); };
+  private _onEditAssigneeChange = (e: Event) => { this._editAssignee = selectValue(e); };
+  private _onEditCategorySelectChange = (e: Event) => { this._onEditCategoryChange(selectValue(e)); };
+  private _onEditNotesInput = (e: Event) => { this._editNotes = (e.target as HTMLTextAreaElement).value; };
+  private _onEditRecurringChange = (e: Event) => { this._editRecurring = checkboxChecked(e); };
+  private _onEditIntervalInput = (e: Event) => { this._editInterval = clampedInt(e, 1, 365); };
+  private _onEditUnitChange = (e: Event) => { this._editUnit = selectValue(e) as RecurrenceUnit; };
+  private _onEditParityChange = (e: Event) => { this._editParity = selectValue(e) as RecurrenceParity; };
+  private _onEditMonthDayInput = (e: Event) => { this._editMonthDay = clampedInt(e, 1, 31); };
+
+  private _onEditTimeInput = (e: Event) => {
+    const t = e.target as HTMLInputElement;
+    const next = normalizeTime24(t.value);
+    this._editTimeOfDay = next;
+    t.value = next;
+  };
+
+  private _onEditTimeBlur = (e: Event) => {
+    const t = e.target as HTMLInputElement;
+    if (!isValidTime24(t.value)) this._editTimeOfDay = '08:00';
+  };
+
+  private _onCancelEdit = () => { this._resetEditState(); this._modalMode = 'view'; };
+  private _onOpenEdit = () => { this._resetEditState(); this._modalMode = 'edit'; };
+  private _onEditBtnClick = () => this._openModal('edit');
+
+  private _onWeekdayChipClick = (e: Event) => {
+    const n = Number((e.currentTarget as HTMLElement).dataset.weekday);
+    this._toggleWeekday(n);
+  };
 
   private _recurrencePayload() {
     return {
@@ -795,9 +794,101 @@ export class DoenTask extends LitElement {
 
   private _formatDue(due?: string | null): { label: string; overdue: boolean } | null {
     if (!due) return null;
-    const d = new Date(due);
-    const overdue = d < new Date() && this.task.status !== 'done';
-    return { label: d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' }), overdue };
+    return {
+      label: formatShortDate(due),
+      overdue: isOverdue(due) && this.task.status !== 'done',
+    };
+  }
+
+  private _renderWeekdayPicker() {
+    const labels = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
+    return html`
+      <div class="rb-row">
+        <span>Op:</span>
+        <div class="weekday-picker">
+          ${labels.map((label, i) => html`
+            <span class="weekday-chip ${this._editWeekdays.has(i) ? 'active' : ''}"
+              data-weekday=${i}
+              @click=${this._onWeekdayChipClick}>${label}</span>
+          `)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderRecurrenceBuilder() {
+    if (!this._editRecurring) return '';
+    return html`
+      <div class="recurrence-builder">
+        <div class="rb-row">
+          <span>Elke</span>
+          <input type="number" min="1" max="365"
+            .value=${String(this._editInterval)}
+            @input=${this._onEditIntervalInput}
+          />
+          <select .value=${this._editUnit} @change=${this._onEditUnitChange}>
+            <option value="day">dag(en)</option>
+            <option value="week">we(e)k(en)</option>
+            <option value="month">maand(en)</option>
+          </select>
+        </div>
+        ${this._editUnit === 'week' ? this._renderWeekdayPicker() : ''}
+        ${this._editUnit === 'month' ? html`
+          <div class="rb-row">
+            <span>Dag van de maand:</span>
+            <input type="number" min="1" max="31"
+              .value=${String(this._editMonthDay)}
+              @input=${this._onEditMonthDayInput}
+            />
+          </div>
+        ` : ''}
+        <div class="rb-row">
+          <span>Om:</span>
+          <input type="text"
+            inputmode="numeric"
+            pattern="[0-2][0-9]:[0-5][0-9]"
+            maxlength="5"
+            placeholder="08:00"
+            aria-label="Tijd in 24-uurs notatie"
+            .value=${this._editTimeOfDay}
+            @input=${this._onEditTimeInput}
+            @blur=${this._onEditTimeBlur}
+          />
+          <span style="margin-left:8px">Alleen</span>
+          <select .value=${this._editParity} @change=${this._onEditParityChange}>
+            <option value="any">alle</option>
+            <option value="odd">oneven</option>
+            <option value="even">even</option>
+          </select>
+          <span>${this._editUnit === 'week' ? 'weken' : this._editUnit === 'month' ? 'maanden' : 'dagen'}</span>
+        </div>
+        <div class="rb-preview">${this._previewDescription()}</div>
+      </div>
+    `;
+  }
+
+  private _renderMemberSelect() {
+    if (this._members.length <= 1) return '';
+    return html`
+      <select @change=${this._onEditAssigneeChange}>
+        <option value="" .selected=${this._editAssignee === ''}>Niemand toegewezen</option>
+        ${this._members.map(member => html`
+          <option value=${member.user_id} .selected=${this._editAssignee === member.user_id}>${member.name}</option>
+        `)}
+      </select>
+    `;
+  }
+
+  private _renderCategorySelect() {
+    return html`
+      <select @change=${this._onEditCategorySelectChange}>
+        <option value="" .selected=${this._editCategoryId === ''}>Geen categorie</option>
+        ${this._categories.map(category => html`
+          <option value=${category.id} .selected=${this._editCategoryId === category.id}>${category.name}</option>
+        `)}
+        <option value="__new__" .selected=${false}>+ Nieuwe categorie…</option>
+      </select>
+    `;
   }
 
   private _renderEditForm() {
@@ -806,44 +897,25 @@ export class DoenTask extends LitElement {
         <div class="edit-row">
           <input class="edit-title" type="text"
             .value=${this._editTitle}
-            @input=${(e: Event) => this._editTitle = (e.target as HTMLInputElement).value}
+            @input=${this._onEditTitleInput}
             ?disabled=${this._saving}
           />
         </div>
         <div class="edit-row">
-          <select .value=${this._editPriority}
-            @change=${(e: Event) => this._editPriority = (e.target as HTMLSelectElement).value as TaskPriority}>
+          <select .value=${this._editPriority} @change=${this._onEditPriorityChange}>
             <option value="none">Geen prioriteit</option>
             <option value="low">Laag</option>
             <option value="medium">Middel</option>
             <option value="high">Hoog</option>
           </select>
-          <input type="date"
-            .value=${this._editDue}
-            @input=${(e: Event) => this._editDue = (e.target as HTMLInputElement).value}
-          />
-          ${this._members.length > 1 ? html`
-            <select
-              @change=${(e: Event) => this._editAssignee = (e.target as HTMLSelectElement).value}>
-              <option value="" .selected=${this._editAssignee === ''}>Niemand toegewezen</option>
-              ${this._members.map(member => html`
-                <option value=${member.user_id} .selected=${this._editAssignee === member.user_id}>${member.name}</option>
-              `)}
-            </select>
-          ` : ''}
-          <select
-            @change=${(e: Event) => this._onEditCategoryChange((e.target as HTMLSelectElement).value)}>
-            <option value="" .selected=${this._editCategoryId === ''}>Geen categorie</option>
-            ${this._categories.map(category => html`
-              <option value=${category.id} .selected=${this._editCategoryId === category.id}>${category.name}</option>
-            `)}
-            <option value="__new__" .selected=${false}>+ Nieuwe categorie…</option>
-          </select>
+          <input type="date" .value=${this._editDue} @input=${this._onEditDueInput} />
+          ${this._renderMemberSelect()}
+          ${this._renderCategorySelect()}
         </div>
         <textarea
           placeholder="Notities, context, links..."
           .value=${this._editNotes}
-          @input=${(e: Event) => this._editNotes = (e.target as HTMLTextAreaElement).value}
+          @input=${this._onEditNotesInput}
           ?disabled=${this._saving}
         ></textarea>
         <div class="recurring-row">
@@ -851,7 +923,7 @@ export class DoenTask extends LitElement {
             <span class="toggle">
               <input type="checkbox"
                 .checked=${this._editRecurring}
-                @change=${(e: Event) => this._editRecurring = (e.target as HTMLInputElement).checked}
+                @change=${this._onEditRecurringChange}
               />
               <span class="toggle-track"></span>
               <span class="toggle-thumb"></span>
@@ -860,73 +932,7 @@ export class DoenTask extends LitElement {
             Herhalen
           </label>
         </div>
-        ${this._editRecurring ? html`
-          <div class="recurrence-builder">
-            <div class="rb-row">
-              <span>Elke</span>
-              <input type="number" min="1" max="365"
-                .value=${String(this._editInterval)}
-                @input=${(e: Event) => this._editInterval = Math.max(1, parseInt((e.target as HTMLInputElement).value, 10) || 1)}
-              />
-              <select .value=${this._editUnit}
-                @change=${(e: Event) => this._editUnit = (e.target as HTMLSelectElement).value as RecurrenceUnit}>
-                <option value="day">dag(en)</option>
-                <option value="week">we(e)k(en)</option>
-                <option value="month">maand(en)</option>
-              </select>
-            </div>
-            ${this._editUnit === 'week' ? html`
-              <div class="rb-row">
-                <span>Op:</span>
-                <div class="weekday-picker">
-                  ${DAY_LABELS.map((label, i) => html`
-                    <span class="weekday-chip ${this._editWeekdays.has(i) ? 'active' : ''}"
-                      @click=${() => this._toggleWeekday(i)}>${label}</span>
-                  `)}
-                </div>
-              </div>
-            ` : ''}
-            ${this._editUnit === 'month' ? html`
-              <div class="rb-row">
-                <span>Dag van de maand:</span>
-                <input type="number" min="1" max="31"
-                  .value=${String(this._editMonthDay)}
-                  @input=${(e: Event) => this._editMonthDay = Math.max(1, Math.min(31, parseInt((e.target as HTMLInputElement).value, 10) || 1))}
-                />
-              </div>
-            ` : ''}
-            <div class="rb-row">
-              <span>Om:</span>
-              <input type="text"
-                inputmode="numeric"
-                pattern="[0-2][0-9]:[0-5][0-9]"
-                maxlength="5"
-                placeholder="08:00"
-                aria-label="Tijd in 24-uurs notatie"
-                .value=${this._editTimeOfDay}
-                @input=${(e: Event) => {
-                  const t = e.target as HTMLInputElement;
-                  const next = normalizeTime24(t.value);
-                  this._editTimeOfDay = next;
-                  t.value = next;
-                }}
-                @blur=${(e: Event) => {
-                  const t = e.target as HTMLInputElement;
-                  if (!/^[0-2][0-9]:[0-5][0-9]$/.test(t.value)) this._editTimeOfDay = '08:00';
-                }}
-              />
-              <span style="margin-left:8px">Alleen</span>
-              <select .value=${this._editParity}
-                @change=${(e: Event) => this._editParity = (e.target as HTMLSelectElement).value as RecurrenceParity}>
-                <option value="any">alle</option>
-                <option value="odd">oneven</option>
-                <option value="even">even</option>
-              </select>
-              <span>${this._editUnit === 'week' ? 'weken' : this._editUnit === 'month' ? 'maanden' : 'dagen'}</span>
-            </div>
-            <div class="rb-preview">${this._previewDescription()}</div>
-          </div>
-        ` : ''}
+        ${this._renderRecurrenceBuilder()}
       </form>
     `;
   }
@@ -1015,8 +1021,39 @@ export class DoenTask extends LitElement {
     `;
   }
 
+  private _renderEditFooter() {
+    return html`
+      <button type="button" class="btn-delete" @click=${this._delete}>
+        <i class="fa-solid fa-trash"></i> Verwijderen
+      </button>
+      <button type="button" class="btn-cancel-edit" @click=${this._onCancelEdit}>
+        Annuleer
+      </button>
+      <button type="button" class="btn-save" ?disabled=${this._saving} @click=${this._saveEdit}>
+        <i class="fa-solid fa-${this._saving ? 'spinner fa-spin' : 'floppy-disk'}"></i>
+        Opslaan
+      </button>
+    `;
+  }
+
+  private _renderViewFooter() {
+    return html`
+      <button type="button" class="btn-cancel-edit" @click=${this._closeModal}>
+        Sluiten
+      </button>
+      ${this._project?.group_id && this._project.offers_enabled ? html`
+        <button type="button" class="btn-cancel-edit" @click=${this._offerTask}>
+          <i class="fa-solid fa-handshake"></i> Offeren
+        </button>
+      ` : ''}
+      <button type="button" class="btn-edit-modal" @click=${this._onOpenEdit}>
+        <i class="fa-solid fa-pen"></i> Bewerken
+      </button>
+    `;
+  }
+
   private _renderModal() {
-    if (!this._modalOpen) return '';
+    if (!this._modalOpen || !this.task) return '';
     const inEdit = this._modalMode === 'edit';
     return html`
       <div class="modal-backdrop" @click=${this._onBackdropClick}>
@@ -1032,30 +1069,7 @@ export class DoenTask extends LitElement {
             ${inEdit ? this._renderEditForm() : this._renderDetailView()}
           </div>
           <div class="modal-footer">
-            ${inEdit ? html`
-              <button type="button" class="btn-delete" @click=${this._delete}>
-                <i class="fa-solid fa-trash"></i> Verwijderen
-              </button>
-              <button type="button" class="btn-cancel-edit" @click=${() => { this._resetEditState(); this._modalMode = 'view'; }}>
-                Annuleer
-              </button>
-              <button type="button" class="btn-save" ?disabled=${this._saving} @click=${(e: Event) => this._saveEdit(e)}>
-                <i class="fa-solid fa-${this._saving ? 'spinner fa-spin' : 'floppy-disk'}"></i>
-                Opslaan
-              </button>
-            ` : html`
-              <button type="button" class="btn-cancel-edit" @click=${this._closeModal}>
-                Sluiten
-              </button>
-              ${this._project?.group_id && this._project.offers_enabled ? html`
-                <button type="button" class="btn-cancel-edit" @click=${this._offerTask}>
-                  <i class="fa-solid fa-handshake"></i> Offeren
-                </button>
-              ` : ''}
-              <button type="button" class="btn-edit-modal" @click=${() => { this._resetEditState(); this._modalMode = 'edit'; }}>
-                <i class="fa-solid fa-pen"></i> Bewerken
-              </button>
-            `}
+            ${inEdit ? this._renderEditFooter() : this._renderViewFooter()}
           </div>
         </div>
       </div>
@@ -1110,7 +1124,7 @@ export class DoenTask extends LitElement {
           ` : ''}
         </span>
 
-        <button class="edit-btn" @click=${() => this._openModal('edit')} title="Bewerken">
+        <button class="edit-btn" @click=${this._onEditBtnClick} title="Bewerken">
           <i class="fa-solid fa-pen"></i>
         </button>
       </div>

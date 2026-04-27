@@ -5,6 +5,7 @@ import { api, ApiError } from '../services/api';
 import { getMe, type Me } from '../services/auth';
 import { toast } from '../components/doen-toast';
 import { sharedStyles } from '../styles/shared-styles';
+import { inputValue, selectValue, checkboxChecked } from '../utils/form';
 
 @customElement('page-groups')
 export class PageGroups extends LitElement {
@@ -408,6 +409,76 @@ export class PageGroups extends LitElement {
     }
   }
 
+  private _onNewNameInput = (e: Event) => { this._newName = inputValue(e); };
+  private _onNewTypeChange = (e: Event) => { this._newType = selectValue(e) as 'household' | 'custom'; };
+
+  private _onRenameInput = (e: Event) => { this._editingGroupName = inputValue(e); };
+
+  private _onRenameKeydownBound = (e: KeyboardEvent) => {
+    const g = this._groups.find(x => x.id === this._editingGroupId);
+    if (g) this._onRenameKeydown(e, g);
+  };
+
+  private _onRenameBlur = () => {
+    const g = this._groups.find(x => x.id === this._editingGroupId);
+    if (g) void this._commitRename(g);
+  };
+
+  private _onStartRenameClick = (e: Event) => {
+    const id = (e.currentTarget as HTMLElement).dataset.groupId!;
+    const g = this._groups.find(x => x.id === id);
+    if (g) this._startRename(g);
+  };
+
+  private _onGoToSettingsClick = (e: Event) => {
+    const id = (e.currentTarget as HTMLElement).dataset.groupId!;
+    const g = this._groups.find(x => x.id === id);
+    if (g) this._goToSettings(g);
+  };
+
+  private _onRemoveMemberClick = (e: Event) => {
+    const btn = e.currentTarget as HTMLElement;
+    const groupId = btn.dataset.groupId!;
+    const userId = btn.dataset.userId!;
+    const g = this._groups.find(x => x.id === groupId);
+    const members = this._members[groupId] ?? [];
+    const m = members.find(x => x.user_id === userId);
+    if (g && m) void this._removeMember(g, m);
+  };
+
+  private _onNewProjectNameInput = (e: Event) => { this._newProjectName = inputValue(e); };
+
+  private _onNewProjectFocus = (e: Event) => {
+    const id = (e.currentTarget as HTMLElement).dataset.groupId!;
+    this._newProjectGroupId = id;
+    this._newProjectOffersEnabled = true;
+  };
+
+  private _onNewProjectOffersChange = (e: Event) => {
+    const id = (e.currentTarget as HTMLElement).dataset.groupId!;
+    this._newProjectGroupId = id;
+    this._newProjectOffersEnabled = checkboxChecked(e);
+  };
+
+  private _onCreateProjectSubmit = (e: Event) => {
+    e.preventDefault();
+    const id = (e.currentTarget as HTMLElement).dataset.groupId!;
+    void this._createProject(id, e);
+  };
+
+  private _onInviteEmailInput = (e: Event) => { this._inviteEmail = inputValue(e); };
+
+  private _onInviteFocus = (e: Event) => {
+    const id = (e.currentTarget as HTMLElement).dataset.groupId!;
+    this._inviteGroupId = id;
+  };
+
+  private _onInviteSubmit = (e: Event) => {
+    e.preventDefault();
+    const id = (e.currentTarget as HTMLElement).dataset.groupId!;
+    void this._invite(id, e);
+  };
+
   private _renderGroupName(g: Group) {
     const canManage = this._canManage(g);
     if (this._editingGroupId === g.id) {
@@ -416,9 +487,9 @@ export class PageGroups extends LitElement {
           class="group-name-input"
           type="text"
           .value=${this._editingGroupName}
-          @input=${(e: Event) => this._editingGroupName = (e.target as HTMLInputElement).value}
-          @keydown=${(e: KeyboardEvent) => this._onRenameKeydown(e, g)}
-          @blur=${() => this._commitRename(g)}
+          @input=${this._onRenameInput}
+          @keydown=${this._onRenameKeydownBound}
+          @blur=${this._onRenameBlur}
           autofocus
         />
       `;
@@ -428,11 +499,11 @@ export class PageGroups extends LitElement {
         <div class="group-name">${g.name}</div>
         ${canManage ? html`
           <button class="rename-btn" title="Naam wijzigen"
-            @click=${() => this._startRename(g)}>
+            data-group-id=${g.id} @click=${this._onStartRenameClick}>
             <i class="fa-solid fa-pen"></i>
           </button>
           <button class="settings-btn" title="Groepsbeheer"
-            @click=${() => this._goToSettings(g)}>
+            data-group-id=${g.id} @click=${this._onGoToSettingsClick}>
             <i class="fa-solid fa-gear"></i>
           </button>
         ` : ''}
@@ -466,8 +537,9 @@ export class PageGroups extends LitElement {
               ${!isOwner && !isSelf && m.role === 'admin' ? html`<span class="member-badge">Admin</span>` : ''}
               ${showRemove ? html`
                 <button class="remove-btn" title="Verwijderen"
+                  data-group-id=${g.id} data-user-id=${m.user_id}
                   ?disabled=${this._removingUserId === m.user_id}
-                  @click=${() => this._removeMember(g, m)}>
+                  @click=${this._onRemoveMemberClick}>
                   <i class="fa-solid fa-${this._removingUserId === m.user_id ? 'spinner fa-spin' : 'xmark'}"></i>
                 </button>
               ` : ''}
@@ -489,11 +561,11 @@ export class PageGroups extends LitElement {
           <div class="form-row">
             <input type="text" placeholder="Naam van de groep"
               .value=${this._newName}
-              @input=${(e: Event) => this._newName = (e.target as HTMLInputElement).value}
+              @input=${this._onNewNameInput}
               style="flex:1;min-width:160px"
             />
             <select .value=${this._newType}
-              @change=${(e: Event) => this._newType = (e.target as HTMLSelectElement).value as 'household' | 'custom'}
+              @change=${this._onNewTypeChange}
               style="width:auto">
               <option value="household">Huishouden</option>
               <option value="custom">Aangepast</option>
@@ -529,17 +601,19 @@ export class PageGroups extends LitElement {
           ${this._renderMembers(g)}
 
           <div class="section-label" style="margin-top:14px">Nieuw project</div>
-          <form class="invite-row" @submit=${(e: Event) => this._createProject(g.id, e)}>
+          <form class="invite-row" data-group-id=${g.id} @submit=${this._onCreateProjectSubmit}>
             <input type="text" placeholder="Projectnaam"
               .value=${this._newProjectGroupId === g.id ? this._newProjectName : ''}
-              @focus=${() => { this._newProjectGroupId = g.id; this._newProjectOffersEnabled = true; }}
-              @input=${(e: Event) => this._newProjectName = (e.target as HTMLInputElement).value}
+              data-group-id=${g.id}
+              @focus=${this._onNewProjectFocus}
+              @input=${this._onNewProjectNameInput}
             />
             ${g.type === 'household' ? html`
               <label class="offers-toggle-inline">
                 <input type="checkbox"
                   .checked=${this._newProjectGroupId === g.id ? this._newProjectOffersEnabled : true}
-                  @change=${(e: Event) => { this._newProjectGroupId = g.id; this._newProjectOffersEnabled = (e.target as HTMLInputElement).checked; }}
+                  data-group-id=${g.id}
+                  @click=${this._onNewProjectOffersChange}
                 />
                 Aanbiedingen
               </label>
@@ -552,11 +626,12 @@ export class PageGroups extends LitElement {
           </form>
 
           <div class="section-label" style="margin-top:14px">Lid uitnodigen</div>
-          <form class="invite-row" @submit=${(e: Event) => this._invite(g.id, e)}>
+          <form class="invite-row" data-group-id=${g.id} @submit=${this._onInviteSubmit}>
             <input type="email" placeholder="e-mailadres"
               .value=${this._inviteGroupId === g.id ? this._inviteEmail : ''}
-              @focus=${() => this._inviteGroupId = g.id}
-              @input=${(e: Event) => this._inviteEmail = (e.target as HTMLInputElement).value}
+              data-group-id=${g.id}
+              @focus=${this._onInviteFocus}
+              @input=${this._onInviteEmailInput}
             />
             <button type="submit" class="btn btn-primary"
               ?disabled=${this._inviting || this._inviteGroupId !== g.id || !this._inviteEmail.trim()}>

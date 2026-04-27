@@ -4,6 +4,7 @@ import { login, registerFirst, requestPasswordReset, getAuthStatus } from '../se
 import { ApiError } from '../services/api';
 import type { User } from '../services/types';
 import { sharedStyles } from '../styles/shared-styles';
+import { inputValue } from '../utils/form';
 
 type Mode = 'login' | 'register-first' | 'forgot';
 
@@ -180,6 +181,14 @@ export class PageLogin extends LitElement {
     }
   }
 
+  private _onEmailInput = (e: Event) => { this._email = inputValue(e); };
+  private _onPasswordInput = (e: Event) => { this._password = inputValue(e); };
+  private _onNameInput = (e: Event) => { this._name = inputValue(e); };
+
+  private _goToForgot = () => { this._mode = 'forgot'; this._error = ''; this._resetSent = false; };
+  private _backToLogin = () => { this._mode = 'login'; this._error = ''; };
+  private _backToLoginAfterSent = () => { this._mode = 'login'; this._resetSent = false; };
+
   private _renderBrand() {
     return html`
       <div class="brand">
@@ -196,12 +205,12 @@ export class PageLogin extends LitElement {
       <form class="form" @submit=${this._submitLogin}>
         <label>E-mailadres
           <input type="email" autocomplete="email" .value=${this._email}
-            @input=${(e: Event) => this._email = (e.target as HTMLInputElement).value}
+            @input=${this._onEmailInput}
             ?disabled=${this._loading} required />
         </label>
         <label>Wachtwoord
           <input type="password" autocomplete="current-password" .value=${this._password}
-            @input=${(e: Event) => this._password = (e.target as HTMLInputElement).value}
+            @input=${this._onPasswordInput}
             ?disabled=${this._loading} required />
         </label>
         ${this._error ? html`<div class="error"><i class="fa-solid fa-circle-exclamation"></i>${this._error}</div>` : ''}
@@ -210,7 +219,7 @@ export class PageLogin extends LitElement {
           ${this._loading ? 'Bezig...' : 'Inloggen'}
         </button>
       </form>
-      <button class="link-btn" @click=${() => { this._mode = 'forgot'; this._error = ''; this._resetSent = false; }}>
+      <button class="link-btn" @click=${this._goToForgot}>
         Wachtwoord vergeten?
       </button>
     `;
@@ -227,17 +236,17 @@ export class PageLogin extends LitElement {
       <form class="form" @submit=${this._submitRegisterFirst}>
         <label>Naam
           <input type="text" autocomplete="name" .value=${this._name}
-            @input=${(e: Event) => this._name = (e.target as HTMLInputElement).value}
+            @input=${this._onNameInput}
             ?disabled=${this._loading} required />
         </label>
         <label>E-mailadres
           <input type="email" autocomplete="email" .value=${this._email}
-            @input=${(e: Event) => this._email = (e.target as HTMLInputElement).value}
+            @input=${this._onEmailInput}
             ?disabled=${this._loading} required />
         </label>
         <label>Wachtwoord
           <input type="password" autocomplete="new-password" minlength="6" .value=${this._password}
-            @input=${(e: Event) => this._password = (e.target as HTMLInputElement).value}
+            @input=${this._onPasswordInput}
             ?disabled=${this._loading} required />
         </label>
         ${this._error ? html`<div class="error"><i class="fa-solid fa-circle-exclamation"></i>${this._error}</div>` : ''}
@@ -257,7 +266,7 @@ export class PageLogin extends LitElement {
         <i class="fa-solid fa-envelope-circle-check"></i>
         Als er een account bestaat voor dit e-mailadres, ontvang je een resetlink.
       </div>
-      <button class="link-btn" @click=${() => { this._mode = 'login'; this._resetSent = false; }}>
+      <button class="link-btn" @click=${this._backToLoginAfterSent}>
         Terug naar inloggen
       </button>
     `;
@@ -268,7 +277,7 @@ export class PageLogin extends LitElement {
       <form class="form" @submit=${this._submitForgot}>
         <label>E-mailadres
           <input type="email" autocomplete="email" .value=${this._email}
-            @input=${(e: Event) => this._email = (e.target as HTMLInputElement).value}
+            @input=${this._onEmailInput}
             ?disabled=${this._loading} required />
         </label>
         ${this._error ? html`<div class="error"><i class="fa-solid fa-circle-exclamation"></i>${this._error}</div>` : ''}
@@ -277,7 +286,7 @@ export class PageLogin extends LitElement {
           ${this._loading ? 'Bezig...' : 'Resetlink sturen'}
         </button>
       </form>
-      <button class="link-btn" @click=${() => { this._mode = 'login'; this._error = ''; }}>
+      <button class="link-btn" @click=${this._backToLogin}>
         Terug naar inloggen
       </button>
     `;

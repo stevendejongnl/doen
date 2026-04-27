@@ -3,6 +3,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import type { Project, Group, User } from '../services/types';
 import { api, logout } from '../services/api';
 import { sharedStyles } from '../styles/shared-styles';
+import { inputValue } from '../utils/form';
 
 @customElement('doen-sidebar')
 export class DoenSidebar extends LitElement {
@@ -308,6 +309,22 @@ export class DoenSidebar extends LitElement {
     } catch { /* toast handled by api */ }
   }
 
+  private _onNewProjectNameInput = (e: Event) => { this._newProjectName = inputValue(e); };
+  private _onCancelCreate = () => { this._creatingIn = null; this._newProjectName = ''; };
+  private _onToggleCreatePersonal = () => { this._toggleCreate('personal'); };
+  private _onToggleCreateGroup = (e: Event) => {
+    const id = (e.currentTarget as HTMLElement).dataset.groupId!;
+    this._toggleCreate(id);
+  };
+  private _onNavigateProject = (e: Event) => {
+    const id = (e.currentTarget as HTMLElement).dataset.projectId!;
+    this._navigate(id);
+  };
+  private _onNavigateTodo = () => { this._navigatePage('todo'); };
+  private _onNavigateGroups = () => { this._navigatePage('groups'); };
+  private _onNavigateAdmin = () => { this._navigatePage('admin'); };
+  private _onNavigateAccount = () => { this._navigatePage('account'); };
+
   private _renderCreateForm() {
     return html`
       <form class="new-project-form" @submit=${this._createProject}>
@@ -315,12 +332,11 @@ export class DoenSidebar extends LitElement {
           type="text"
           placeholder="Projectnaam..."
           .value=${this._newProjectName}
-          @input=${(e: Event) => this._newProjectName = (e.target as HTMLInputElement).value}
+          @input=${this._onNewProjectNameInput}
           autofocus
         />
         <button type="submit" class="btn-confirm"><i class="fa-solid fa-check"></i></button>
-        <button type="button" class="btn-cancel"
-          @click=${() => { this._creatingIn = null; this._newProjectName = ''; }}>
+        <button type="button" class="btn-cancel" @click=${this._onCancelCreate}>
           <i class="fa-solid fa-xmark"></i>
         </button>
       </form>
@@ -346,14 +362,14 @@ export class DoenSidebar extends LitElement {
 
       <nav>
         <div class="nav-section">
-          <button class="nav-item" @click=${() => this._navigatePage('todo')}>
+          <button class="nav-item" @click=${this._onNavigateTodo}>
             <i class="fa-solid fa-list-check"></i> Te doen
           </button>
-          <button class="nav-item" @click=${() => this._navigatePage('groups')}>
+          <button class="nav-item" @click=${this._onNavigateGroups}>
             <i class="fa-solid fa-people-group"></i> Groepen
           </button>
           ${this.user?.is_admin ? html`
-            <button class="nav-item" @click=${() => this._navigatePage('admin')}>
+            <button class="nav-item" @click=${this._onNavigateAdmin}>
               <i class="fa-solid fa-users-gear"></i> Gebruikers
             </button>
           ` : ''}
@@ -368,7 +384,7 @@ export class DoenSidebar extends LitElement {
             <div class="section-header">
               <span class="section-label">Persoonlijk</span>
               <button class="add-project-btn" title="Nieuw project"
-                @click=${() => this._toggleCreate('personal')}>
+                @click=${this._onToggleCreatePersonal}>
                 <i class="fa-solid fa-plus"></i>
               </button>
             </div>
@@ -377,7 +393,7 @@ export class DoenSidebar extends LitElement {
 
             ${this._personalProjects().map(p => html`
               <button class="nav-item ${this.activeProjectId === p.id ? 'active' : ''}"
-                @click=${() => this._navigate(p.id)}>
+                data-project-id=${p.id} @click=${this._onNavigateProject}>
                 <span class="dot" style="background:${p.color}"></span>
                 ${p.name}
               </button>
@@ -389,14 +405,14 @@ export class DoenSidebar extends LitElement {
               <div class="section-header">
                 <span class="section-label">${g.name}</span>
                 <button class="add-project-btn" title="Nieuw project in ${g.name}"
-                  @click=${() => this._toggleCreate(g.id)}>
+                  data-group-id=${g.id} @click=${this._onToggleCreateGroup}>
                   <i class="fa-solid fa-plus"></i>
                 </button>
               </div>
               ${this._creatingIn === g.id ? this._renderCreateForm() : ''}
               ${this._groupProjects(g.id).map(p => html`
                 <button class="nav-item ${this.activeProjectId === p.id ? 'active' : ''}"
-                  @click=${() => this._navigate(p.id)}>
+                  data-project-id=${p.id} @click=${this._onNavigateProject}>
                   <span class="dot" style="background:${p.color}"></span>
                   ${p.name}
                 </button>
@@ -408,7 +424,7 @@ export class DoenSidebar extends LitElement {
 
       <div class="user-footer">
         <div class="user-row">
-          <button class="user-info" @click=${() => this._navigatePage('account')} title="Account">
+          <button class="user-info" @click=${this._onNavigateAccount} title="Account">
             <div class="avatar">${initials}</div>
             <span class="user-name">${this.user?.name ?? '...'}</span>
           </button>

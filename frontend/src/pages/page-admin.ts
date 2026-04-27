@@ -4,6 +4,7 @@ import type { User } from '../services/types';
 import { api, ApiError } from '../services/api';
 import { toast } from '../components/doen-toast';
 import { sharedStyles } from '../styles/shared-styles';
+import { inputValue } from '../utils/form';
 
 @customElement('page-admin')
 export class PageAdmin extends LitElement {
@@ -234,6 +235,46 @@ export class PageAdmin extends LitElement {
     }
   }
 
+  private _onNameInput = (e: Event) => { this._name = inputValue(e); };
+  private _onEmailInput = (e: Event) => { this._email = inputValue(e); };
+  private _onPasswordInput = (e: Event) => { this._password = inputValue(e); };
+  private _onSearchInput = (e: Event) => { this._search = inputValue(e); };
+
+  private _onFilterTabClick = (e: Event) => {
+    const f = (e.currentTarget as HTMLElement).dataset.filter as 'all' | 'active' | 'disabled';
+    this._filter = f;
+  };
+
+  private _onEnableClick = (e: Event) => {
+    const id = (e.currentTarget as HTMLElement).dataset.userId!;
+    const user = this._users.find(u => u.id === id);
+    if (user) this._enable(user);
+  };
+
+  private _onDisableClick = (e: Event) => {
+    const id = (e.currentTarget as HTMLElement).dataset.userId!;
+    const user = this._users.find(u => u.id === id);
+    if (user) this._disable(user);
+  };
+
+  private _onSendResetClick = (e: Event) => {
+    const id = (e.currentTarget as HTMLElement).dataset.userId!;
+    const user = this._users.find(u => u.id === id);
+    if (user) this._sendReset(user);
+  };
+
+  private _onToggleAdminClick = (e: Event) => {
+    const id = (e.currentTarget as HTMLElement).dataset.userId!;
+    const user = this._users.find(u => u.id === id);
+    if (user) this._toggleAdmin(user);
+  };
+
+  private _onDeleteClick = (e: Event) => {
+    const id = (e.currentTarget as HTMLElement).dataset.userId!;
+    const user = this._users.find(u => u.id === id);
+    if (user) this._delete(user);
+  };
+
   private _replaceUser(updated: User) {
     this._users = this._users.map(u => u.id === updated.id ? updated : u);
   }
@@ -269,15 +310,15 @@ export class PageAdmin extends LitElement {
             <div class="form-row">
               <input type="text" placeholder="Naam"
                 .value=${this._name}
-                @input=${(e: Event) => this._name = (e.target as HTMLInputElement).value} />
+                @input=${this._onNameInput} />
               <input type="email" placeholder="E-mailadres"
                 .value=${this._email}
-                @input=${(e: Event) => this._email = (e.target as HTMLInputElement).value} />
+                @input=${this._onEmailInput} />
             </div>
             <div class="form-row">
               <input type="password" placeholder="Tijdelijk wachtwoord"
                 .value=${this._password}
-                @input=${(e: Event) => this._password = (e.target as HTMLInputElement).value} />
+                @input=${this._onPasswordInput} />
               <button type="submit" class="btn-primary"
                 ?disabled=${this._creating || !this._name.trim() || !this._email.trim() || !this._password.trim()}>
                 <i class="fa-solid fa-${this._creating ? 'spinner fa-spin' : 'user-plus'}"></i>
@@ -294,12 +335,13 @@ export class PageAdmin extends LitElement {
             <i class="fa-solid fa-magnifying-glass"></i>
             <input type="search" placeholder="Zoeken op naam of e-mail"
               .value=${this._search}
-              @input=${(e: Event) => this._search = (e.target as HTMLInputElement).value} />
+              @input=${this._onSearchInput} />
           </div>
           <div class="filter-tabs">
             ${(['active','all','disabled'] as const).map(f => html`
               <button class="tab ${this._filter === f ? 'active' : ''}"
-                @click=${() => this._filter = f}>
+                data-filter=${f}
+                @click=${this._onFilterTabClick}>
                 ${f === 'active' ? 'Actief' : f === 'disabled' ? 'Uitgeschakeld' : 'Alle'}
               </button>
             `)}
@@ -334,22 +376,23 @@ export class PageAdmin extends LitElement {
                         <div class="actions">
                           ${u.id !== this.me?.id ? html`
                             ${u.disabled_at
-                              ? html`<button class="btn-icon btn-success" @click=${() => this._enable(u)}>
+                              ? html`<button class="btn-icon btn-success" data-user-id=${u.id} @click=${this._onEnableClick}>
                                   <i class="fa-solid fa-toggle-on"></i> Inschakelen
                                 </button>`
-                              : html`<button class="btn-icon btn-warning" @click=${() => this._disable(u)}>
+                              : html`<button class="btn-icon btn-warning" data-user-id=${u.id} @click=${this._onDisableClick}>
                                   <i class="fa-solid fa-toggle-off"></i> Uitschakelen
                                 </button>`
                             }
-                            <button class="btn-icon btn-neutral" @click=${() => this._sendReset(u)}>
+                            <button class="btn-icon btn-neutral" data-user-id=${u.id} @click=${this._onSendResetClick}>
                               <i class="fa-solid fa-key"></i> Reset
                             </button>
                             <button class="btn-icon ${u.is_admin ? 'btn-warning' : 'btn-neutral'}"
-                              @click=${() => this._toggleAdmin(u)}>
+                              data-user-id=${u.id}
+                              @click=${this._onToggleAdminClick}>
                               <i class="fa-solid fa-${u.is_admin ? 'user-minus' : 'user-shield'}"></i>
                               ${u.is_admin ? 'Admin intrekken' : 'Admin'}
                             </button>
-                            <button class="btn-icon btn-danger" @click=${() => this._delete(u)}>
+                            <button class="btn-icon btn-danger" data-user-id=${u.id} @click=${this._onDeleteClick}>
                               <i class="fa-solid fa-trash"></i>
                             </button>
                           ` : html`<span class="muted" style="font-size:11px;">Dat ben jij</span>`}

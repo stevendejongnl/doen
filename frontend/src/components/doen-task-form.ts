@@ -20,43 +20,14 @@ import './ui/doen-textarea';
 import './ui/doen-button';
 import './ui/doen-prompt-dialog';
 import type { DoenPromptDialog } from './ui/doen-prompt-dialog';
-
-const DAY_LABELS = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
-
-function normalizeTime24(raw: string): string {
-  const digits = raw.replace(/\D/g, '').slice(0, 4);
-  if (digits.length <= 2) return digits;
-  return `${digits.slice(0, 2)}:${digits.slice(2)}`;
-}
-
-function weekdaysToCsv(s: Set<number>): string | null {
-  if (s.size === 0) return null;
-  return [...s].sort((a, b) => a - b).join(',');
-}
-
-function describeDraft(
-  unit: RecurrenceUnit,
-  interval: number,
-  weekdays: Set<number>,
-  monthDay: number,
-  timeOfDay: string,
-  parity: RecurrenceParity,
-): string {
-  let base = '';
-  if (unit === 'day') {
-    base = interval > 1 ? `Elke ${interval} dagen` : 'Dagelijks';
-  } else if (unit === 'week') {
-    const days = [...weekdays].sort((a, b) => a - b).map(n => DAY_LABELS[n]).join(', ');
-    const prefix = interval > 1 ? `Elke ${interval} weken` : 'Wekelijks';
-    base = days ? `${prefix} op ${days}` : prefix;
-  } else {
-    base = interval > 1 ? `Elke ${interval} maanden op dag ${monthDay}` : `Maandelijks op dag ${monthDay}`;
-  }
-  let suffix = '';
-  if (parity === 'odd') suffix = unit === 'week' ? ' · oneven weken' : ' · oneven';
-  if (parity === 'even') suffix = unit === 'week' ? ' · even weken' : ' · even';
-  return `${base}${suffix} · ${timeOfDay}`;
-}
+import {
+  toggleWeekday, weekdaysToCsv, describeDraft,
+  DAY_LABELS,
+} from '../utils/recurrence';
+import {
+  checkboxChecked, selectValue, clampedInt,
+  normalizeTime24, isValidTime24, customInputValue,
+} from '../utils/form';
 
 @customElement('doen-task-form')
 export class DoenTaskForm extends LitElement {
@@ -233,7 +204,7 @@ export class DoenTaskForm extends LitElement {
     }
   }
 
-  private _onCategoryChange(value: string) {
+  private _onCategoryChange_impl(value: string) {
     if (value === '__new__') {
       const dialog = document.createElement('doen-prompt-dialog') as DoenPromptDialog;
       dialog.message = 'Naam van de categorie?';
@@ -264,11 +235,44 @@ export class DoenTaskForm extends LitElement {
   }
 
   private _toggleWeekday(n: number) {
-    const next = new Set(this._weekdays);
-    if (next.has(n)) next.delete(n);
-    else next.add(n);
-    this._weekdays = next;
+    this._weekdays = toggleWeekday(this._weekdays, n);
   }
+
+  private _onPriorityChange = (e: CustomEvent<{ value: string }>) => {
+    this._priority = (e as CustomEvent<{ value: string }>).detail.value as TaskPriority;
+  };
+  private _onDueDateChange = (e: Event) => { this._dueDate = customInputValue(e); };
+  private _onAssigneeChange = (e: Event) => { this._assigneeId = customInputValue(e); };
+  private _onNotesInput = (e: Event) => { this._notes = customInputValue(e); };
+  private _onRecurringChange = (e: Event) => { this._recurring = checkboxChecked(e); };
+  private _onIntervalInput = (e: Event) => { this._interval = clampedInt(e, 1, 365); };
+  private _onUnitChange = (e: Event) => { this._unit = selectValue(e) as RecurrenceUnit; };
+  private _onMonthDayInput = (e: Event) => { this._monthDay = clampedInt(e, 1, 31); };
+  private _onParityChange = (e: Event) => { this._parity = selectValue(e) as RecurrenceParity; };
+  private _onToggleNotes = () => { this._showNotes = !this._showNotes; };
+
+  private _onWeekdayChipClick = (e: Event) => {
+    const n = Number((e.currentTarget as HTMLElement).dataset.weekday);
+    this._toggleWeekday(n);
+  };
+
+  private _onTitleInput = (e: Event) => { this._title = customInputValue(e); };
+
+  private _onTimeInput = (e: Event) => {
+    const t = e.target as HTMLInputElement;
+    const next = normalizeTime24(t.value);
+    this._timeOfDay = next;
+    t.value = next;
+  };
+
+  private _onTimeBlur = (e: Event) => {
+    const t = e.target as HTMLInputElement;
+    if (!isValidTime24(t.value)) this._timeOfDay = '08:00';
+  };
+
+  private _onCategoryChange = (e: Event) => {
+    this._onCategoryChange_impl(customInputValue(e));
+  };
 
   private async _submit(e: Event) {
     e.preventDefault();
@@ -330,7 +334,7 @@ export class DoenTaskForm extends LitElement {
             placeholder="Nieuwe taak toevoegen..."
             style="flex:1"
             .value=${this._title}
-            @doen-input=${(inputEvent: CustomEvent<{ value: string }>) => { this._title = inputEvent.detail.value; }}
+            @doen-input=${this._onTitleInput}
             ?disabled=${this._submitting}
           ></doen-input>
           <doen-button
@@ -353,15 +357,13 @@ export class DoenTaskForm extends LitElement {
               { value: 'medium', label: 'Middel' },
               { value: 'high', label: 'Hoog' },
             ]}
-            @doen-change=${(changeEvent: CustomEvent<{ value: string }>) => {
-              this._priority = changeEvent.detail.value as TaskPriority;
-            }}
+            @doen-change=${this._onPriorityChange}
           ></doen-select>
           <doen-input
             type="date"
             aria-label="Deadline"
             .value=${this._dueDate}
-            @doen-change=${(changeEvent: CustomEvent<{ value: string }>) => { this._dueDate = changeEvent.detail.value; }}
+            @doen-change=${this._onDueDateChange}
           ></doen-input>
           ${this._members.length > 1 ? html`
             <doen-select
@@ -371,7 +373,7 @@ export class DoenTaskForm extends LitElement {
                 { value: '', label: 'Niemand toegewezen' } as SelectOption,
                 ...this._members.map((member): SelectOption => ({ value: member.user_id, label: member.name })),
               ]}
-              @doen-change=${(changeEvent: CustomEvent<{ value: string }>) => { this._assigneeId = changeEvent.detail.value; }}
+              @doen-change=${this._onAssigneeChange}
             ></doen-select>
           ` : ''}
           <doen-select
@@ -382,11 +384,9 @@ export class DoenTaskForm extends LitElement {
               ...this._categories.map((category): SelectOption => ({ value: category.id, label: category.name })),
               { value: '__new__', label: '+ Nieuwe categorie…' },
             ]}
-            @doen-change=${(changeEvent: CustomEvent<{ value: string }>) => {
-              this._onCategoryChange(changeEvent.detail.value);
-            }}
+            @doen-change=${this._onCategoryChange}
           ></doen-select>
-          <button type="button" class="btn-notes-toggle" @click=${() => this._showNotes = !this._showNotes}>
+          <button type="button" class="btn-notes-toggle" @click=${this._onToggleNotes}>
             <i class="fa-solid fa-${this._showNotes ? 'chevron-up' : 'plus'}"></i>
             ${this._showNotes ? 'Notitie verbergen' : 'Notitie toevoegen'}
           </button>
@@ -396,7 +396,7 @@ export class DoenTaskForm extends LitElement {
             placeholder="Notities, context, links..."
             aria-label="Notities"
             .value=${this._notes}
-            @doen-input=${(inputEvent: CustomEvent<{ value: string }>) => { this._notes = inputEvent.detail.value; }}
+            @doen-input=${this._onNotesInput}
             ?disabled=${this._submitting}
           ></doen-textarea>
         ` : ''}
@@ -405,7 +405,7 @@ export class DoenTaskForm extends LitElement {
             <span class="toggle">
               <input type="checkbox"
                 .checked=${this._recurring}
-                @change=${(e: Event) => this._recurring = (e.target as HTMLInputElement).checked}
+                @change=${this._onRecurringChange}
               />
               <span class="toggle-track"></span>
               <span class="toggle-thumb"></span>
@@ -420,10 +420,9 @@ export class DoenTaskForm extends LitElement {
               <span>Elke</span>
               <input type="number" min="1" max="365"
                 .value=${String(this._interval)}
-                @input=${(e: Event) => this._interval = Math.max(1, parseInt((e.target as HTMLInputElement).value, 10) || 1)}
+                @input=${this._onIntervalInput}
               />
-              <select .value=${this._unit}
-                @change=${(e: Event) => this._unit = (e.target as HTMLSelectElement).value as RecurrenceUnit}>
+              <select .value=${this._unit} @change=${this._onUnitChange}>
                 <option value="day">dag(en)</option>
                 <option value="week">we(e)k(en)</option>
                 <option value="month">maand(en)</option>
@@ -435,7 +434,8 @@ export class DoenTaskForm extends LitElement {
                 <div class="weekday-picker">
                   ${DAY_LABELS.map((label, i) => html`
                     <span class="weekday-chip ${this._weekdays.has(i) ? 'active' : ''}"
-                      @click=${() => this._toggleWeekday(i)}>${label}</span>
+                      data-weekday=${i}
+                      @click=${this._onWeekdayChipClick}>${label}</span>
                   `)}
                 </div>
               </div>
@@ -445,7 +445,7 @@ export class DoenTaskForm extends LitElement {
                 <span>Dag van de maand:</span>
                 <input type="number" min="1" max="31"
                   .value=${String(this._monthDay)}
-                  @input=${(e: Event) => this._monthDay = Math.max(1, Math.min(31, parseInt((e.target as HTMLInputElement).value, 10) || 1))}
+                  @input=${this._onMonthDayInput}
                 />
               </div>
             ` : ''}
@@ -458,20 +458,11 @@ export class DoenTaskForm extends LitElement {
                 placeholder="08:00"
                 aria-label="Tijd in 24-uurs notatie"
                 .value=${this._timeOfDay}
-                @input=${(e: Event) => {
-                  const t = e.target as HTMLInputElement;
-                  const next = normalizeTime24(t.value);
-                  this._timeOfDay = next;
-                  t.value = next;
-                }}
-                @blur=${(e: Event) => {
-                  const t = e.target as HTMLInputElement;
-                  if (!/^[0-2][0-9]:[0-5][0-9]$/.test(t.value)) this._timeOfDay = '08:00';
-                }}
+                @input=${this._onTimeInput}
+                @blur=${this._onTimeBlur}
               />
               <span style="margin-left:8px">Alleen</span>
-              <select .value=${this._parity}
-                @change=${(e: Event) => this._parity = (e.target as HTMLSelectElement).value as RecurrenceParity}>
+              <select .value=${this._parity} @change=${this._onParityChange}>
                 <option value="any">alle</option>
                 <option value="odd">oneven</option>
                 <option value="even">even</option>
