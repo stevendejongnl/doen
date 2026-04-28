@@ -1,3 +1,10 @@
+# [1.28.0](https://github.com/stevendejongnl/doen/compare/v1.27.0...v1.28.0) (2026-04-28)
+
+
+### Features
+
+* **pwa:** pull-to-refresh on all pages and fix mobile double-scroll ([c2bcd50](https://github.com/stevendejongnl/doen/commit/c2bcd500aa73592f7d2998e88fcef20e63040a04))
+
 # [1.27.0](https://github.com/stevendejongnl/doen/compare/v1.26.1...v1.27.0) (2026-04-28)
 
 
