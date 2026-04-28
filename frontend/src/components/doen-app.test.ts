@@ -440,4 +440,94 @@ describe('doen-app', () => {
     (el as any)._onResetNavigate(new CustomEvent('navigate', { detail: { page: 'groups' } }));
     expect((el as any)._resetToken).toBe('token123');
   });
+
+  it('blocks project switch when unsaved edits and user cancels confirm', async () => {
+    await setupLoggedIn();
+    vi.mocked(api.get).mockImplementation((url: string) => {
+      if (url === '/projects/p1' || url === '/projects/p2') return Promise.resolve({ id: url.slice(-2), name: 'Test', color: '#6366f1', group_id: null });
+      if (url.includes('/tasks')) return Promise.resolve([]);
+      return Promise.resolve([]);
+    });
+    el.shadowRoot!.querySelector('.layout')!.dispatchEvent(new CustomEvent('navigate', {
+      detail: { projectId: 'p1' }, bubbles: true,
+    }));
+    await flushPromises();
+    await el.updateComplete;
+    const pageEl = el.shadowRoot!.querySelector('page-project') as any;
+    vi.spyOn(pageEl, 'hasUnsavedProjectChanges').mockReturnValue(true);
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    el.shadowRoot!.querySelector('.layout')!.dispatchEvent(new CustomEvent('navigate', {
+      detail: { projectId: 'p2' }, bubbles: true,
+    }));
+    await el.updateComplete;
+    expect((el as any)._route.projectId).toBe('p1');
+  });
+
+  it('blocks navigation away from project via groupId when unsaved edits and user cancels', async () => {
+    await setupLoggedIn();
+    vi.mocked(api.get).mockImplementation((url: string) => {
+      if (url === '/projects/p1') return Promise.resolve({ id: 'p1', name: 'Test', color: '#6366f1', group_id: null });
+      if (url.includes('/tasks')) return Promise.resolve([]);
+      return Promise.resolve([]);
+    });
+    el.shadowRoot!.querySelector('.layout')!.dispatchEvent(new CustomEvent('navigate', {
+      detail: { projectId: 'p1' }, bubbles: true,
+    }));
+    await flushPromises();
+    await el.updateComplete;
+    const pageEl = el.shadowRoot!.querySelector('page-project') as any;
+    vi.spyOn(pageEl, 'hasUnsavedProjectChanges').mockReturnValue(true);
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    el.shadowRoot!.querySelector('.layout')!.dispatchEvent(new CustomEvent('navigate', {
+      detail: { groupId: 'g1' }, bubbles: true,
+    }));
+    await el.updateComplete;
+    expect((el as any)._route.type).toBe('project');
+  });
+
+  it('blocks navigation to todo when on project with unsaved edits and user cancels', async () => {
+    await setupLoggedIn();
+    vi.mocked(api.get).mockImplementation((url: string) => {
+      if (url === '/projects/p1') return Promise.resolve({ id: 'p1', name: 'Test', color: '#6366f1', group_id: null });
+      if (url.includes('/tasks')) return Promise.resolve([]);
+      return Promise.resolve([]);
+    });
+    el.shadowRoot!.querySelector('.layout')!.dispatchEvent(new CustomEvent('navigate', {
+      detail: { projectId: 'p1' }, bubbles: true,
+    }));
+    await flushPromises();
+    await el.updateComplete;
+    const pageEl = el.shadowRoot!.querySelector('page-project') as any;
+    vi.spyOn(pageEl, 'hasUnsavedProjectChanges').mockReturnValue(true);
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    el.shadowRoot!.querySelector('.layout')!.dispatchEvent(new CustomEvent('navigate', {
+      detail: { page: 'todo' }, bubbles: true,
+    }));
+    await el.updateComplete;
+    expect((el as any)._route.type).toBe('project');
+  });
+
+  it('allows project switch when unsaved edits and user confirms', async () => {
+    await setupLoggedIn();
+    vi.mocked(api.get).mockImplementation((url: string) => {
+      if (url === '/projects/p1' || url === '/projects/p2') return Promise.resolve({ id: url.slice(-2), name: 'Test', color: '#6366f1', group_id: null });
+      if (url.includes('/tasks')) return Promise.resolve([]);
+      return Promise.resolve([]);
+    });
+    el.shadowRoot!.querySelector('.layout')!.dispatchEvent(new CustomEvent('navigate', {
+      detail: { projectId: 'p1' }, bubbles: true,
+    }));
+    await flushPromises();
+    await el.updateComplete;
+    const pageEl = el.shadowRoot!.querySelector('page-project') as any;
+    vi.spyOn(pageEl, 'hasUnsavedProjectChanges').mockReturnValue(true);
+    const discardSpy = vi.spyOn(pageEl, 'discardProjectEdit').mockImplementation(() => {});
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    el.shadowRoot!.querySelector('.layout')!.dispatchEvent(new CustomEvent('navigate', {
+      detail: { projectId: 'p2' }, bubbles: true,
+    }));
+    await el.updateComplete;
+    expect((el as any)._route.projectId).toBe('p2');
+    expect(discardSpy).toHaveBeenCalled();
+  });
 });

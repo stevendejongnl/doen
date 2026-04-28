@@ -774,6 +774,17 @@ describe('page-project', () => {
     expect(vi.mocked(api.post)).not.toHaveBeenCalled();
   });
 
+  it('updated resets edit state but does not call _load when projectId changes to empty', async () => {
+    await setup();
+    (el as any)._editing = true;
+    (el as any)._editName = 'Changed';
+    vi.mocked(api.get).mockClear();
+    el.projectId = '';
+    await el.updateComplete;
+    expect((el as any)._editing).toBe(false);
+    expect(vi.mocked(api.get)).not.toHaveBeenCalled();
+  });
+
   it('does not call _load on connect when projectId is empty', async () => {
     vi.mocked(getMe).mockResolvedValue(me);
     vi.mocked(api.get).mockResolvedValue([]);
@@ -819,5 +830,86 @@ describe('page-project', () => {
     await (el as any)._handleInboxAction(offer, true);
     await flushPromises();
     expect(vi.mocked(api.post)).toHaveBeenCalled();
+  });
+
+  it('discardProjectEdit resets all edit state', async () => {
+    await setup();
+    (el as any)._editing = true;
+    (el as any)._editName = 'Changed';
+    (el as any)._editColor = '#ff0000';
+    (el as any)._editOffersEnabled = false;
+    el.discardProjectEdit();
+    expect((el as any)._editing).toBe(false);
+    expect((el as any)._editName).toBe('');
+    expect((el as any)._editColor).toBe('');
+    expect((el as any)._editOffersEnabled).toBe(true);
+  });
+
+  it('hasUnsavedProjectChanges returns false when not editing', async () => {
+    await setup();
+    (el as any)._editing = false;
+    expect(el.hasUnsavedProjectChanges()).toBe(false);
+  });
+
+  it('hasUnsavedProjectChanges returns false when project is null', async () => {
+    await setup();
+    (el as any)._editing = true;
+    (el as any)._project = null;
+    expect(el.hasUnsavedProjectChanges()).toBe(false);
+  });
+
+  it('hasUnsavedProjectChanges returns false when nothing changed', async () => {
+    await setup();
+    (el as any)._editing = true;
+    (el as any)._editName = project.name;
+    (el as any)._editColor = project.color;
+    (el as any)._editOffersEnabled = project.offers_enabled ?? true;
+    expect(el.hasUnsavedProjectChanges()).toBe(false);
+  });
+
+  it('hasUnsavedProjectChanges returns true when name changed', async () => {
+    await setup();
+    (el as any)._editing = true;
+    (el as any)._editName = 'Different Name';
+    (el as any)._editColor = project.color;
+    (el as any)._editOffersEnabled = project.offers_enabled ?? true;
+    expect(el.hasUnsavedProjectChanges()).toBe(true);
+  });
+
+  it('hasUnsavedProjectChanges returns true when color changed', async () => {
+    await setup();
+    (el as any)._editing = true;
+    (el as any)._editName = project.name;
+    (el as any)._editColor = '#ff0000';
+    (el as any)._editOffersEnabled = project.offers_enabled ?? true;
+    expect(el.hasUnsavedProjectChanges()).toBe(true);
+  });
+
+  it('hasUnsavedProjectChanges returns true when offers_enabled changed', async () => {
+    await setup();
+    (el as any)._editing = true;
+    (el as any)._editName = project.name;
+    (el as any)._editColor = project.color;
+    (el as any)._editOffersEnabled = !(project.offers_enabled ?? true);
+    expect(el.hasUnsavedProjectChanges()).toBe(true);
+  });
+
+  it('hasUnsavedProjectChanges returns true when offers_enabled differs from null project value', async () => {
+    const proj = { ...project, offers_enabled: null };
+    await setup(proj as any);
+    (el as any)._editing = true;
+    (el as any)._editName = proj.name;
+    (el as any)._editColor = proj.color;
+    (el as any)._editOffersEnabled = false;
+    expect(el.hasUnsavedProjectChanges()).toBe(true);
+  });
+
+  it('hasUnsavedProjectChanges trims name before comparing', async () => {
+    await setup();
+    (el as any)._editing = true;
+    (el as any)._editName = `  ${project.name}  `;
+    (el as any)._editColor = project.color;
+    (el as any)._editOffersEnabled = project.offers_enabled ?? true;
+    expect(el.hasUnsavedProjectChanges()).toBe(false);
   });
 });
