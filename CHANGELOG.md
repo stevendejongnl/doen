@@ -1,3 +1,10 @@
+## [1.26.1](https://github.com/stevendejongnl/doen/compare/v1.26.0...v1.26.1) (2026-04-28)
+
+
+### Bug Fixes
+
+* **project:** prompt before discarding unsaved edits on project switch ([b5e6575](https://github.com/stevendejongnl/doen/commit/b5e65752dac8984e47ee4303a33765d493f855ce))
+
 # [1.26.0](https://github.com/stevendejongnl/doen/compare/v1.25.3...v1.26.0) (2026-04-27)
 
 
