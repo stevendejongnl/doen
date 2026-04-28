@@ -80,7 +80,7 @@ export class DoenApp extends LitElement {
   static styles = [...sharedStyles, css`
     :host {
       display: flex;
-      height: 100dvh;
+      height: 100%;
       overflow: hidden;
       position: relative;
       background:
@@ -88,7 +88,6 @@ export class DoenApp extends LitElement {
         radial-gradient(ellipse at 80% 20%, rgba(99, 102, 241, 0.14) 0%, transparent 50%),
         radial-gradient(ellipse at 60% 80%, rgba(16, 185, 129, 0.08) 0%, transparent 45%),
         linear-gradient(160deg, #060d1a 0%, #081020 40%, #0a1628 70%, #0d0f1f 100%);
-      background-attachment: fixed;
     }
 
     .layout { display: flex; width: 100%; height: 100%; }
@@ -118,10 +117,8 @@ export class DoenApp extends LitElement {
       flex: 1;
       overflow: hidden;
       border-radius: 16px;
-      background: rgba(255,255,255,0.03);
+      background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.07);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
       display: flex;
       flex-direction: column;
       padding: 28px;
@@ -177,7 +174,11 @@ export class DoenApp extends LitElement {
     }
 
     @media (max-width: 768px) {
-      .topbar { display: flex; }
+      .topbar {
+        display: flex;
+        padding-top: env(safe-area-inset-top, 0px);
+        height: calc(var(--topbar-height) + env(safe-area-inset-top, 0px));
+      }
 
       doen-sidebar {
         position: fixed;
@@ -193,7 +194,10 @@ export class DoenApp extends LitElement {
         transform: translateX(0);
       }
 
-      .main { padding: 8px; gap: 8px; }
+      .main {
+        padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+        gap: 8px;
+      }
       .page-wrap { padding: 16px; border-radius: 12px; }
     }
   `];
