@@ -1,3 +1,15 @@
+# [1.27.0](https://github.com/stevendejongnl/doen/compare/v1.26.1...v1.27.0) (2026-04-28)
+
+
+### Bug Fixes
+
+* **build:** use explicit class fields in PullToRefreshController for erasableSyntaxOnly compat ([ebd257e](https://github.com/stevendejongnl/doen/commit/ebd257ee82aeb7c4b84c715b3ffc77c1c4ea0fbd))
+
+
+### Features
+
+* **pwa:** pull-to-refresh on project, groups, group-settings and todo list view ([4f0f451](https://github.com/stevendejongnl/doen/commit/4f0f4519a329e94d7bfb574515c181423ef185ae))
+
 ## [1.26.1](https://github.com/stevendejongnl/doen/compare/v1.26.0...v1.26.1) (2026-04-28)
 
 
