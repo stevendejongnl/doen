@@ -1,3 +1,10 @@
+## [1.28.3](https://github.com/stevendejongnl/doen/compare/v1.28.2...v1.28.3) (2026-04-28)
+
+
+### Bug Fixes
+
+* **realtime:** full SSE reliability and missing event broadcasts ([ec56eff](https://github.com/stevendejongnl/doen/commit/ec56eff5e84de08ff93617aa920c30cfa1a404e0))
+
 ## [1.28.2](https://github.com/stevendejongnl/doen/compare/v1.28.1...v1.28.2) (2026-04-28)
 
 
