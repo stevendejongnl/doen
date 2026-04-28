@@ -13,10 +13,14 @@ export class PullToRefreshController implements ReactiveController {
   state: PullState = 'idle';
   pullDistance = 0;
 
+  private host: Host;
+  private onRefresh: () => Promise<unknown> | unknown;
   private startY = 0;
   private isTracking = false;
 
-  constructor(private host: Host, private onRefresh: () => Promise<unknown> | unknown) {
+  constructor(host: Host, onRefresh: () => Promise<unknown> | unknown) {
+    this.host = host;
+    this.onRefresh = onRefresh;
     host.addController(this);
   }
 
