@@ -385,6 +385,16 @@ describe('doen-task-form', () => {
     document.body.querySelector('doen-prompt-dialog')?.remove();
   });
 
+  it('doen:categories-changed resets cache and triggers reload', async () => {
+    await setup();
+    (el as any)._loadedCategoriesFor = 'p1';
+    const loadSpy = vi.spyOn(el as any, '_maybeLoadCategories').mockResolvedValue(undefined);
+    window.dispatchEvent(new CustomEvent('doen:categories-changed'));
+    await flushPromises();
+    expect((el as any)._loadedCategoriesFor).toBeNull();
+    expect(loadSpy).toHaveBeenCalled();
+  });
+
   it('_maybeLoadCategories error sets categories to empty array', async () => {
     await setup();
     vi.mocked(api.get).mockRejectedValue(new Error('fail'));

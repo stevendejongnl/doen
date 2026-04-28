@@ -1367,4 +1367,22 @@ describe('doen-task', () => {
     (el as any)._onEditTimeBlur({ target: fakeInput });
     expect((el as any)._editTimeOfDay).toBe('14:30');
   });
+
+  it('doen:categories-changed triggers _loadMembers when modal is open', async () => {
+    await setup();
+    (el as any)._modalOpen = true;
+    const loadSpy = vi.spyOn(el as any, '_loadMembers').mockResolvedValue(undefined);
+    window.dispatchEvent(new CustomEvent('doen:categories-changed'));
+    await flushPromises();
+    expect(loadSpy).toHaveBeenCalled();
+  });
+
+  it('doen:categories-changed does nothing when modal is closed', async () => {
+    await setup();
+    (el as any)._modalOpen = false;
+    const loadSpy = vi.spyOn(el as any, '_loadMembers').mockResolvedValue(undefined);
+    window.dispatchEvent(new CustomEvent('doen:categories-changed'));
+    await flushPromises();
+    expect(loadSpy).not.toHaveBeenCalled();
+  });
 });

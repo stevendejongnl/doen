@@ -434,6 +434,115 @@ describe('doen-app', () => {
     expect(() => (el as any)._handleSSE('unknown_event', {})).not.toThrow();
   });
 
+  it('_handleSSE category events dispatch doen:categories-changed and reload groupSettings', async () => {
+    await setupLoggedIn();
+    const dispatched: string[] = [];
+    window.addEventListener('doen:categories-changed', () => dispatched.push('fired'));
+    for (const ev of ['category_created', 'category_updated', 'category_deleted']) {
+      expect(() => (el as any)._handleSSE(ev, {})).not.toThrow();
+    }
+    expect(dispatched.length).toBe(3);
+  });
+
+  it('_handleSSE project_created reloads sidebar and groups', async () => {
+    await setupLoggedIn();
+    expect(() => (el as any)._handleSSE('project_created', { id: 'p1' })).not.toThrow();
+  });
+
+  it('_handleSSE project_updated reloads project page when id matches current route', async () => {
+    await setupLoggedIn();
+    vi.mocked(api.get).mockImplementation((url: string) => {
+      if (url === '/projects/p1') return Promise.resolve({ id: 'p1', name: 'Test', color: '#6366f1', group_id: null });
+      if (url.includes('/tasks')) return Promise.resolve([]);
+      return Promise.resolve([]);
+    });
+    el.shadowRoot!.querySelector('.layout')!.dispatchEvent(new CustomEvent('navigate', {
+      detail: { projectId: 'p1' }, bubbles: true,
+    }));
+    await flushPromises();
+    await el.updateComplete;
+    const project = el.shadowRoot!.querySelector('page-project') as any;
+    const reloadSpy = vi.spyOn(project, 'reload').mockResolvedValue(undefined);
+    (el as any)._handleSSE('project_updated', { id: 'p1' });
+    expect(reloadSpy).toHaveBeenCalled();
+  });
+
+  it('_handleSSE project_deleted does not reload project page when id does not match', async () => {
+    await setupLoggedIn();
+    vi.mocked(api.get).mockImplementation((url: string) => {
+      if (url === '/projects/p1') return Promise.resolve({ id: 'p1', name: 'Test', color: '#6366f1', group_id: null });
+      if (url.includes('/tasks')) return Promise.resolve([]);
+      return Promise.resolve([]);
+    });
+    el.shadowRoot!.querySelector('.layout')!.dispatchEvent(new CustomEvent('navigate', {
+      detail: { projectId: 'p1' }, bubbles: true,
+    }));
+    await flushPromises();
+    await el.updateComplete;
+    const project = el.shadowRoot!.querySelector('page-project') as any;
+    const reloadSpy = vi.spyOn(project, 'reload').mockResolvedValue(undefined);
+    (el as any)._handleSSE('project_deleted', { id: 'other' });
+    expect(reloadSpy).not.toHaveBeenCalled();
+  });
+
+  it('_handleSSE group_created/updated/deleted reloads sidebar and groups', async () => {
+    await setupLoggedIn();
+    expect(() => (el as any)._handleSSE('group_created', { id: 'g1' })).not.toThrow();
+    expect(() => (el as any)._handleSSE('group_updated', { id: 'g1' })).not.toThrow();
+    expect(() => (el as any)._handleSSE('group_deleted', { id: 'g1' })).not.toThrow();
+  });
+
+  it('_handleSSE group_updated reloads group-settings page when id matches', async () => {
+    await setupLoggedIn();
+    vi.mocked(api.get).mockImplementation((url: string) => {
+      if (url === '/groups/g1') return Promise.resolve({ id: 'g1', name: 'G', type: 'household' });
+      if (url === '/groups/g1/members') return Promise.resolve([]);
+      if (url.includes('/categories')) return Promise.resolve([]);
+      if (url.includes('/projects')) return Promise.resolve([]);
+      return Promise.resolve([]);
+    });
+    el.shadowRoot!.querySelector('.layout')!.dispatchEvent(new CustomEvent('navigate', {
+      detail: { page: 'group-settings', groupId: 'g1' }, bubbles: true,
+    }));
+    await flushPromises();
+    await el.updateComplete;
+    const gs = el.shadowRoot!.querySelector('page-group-settings') as any;
+    const reloadSpy = vi.spyOn(gs, 'reload').mockResolvedValue(undefined);
+    (el as any)._handleSSE('group_updated', { id: 'g1' });
+    expect(reloadSpy).toHaveBeenCalled();
+  });
+
+  it('_handleSSE group_deleted does not reload group-settings when id does not match', async () => {
+    await setupLoggedIn();
+    vi.mocked(api.get).mockImplementation((url: string) => {
+      if (url === '/groups/g1') return Promise.resolve({ id: 'g1', name: 'G', type: 'household' });
+      if (url === '/groups/g1/members') return Promise.resolve([]);
+      if (url.includes('/categories')) return Promise.resolve([]);
+      if (url.includes('/projects')) return Promise.resolve([]);
+      return Promise.resolve([]);
+    });
+    el.shadowRoot!.querySelector('.layout')!.dispatchEvent(new CustomEvent('navigate', {
+      detail: { page: 'group-settings', groupId: 'g1' }, bubbles: true,
+    }));
+    await flushPromises();
+    await el.updateComplete;
+    const gs = el.shadowRoot!.querySelector('page-group-settings') as any;
+    const reloadSpy = vi.spyOn(gs, 'reload').mockResolvedValue(undefined);
+    (el as any)._handleSSE('group_deleted', { id: 'other' });
+    expect(reloadSpy).not.toHaveBeenCalled();
+  });
+
+  it('_handleSSE group_member_added/removed does not throw', async () => {
+    await setupLoggedIn();
+    expect(() => (el as any)._handleSSE('group_member_added', { group_id: 'g1', user_id: 'u1' })).not.toThrow();
+    expect(() => (el as any)._handleSSE('group_member_removed', { group_id: 'g1', user_id: 'u1' })).not.toThrow();
+  });
+
+  it('_handleSSE heartbeat does not throw', async () => {
+    await setupLoggedIn();
+    expect(() => (el as any)._handleSSE('heartbeat', {})).not.toThrow();
+  });
+
   it('_onResetNavigate does not clear resetToken when page is not login', async () => {
     await setupLoggedOut();
     (el as any)._resetToken = 'token123';
