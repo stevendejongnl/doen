@@ -182,6 +182,10 @@ export class PageTodo extends LitElement {
     }
   }
 
+  reload() {
+    return this._loadTasks();
+  }
+
   // SSE helpers — called from doen-app
   addTask(task: Task) {
     if (!this._tasks.find(t => t.id === task.id)) {
@@ -280,7 +284,7 @@ export class PageTodo extends LitElement {
       return html`${[1, 2, 3, 4].map(() => html`<div class="sk-task"></div>`)}`;
     }
     if (this._view === 'list') {
-      return html`<doen-view-list .tasks=${this._tasks}></doen-view-list>`;
+      return html`<doen-view-list .tasks=${this._tasks} .onRefresh=${() => this.reload()}></doen-view-list>`;
     }
     if (this._view === 'kanban') {
       return html`<doen-view-kanban .tasks=${this._tasks}></doen-view-kanban>`;

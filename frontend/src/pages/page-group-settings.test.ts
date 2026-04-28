@@ -365,6 +365,17 @@ describe('page-group-settings', () => {
     expect(vi.mocked(api.delete)).not.toHaveBeenCalled();
   });
 
+  it('pull-to-refresh controller triggers _load', async () => {
+    await setup();
+    vi.mocked(api.get).mockClear();
+    const ptr = (el as any)._ptr;
+    ptr.state = 'ready';
+    (ptr as any).isTracking = true;
+    await (ptr as any)._onTouchEnd();
+    await flushPromises();
+    expect(vi.mocked(api.get)).toHaveBeenCalledWith(expect.stringContaining(`/groups/${group.id}`));
+  });
+
   it('reload() method refreshes data', async () => {
     await setup();
     vi.mocked(api.get).mockImplementation((url: string) => {

@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import { PullToRefreshController } from '../utils/pull-to-refresh';
 import type { Group, GroupMember, TaskOffer, HouseholdBalance, Category } from '../services/types';
 import { api, ApiError, purgeOffers, resetBalances, adjustBalance } from '../services/api';
 import { getMe, type Me } from '../services/auth';
@@ -53,7 +54,7 @@ export class PageGroupSettings extends LitElement {
   @state() private _deletingCategoryId = '';
 
   static styles = [...sharedStyles, css`
-    :host { display: block; overflow-y: auto; height: 100%; }
+    :host { display: block; overflow-y: auto; height: 100%; position: relative; overscroll-behavior-y: contain; }
 
     h1 { font-size: 24px; font-weight: 800; color: var(--color-text); margin-bottom: 4px; letter-spacing: -0.5px; }
     .subtitle { font-size: 13px; color: var(--color-text-muted); margin-bottom: 24px; }
@@ -252,6 +253,8 @@ export class PageGroupSettings extends LitElement {
     super.connectedCallback();
     this._load();
   }
+
+  private _ptr = new PullToRefreshController(this, () => this._load());
 
   reload() {
     this._load();
@@ -839,28 +842,28 @@ export class PageGroupSettings extends LitElement {
 
   render() {
     if (this._loading) {
-      return html`
+      return this._ptr.wrap(html`
         <button class="back-btn" @click=${this._goBack}>
           <i class="fa-solid fa-arrow-left"></i> Terug
         </button>
         <div class="sk"></div>
         <div class="sk"></div>
         <div class="sk"></div>
-      `;
+      `);
     }
 
     if (this._accessDenied || !this._group) {
-      return html`
+      return this._ptr.wrap(html`
         <button class="back-btn" @click=${this._goBack}>
           <i class="fa-solid fa-arrow-left"></i> Terug
         </button>
         <div class="empty-state">Alleen beheerders hebben toegang tot groepsbeheer.</div>
-      `;
+      `);
     }
 
     const group = this._group;
 
-    return html`
+    return this._ptr.wrap(html`
       <button class="back-btn" @click=${this._goBack}>
         <i class="fa-solid fa-arrow-left"></i> Groepen
       </button>
@@ -871,7 +874,7 @@ export class PageGroupSettings extends LitElement {
       ${group.type === 'household' ? this._renderOffersCard() : ''}
       ${group.type === 'household' ? this._renderPointsCard() : ''}
       ${this._renderCategoriesCard()}
-    `;
+    `);
   }
 }
 

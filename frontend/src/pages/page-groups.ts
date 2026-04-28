@@ -5,6 +5,7 @@ import { api, ApiError } from '../services/api';
 import { getMe, type Me } from '../services/auth';
 import { toast } from '../components/doen-toast';
 import { sharedStyles } from '../styles/shared-styles';
+import { PullToRefreshController } from '../utils/pull-to-refresh';
 import { inputValue, selectValue, checkboxChecked } from '../utils/form';
 
 @customElement('page-groups')
@@ -28,8 +29,10 @@ export class PageGroups extends LitElement {
   @state() private _editingGroupName = '';
   @state() private _savingRename = false;
 
+  private _ptr = new PullToRefreshController(this, () => this._load());
+
   static styles = [...sharedStyles, css`
-    :host { display: block; overflow-y: auto; height: 100%; }
+    :host { display: block; overflow-y: auto; height: 100%; position: relative; overscroll-behavior-y: contain; }
 
     h1 {
       font-size: 24px; font-weight: 800; color: var(--color-text);
@@ -230,6 +233,10 @@ export class PageGroups extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     this._load();
+  }
+
+  reload() {
+    return this._load();
   }
 
   private async _load() {
@@ -563,7 +570,7 @@ export class PageGroups extends LitElement {
   }
 
   render() {
-    return html`
+    return this._ptr.wrap(html`
       <h1>Groepen</h1>
       <p class="subtitle">Beheer gedeelde projecten met huisgenoten of anderen.</p>
 
@@ -657,7 +664,7 @@ export class PageGroups extends LitElement {
           </form>
         </div>
       `)}
-    `;
+    `);
   }
 }
 

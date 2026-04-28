@@ -215,6 +215,17 @@ describe('page-project', () => {
     expect(el.shadowRoot!.textContent).toContain('Reloaded');
   });
 
+  it('pull-to-refresh controller triggers _load', async () => {
+    await setup();
+    vi.mocked(api.get).mockClear();
+    const ptr = (el as any)._ptr;
+    ptr.state = 'ready';
+    (ptr as any).isTracking = true;
+    await (ptr as any)._onTouchEnd();
+    await flushPromises();
+    expect(vi.mocked(api.get)).toHaveBeenCalledWith(`/projects/${project.id}`);
+  });
+
   it('shows household panel for group projects', async () => {
     vi.mocked(getMe).mockResolvedValue(me);
     vi.mocked(api.get).mockImplementation((url: string) => {

@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import { PullToRefreshController } from '../utils/pull-to-refresh';
 import type {
   GroupMember,
   HouseholdBalance,
@@ -43,13 +44,15 @@ export class PageProject extends LitElement {
   @state() private _transferAmount = 1;
   @state() private _transferNote = '';
 
+  private _ptr = new PullToRefreshController(this, () => this._load());
+
   private static readonly COLORS = [
     '#6366f1', '#10b981', '#f59e0b', '#ef4444',
     '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16',
   ];
 
   static styles = [...sharedStyles, css`
-    :host { display: block; overflow-y: auto; height: 100%; }
+    :host { display: block; overflow-y: auto; height: 100%; position: relative; overscroll-behavior-y: contain; }
 
     .header {
       display: flex;
@@ -676,18 +679,18 @@ export class PageProject extends LitElement {
 
   render() {
     if (this._loading) {
-      return html`
+      return this._ptr.wrap(html`
         <div class="header"><div class="sk-title"></div></div>
         ${[1,2,3,4].map(() => html`<div class="sk-task"></div>`)}
-      `;
+      `);
     }
 
-    if (!this._project) return html`<div class="empty-state">Project niet gevonden.</div>`;
+    if (!this._project) return this._ptr.wrap(html`<div class="empty-state">Project niet gevonden.</div>`);
 
     const active = this._active();
     const done = this._done();
 
-    return html`
+    return this._ptr.wrap(html`
       <div class="header">
         ${this._editing ? html`
           <div class="color-dot" style="background:${this._editColor};color:${this._editColor}"></div>
@@ -901,7 +904,7 @@ export class PageProject extends LitElement {
           ${done.map(t => html`<doen-task .task=${t}></doen-task>`)}
         ` : ''}
       </div>
-    `;
+    `);
   }
 }
 

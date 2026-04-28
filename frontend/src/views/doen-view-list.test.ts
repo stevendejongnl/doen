@@ -110,6 +110,17 @@ describe('doen-view-list', () => {
     expect(el.shadowRoot!.querySelector('.empty-state')).toBeTruthy();
   });
 
+  it('onRefresh prop is called when controller triggers refresh', async () => {
+    const onRefresh = vi.fn().mockResolvedValue(undefined);
+    el = await mount<DoenViewList>('doen-view-list', { tasks: [], onRefresh });
+    await el.updateComplete;
+    const ptr = (el as any)._ptr;
+    ptr.state = 'ready';
+    (ptr as any).isTracking = true;
+    await (ptr as any)._onTouchEnd();
+    expect(onRefresh).toHaveBeenCalledOnce();
+  });
+
   it('shows overdue badge count', async () => {
     el = await mount<DoenViewList>('doen-view-list', {
       tasks: [

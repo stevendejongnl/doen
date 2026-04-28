@@ -513,6 +513,25 @@ describe('page-groups', () => {
     expect((el as any)._loading).toBe(false);
   });
 
+  it('reload() re-fetches data', async () => {
+    await setup();
+    vi.mocked(api.get).mockClear();
+    el.reload();
+    await flushPromises();
+    expect(vi.mocked(api.get)).toHaveBeenCalledWith('/groups');
+  });
+
+  it('pull-to-refresh controller triggers _load', async () => {
+    await setup();
+    vi.mocked(api.get).mockClear();
+    const ptr = (el as any)._ptr;
+    ptr.state = 'ready';
+    (ptr as any).isTracking = true;
+    await (ptr as any)._onTouchEnd();
+    await flushPromises();
+    expect(vi.mocked(api.get)).toHaveBeenCalledWith('/groups');
+  });
+
   it('_removeMember filters from empty array when group has no members entry', async () => {
     await setup();
     (el as any)._members = {};

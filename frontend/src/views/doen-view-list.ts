@@ -2,17 +2,23 @@ import { LitElement, html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import type { Task } from '../services/types';
 import { sharedStyles } from '../styles/shared-styles';
+import { PullToRefreshController } from '../utils/pull-to-refresh';
 import '../components/doen-task';
 
 @customElement('doen-view-list')
 export class DoenViewList extends LitElement {
   @property({ type: Array }) tasks: Task[] = [];
+  @property({ attribute: false }) onRefresh?: () => Promise<unknown> | unknown;
+
+  private _ptr = new PullToRefreshController(this, () => this.onRefresh?.());
 
   static styles = [...sharedStyles, css`
     :host {
       display: block;
       overflow-y: auto;
       height: 100%;
+      position: relative;
+      overscroll-behavior-y: contain;
     }
 
     .section { margin-bottom: 24px; }
@@ -86,16 +92,16 @@ export class DoenViewList extends LitElement {
     const upcoming = this._upcoming();
 
     if (!today.length && !overdue.length && !upcoming.length) {
-      return html`
+      return this._ptr.wrap(html`
         <div class="empty-state">
           <i class="fa-solid fa-circle-check"></i>
           <p>Niets te doen.</p>
           <small>Óf je bent super productief, óf je bent alles vergeten in te plannen.</small>
         </div>
-      `;
+      `);
     }
 
-    return html`
+    return this._ptr.wrap(html`
       ${overdue.length ? html`
         <div class="section">
           <div class="section-label">
@@ -129,7 +135,7 @@ export class DoenViewList extends LitElement {
           </div>
         </div>
       ` : ''}
-    `;
+    `);
   }
 }
 

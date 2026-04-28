@@ -286,6 +286,29 @@ describe('page-todo', () => {
     expect((el as any)._tasks.find((t: typeof task1) => t.id === 't2').title).toBe('Other');
   });
 
+  it('reload() re-fetches tasks', async () => {
+    await setup();
+    vi.mocked(api.get).mockClear();
+    el.reload();
+    await flushPromises();
+    expect(vi.mocked(api.get)).toHaveBeenCalledWith(expect.stringContaining('/tasks'));
+  });
+
+  it('pull-to-refresh controller on view-list triggers _loadTasks', async () => {
+    await setup();
+    (el as any)._view = 'list';
+    await el.updateComplete;
+    vi.mocked(api.get).mockClear();
+    const list = el.shadowRoot!.querySelector('doen-view-list') as any;
+    expect(list).toBeTruthy();
+    const ptr = list._ptr;
+    ptr.state = 'ready';
+    (ptr as any).isTracking = true;
+    await (ptr as any)._onTouchEnd();
+    await flushPromises();
+    expect(vi.mocked(api.get)).toHaveBeenCalledWith(expect.stringContaining('/tasks'));
+  });
+
   it('non-ApiError from _loadTasks is ignored silently', async () => {
     vi.mocked(api.get).mockImplementation((url: string) => {
       if (url.includes('/tasks')) return Promise.reject(new Error('network'));
