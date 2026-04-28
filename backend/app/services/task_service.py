@@ -169,12 +169,12 @@ class TaskService:
         time_of_day: str,
         parity: str,
         notify_on_spawn: bool,
-    ) -> RecurringRule:
+    ) -> tuple[RecurringRule, Task, list[str]]:
         task = await self.get_task(task_id)
         existing = await self._tasks.get_recurring_rule(task.id)
         if existing:
             raise ConflictError("Recurring rule already exists for this task")
-        return await self._tasks.create_recurring_rule(
+        rule = await self._tasks.create_recurring_rule(
             task_id=task_id,
             unit=unit,
             interval=interval,
@@ -184,17 +184,25 @@ class TaskService:
             parity=parity,
             notify_on_spawn=notify_on_spawn,
         )
+        member_ids = await self._member_ids_for_project(task.project_id)
+        return rule, task, member_ids
 
     async def update_recurring_rule(
         self, rule_id: str, fields: dict[str, object]
-    ) -> RecurringRule:
+    ) -> tuple[RecurringRule, Task, list[str]]:
         rule = await self._tasks.get_recurring_rule_by_id(rule_id)
         if not rule:
             raise NotFoundError("RecurringRule", rule_id)
-        return await self._tasks.update_recurring_rule(rule, fields)
+        updated = await self._tasks.update_recurring_rule(rule, fields)
+        task = await self.get_task(updated.template_task_id)
+        member_ids = await self._member_ids_for_project(task.project_id)
+        return updated, task, member_ids
 
-    async def delete_recurring_rule(self, rule_id: str) -> None:
+    async def delete_recurring_rule(self, rule_id: str) -> tuple[Task, list[str]]:
         rule = await self._tasks.get_recurring_rule_by_id(rule_id)
         if not rule:
             raise NotFoundError("RecurringRule", rule_id)
+        task = await self.get_task(rule.template_task_id)
+        member_ids = await self._member_ids_for_project(task.project_id)
         await self._tasks.delete_recurring_rule(rule)
+        return task, member_ids

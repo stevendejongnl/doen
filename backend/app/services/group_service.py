@@ -150,6 +150,9 @@ class GroupService:
         )
         return InviteResult(status="invited", user_id=None, email=invite.email)
 
+    async def list_member_ids(self, group_id: str) -> list[str]:
+        return await self._groups.list_member_ids(group_id)
+
     async def remove_member(
         self,
         group_id: str,

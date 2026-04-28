@@ -87,6 +87,11 @@ class ProjectService:
         project = await self.get_project(project_id, requesting_user_id)
         return await self._projects.archive(project)
 
+    async def member_ids_for_project(self, project: Project) -> list[str]:
+        if project.group_id:
+            return await self._groups.list_member_ids(project.group_id)
+        return [project.owner_id]
+
     async def delete_project(self, project_id: str, requesting_user_id: str) -> None:
         project = await self._projects.get_by_id(project_id)
         if not project:

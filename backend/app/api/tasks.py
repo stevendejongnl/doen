@@ -166,7 +166,7 @@ async def create_recurring_rule(
     svc: TaskService = Depends(get_task_service),
 ):
     try:
-        return await svc.create_recurring_rule(
+        rule, task, member_ids = await svc.create_recurring_rule(
             task_id=task_id,
             unit=body.unit,
             interval=body.interval,
@@ -178,6 +178,8 @@ async def create_recurring_rule(
         )
     except DoenError as exc:
         raise_http(exc)
+    await sse_bus.publish_to_group(member_ids, "task_updated", _task_payload(task))
+    return rule
 
 
 @router.patch("/recurring/{rule_id}", response_model=RecurringRuleOut)
@@ -189,9 +191,11 @@ async def update_recurring_rule(
 ):
     fields = body.model_dump(exclude_unset=True)
     try:
-        return await svc.update_recurring_rule(rule_id, fields)
+        rule, task, member_ids = await svc.update_recurring_rule(rule_id, fields)
     except DoenError as exc:
         raise_http(exc)
+    await sse_bus.publish_to_group(member_ids, "task_updated", _task_payload(task))
+    return rule
 
 
 @router.delete("/recurring/{rule_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -201,6 +205,7 @@ async def delete_recurring_rule(
     svc: TaskService = Depends(get_task_service),
 ) -> None:
     try:
-        await svc.delete_recurring_rule(rule_id)
+        task, member_ids = await svc.delete_recurring_rule(rule_id)
     except DoenError as exc:
         raise_http(exc)
+    await sse_bus.publish_to_group(member_ids, "task_updated", _task_payload(task))

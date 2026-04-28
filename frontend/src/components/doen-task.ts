@@ -652,14 +652,20 @@ export class DoenTask extends LitElement {
     if (e.key === 'Escape' && this._modalOpen) this._closeModal();
   };
 
+  private _onCategoriesChanged = () => {
+    if (this._modalOpen) void this._loadMembers();
+  };
+
   connectedCallback() {
     super.connectedCallback();
     document.addEventListener('keydown', this._onKeydown);
+    window.addEventListener('doen:categories-changed', this._onCategoriesChanged);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     document.removeEventListener('keydown', this._onKeydown);
+    window.removeEventListener('doen:categories-changed', this._onCategoriesChanged);
   }
 
   firstUpdated() {

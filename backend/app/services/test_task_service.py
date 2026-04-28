@@ -161,7 +161,7 @@ async def test_create_recurring_rule(db_session, seed_data):
     svc = _service(db_session)
 
     # When creating a rule
-    rule = await svc.create_recurring_rule(
+    rule, _task, _member_ids = await svc.create_recurring_rule(
         task_id=seed_data["todo_task"].id,
         unit="week",
         interval=1,
@@ -203,7 +203,7 @@ async def test_delete_recurring_rule(db_session, seed_data):
     await svc.delete_recurring_rule(seed_data["recurring_rule"].id)
 
     # Then it is gone — creating a new rule on the template should now succeed
-    rule = await svc.create_recurring_rule(
+    rule, _task, _member_ids = await svc.create_recurring_rule(
         task_id=seed_data["recurring_template"].id,
         unit="week",
         interval=1,

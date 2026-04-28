@@ -166,6 +166,21 @@ export class DoenTaskForm extends LitElement {
     }
   `];
 
+  private _onCategoriesChanged = () => {
+    this._loadedCategoriesFor = null;
+    void this._maybeLoadCategories();
+  };
+
+  connectedCallback() {
+    super.connectedCallback();
+    window.addEventListener('doen:categories-changed', this._onCategoriesChanged);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    window.removeEventListener('doen:categories-changed', this._onCategoriesChanged);
+  }
+
   updated(changed: Map<string, unknown>) {
     if (changed.has('project')) {
       this._maybeLoadMembers();

@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.api.deps import (
     get_current_user_optional,
     get_group_invitation_service,
+    get_group_repo,
     raise_http,
 )
 from app.api.schemas import (
@@ -13,7 +14,9 @@ from app.api.schemas import (
 )
 from app.exceptions import DoenError
 from app.models.user import User
+from app.repositories.group_repo import GroupRepository
 from app.services.group_invitation_service import GroupInvitationService
+from app.services.sse_bus import sse_bus
 
 router = APIRouter(prefix="/invitations", tags=["invitations"])
 
@@ -46,6 +49,7 @@ async def accept_invitation(
     body: InvitationAcceptRequest,
     current_user: User | None = Depends(get_current_user_optional),
     svc: GroupInvitationService = Depends(get_group_invitation_service),
+    group_repo: GroupRepository = Depends(get_group_repo),
 ) -> InvitationAcceptResponse:
     has_signup_payload = body.name is not None and body.password is not None
     try:
@@ -63,6 +67,11 @@ async def accept_invitation(
             )
     except DoenError as exc:
         raise_http(exc)
+
+    member_ids = await group_repo.list_member_ids(result.group_id)
+    await sse_bus.publish_to_group(
+        member_ids, "group_member_added", {"group_id": result.group_id, "user_id": result.user_id}
+    )
 
     tokens = None
     if result.tokens is not None:

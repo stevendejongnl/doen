@@ -2,8 +2,8 @@ import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { sharedStyles } from '../styles/shared-styles';
 import { isLoggedIn, getMe } from '../services/auth';
-import { sseConnect } from '../services/api';
-import type { User, Task } from '../services/types';
+import { sseConnect, type SSEClient } from '../services/api';
+import type { User } from '../services/types';
 import './doen-sidebar';
 import './doen-toast';
 import '../pages/page-login';
@@ -32,7 +32,7 @@ export class DoenApp extends LitElement {
   @state() private _sidebarOpen = false;
   @state() private _inviteToken: string | null = null;
   @state() private _resetToken: string | null = null;
-  private _sse: EventSource | null = null;
+  private _sse: SSEClient | null = null;
 
   private _readInviteTokenFromUrl(): string | null {
     const match = window.location.pathname.match(/^\/invite\/([^/]+)/);
@@ -225,48 +225,94 @@ export class DoenApp extends LitElement {
     super.disconnectedCallback();
     window.removeEventListener('doen:logout', this._onLogout);
     window.removeEventListener('popstate', this._onPopState);
-    this._sse?.close();
+    this._sse?.stop();
   }
 
   private _connectSSE() {
-    this._sse?.close();
-    this._sse = sseConnect((name, data) => this._handleSSE(name, data as Task));
+    this._sse?.stop();
+    this._sse = sseConnect((name, data) => this._handleSSE(name, data));
   }
 
-  private _handleSSE(event: string, task: Task) {
-    const project = (this.shadowRoot?.querySelector('page-project') as any);
-    const todo = (this.shadowRoot?.querySelector('page-todo') as any);
-    const groupSettings = (this.shadowRoot?.querySelector('page-group-settings') as any);
-    if (event === 'offer_created' || event === 'offer_updated') {
-      project?.reload?.();
-      return;
-    }
-    if (event === 'offers_purged') {
-      groupSettings?.reload?.();
-      return;
-    }
-    if (event === 'points_updated') {
-      project?.reload?.();
-      groupSettings?.reload?.();
-      return;
-    }
-    if (event === 'task_created') {
-      project?.addTask?.(task);
-      todo?.addTask?.(task);
-    } else if (event === 'task_updated' || event === 'task_completed') {
-      project?.updateTask(task);
-      todo?.updateTask?.(task);
-      project?.reload?.();
-    } else if (event === 'task_deleted') {
-      project?.removeTask((task as any).id);
-      todo?.removeTask?.((task as any).id);
-      project?.reload?.();
+  private _handleSSE(event: string, data: unknown) {
+    const root = this.shadowRoot;
+    const project = root?.querySelector('page-project') as any;
+    const todo = root?.querySelector('page-todo') as any;
+    const sidebar = root?.querySelector('doen-sidebar') as any;
+    const groups = root?.querySelector('page-groups') as any;
+    const groupSettings = root?.querySelector('page-group-settings') as any;
+
+    switch (event) {
+      case 'task_created':
+        project?.addTask?.(data);
+        todo?.addTask?.(data);
+        break;
+      case 'task_updated':
+      case 'task_completed':
+        project?.updateTask?.(data);
+        todo?.updateTask?.(data);
+        break;
+      case 'task_deleted':
+        project?.removeTask?.((data as any).id);
+        todo?.removeTask?.((data as any).id);
+        break;
+      case 'category_created':
+      case 'category_updated':
+      case 'category_deleted':
+        window.dispatchEvent(new CustomEvent('doen:categories-changed'));
+        groupSettings?.reload?.();
+        break;
+      case 'project_created':
+        sidebar?.reload?.();
+        groups?.reload?.();
+        break;
+      case 'project_updated':
+      case 'project_deleted': {
+        sidebar?.reload?.();
+        groups?.reload?.();
+        const pid = (data as any).id;
+        if (this._route.type === 'project' && this._route.projectId === pid) {
+          project?.reload?.();
+        }
+        break;
+      }
+      case 'group_created':
+      case 'group_updated':
+      case 'group_deleted': {
+        sidebar?.reload?.();
+        groups?.reload?.();
+        const gid = (data as any).id;
+        if (this._route.type === 'group-settings' && this._route.groupId === gid) {
+          groupSettings?.reload?.();
+        }
+        break;
+      }
+      case 'group_member_added':
+      case 'group_member_removed':
+        groups?.reload?.();
+        groupSettings?.reload?.();
+        project?.reload?.();
+        break;
+      case 'offer_created':
+      case 'offer_updated':
+        project?.reload?.();
+        groupSettings?.reload?.();
+        break;
+      case 'offers_purged':
+        groupSettings?.reload?.();
+        project?.reload?.();
+        break;
+      case 'points_updated':
+        project?.reload?.();
+        groupSettings?.reload?.();
+        break;
+      case 'heartbeat':
+        break;
     }
   }
 
   private _onLogout = () => {
     this._user = null;
-    this._sse?.close();
+    this._sse?.stop();
     this._sse = null;
   };
 

@@ -11,8 +11,13 @@ from app.api.schemas import (
 from app.exceptions import DoenError
 from app.models.user import User
 from app.services.group_service import GroupService
+from app.services.sse_bus import sse_bus
 
 router = APIRouter(prefix="/groups", tags=["groups"])
+
+
+def _group_payload(group: object) -> dict:
+    return GroupOut.model_validate(group).model_dump(mode="json")
 
 
 @router.get("", response_model=list[GroupOut])
@@ -29,7 +34,9 @@ async def create_group(
     current_user: User = Depends(get_current_user),
     svc: GroupService = Depends(get_group_service),
 ):
-    return await svc.create_group(body.name, body.type, current_user.id)
+    group = await svc.create_group(body.name, body.type, current_user.id)
+    await sse_bus.publish(current_user.id, "group_created", _group_payload(group))
+    return group
 
 
 @router.get("/{group_id}", response_model=GroupOut)
@@ -52,9 +59,12 @@ async def update_group(
     svc: GroupService = Depends(get_group_service),
 ):
     try:
-        return await svc.update_group(group_id, current_user.id, body.name, body.type)
+        updated = await svc.update_group(group_id, current_user.id, body.name, body.type)
     except DoenError as exc:
         raise_http(exc)
+    member_ids = await svc.list_member_ids(group_id)
+    await sse_bus.publish_to_group(member_ids, "group_updated", _group_payload(updated))
+    return updated
 
 
 @router.delete("/{group_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -64,9 +74,11 @@ async def delete_group(
     svc: GroupService = Depends(get_group_service),
 ) -> None:
     try:
+        member_ids = await svc.list_member_ids(group_id)
         await svc.delete_group(group_id, current_user.id)
     except DoenError as exc:
         raise_http(exc)
+    await sse_bus.publish_to_group(member_ids, "group_deleted", {"id": group_id})
 
 
 @router.get("/{group_id}/members", response_model=list[GroupMemberOut])
@@ -96,6 +108,11 @@ async def invite_member(
         result = await svc.invite_member(group_id, current_user.id, body.email, body.role)
     except DoenError as exc:
         raise_http(exc)
+    if result.status == "added" and result.user_id:
+        member_ids = await svc.list_member_ids(group_id)
+        await sse_bus.publish_to_group(
+            member_ids, "group_member_added", {"group_id": group_id, "user_id": result.user_id}
+        )
     return {"status": result.status, "email": result.email, "user_id": result.user_id}
 
 
@@ -107,6 +124,10 @@ async def remove_member(
     svc: GroupService = Depends(get_group_service),
 ) -> None:
     try:
+        member_ids_before = await svc.list_member_ids(group_id)
         await svc.remove_member(group_id, current_user.id, user_id)
     except DoenError as exc:
         raise_http(exc)
+    await sse_bus.publish_to_group(
+        member_ids_before, "group_member_removed", {"group_id": group_id, "user_id": user_id}
+    )

@@ -285,7 +285,12 @@ async def ha_quick_add(
     )
     session.add(task)
     await session.commit()
-    await session.refresh(task)
+    full_task = await task_repo.get_by_id(task.id)
+    member_ids = await group_repo.list_member_ids(group_id)
+    await sse_bus.publish_to_group(
+        member_ids, "task_created",
+        TaskOut.model_validate(full_task).model_dump(mode="json"),
+    )
     return {"id": task.id, "title": task.title}
 
 
@@ -325,15 +330,25 @@ async def ha_webhook(
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
 
+    project_repo = ProjectRepository(db)
+    group_repo = GroupRepository(db)
+    project = await project_repo.get_by_id(task.project_id)
+    if project and project.group_id:
+        member_ids = await group_repo.list_member_ids(project.group_id)
+    else:
+        member_ids = [user_id]
+
     if body.action == "complete":
         completed = await task_repo.complete(task)
         payload = TaskOut.model_validate(completed).model_dump(mode="json")
-        await sse_bus.publish(user_id, "task_completed", payload)
+        await sse_bus.publish_to_group(member_ids, "task_completed", payload)
         return {"result": "completed"}
 
     if body.action == "snooze":
         new_due = datetime.now(UTC) + timedelta(hours=body.snooze_hours)
-        await task_repo.update(task, {"due_date": new_due})
+        updated = await task_repo.update(task, {"due_date": new_due})
+        payload = TaskOut.model_validate(updated).model_dump(mode="json")
+        await sse_bus.publish_to_group(member_ids, "task_updated", payload)
         return {"result": "snoozed", "new_due": new_due.isoformat()}
 
     raise HTTPException(status_code=400, detail="Unknown action")

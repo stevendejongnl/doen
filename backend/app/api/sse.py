@@ -24,8 +24,7 @@ async def events(current_user: User = Depends(get_current_user_sse)) -> EventSou
                         break
                     yield message
                 except TimeoutError:
-                    # keepalive ping
-                    yield ": ping\n\n"
+                    yield "event: heartbeat\ndata: {}\n\n"
         finally:
             sse_bus.unsubscribe(current_user.id, q)
 

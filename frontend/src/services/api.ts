@@ -102,19 +102,90 @@ export function adjustBalance(
   });
 }
 
-export function sseConnect(onEvent: (name: string, data: unknown) => void): EventSource {
-  const token = localStorage.getItem('access_token');
-  const src = new EventSource(`${BASE}/events?token=${token}`);
-  const handle = (name: string) => (e: MessageEvent) => {
-    try { onEvent(name, JSON.parse(e.data)); } catch { /* skip */ }
-  };
-  for (const ev of [
-    'task_created', 'task_updated', 'task_completed', 'task_deleted',
-    'offer_created', 'offer_updated', 'offers_purged',
-    'points_updated',
-    'category_created', 'category_updated', 'category_deleted',
-  ]) {
-    src.addEventListener(ev, handle(ev) as EventListener);
+const SSE_EVENTS = [
+  'task_created', 'task_updated', 'task_completed', 'task_deleted',
+  'offer_created', 'offer_updated', 'offers_purged',
+  'points_updated',
+  'category_created', 'category_updated', 'category_deleted',
+  'project_created', 'project_updated', 'project_deleted',
+  'group_created', 'group_updated', 'group_deleted',
+  'group_member_added', 'group_member_removed',
+  'heartbeat',
+] as const;
+
+export interface SSEClient { stop(): void; }
+
+export function sseConnect(onEvent: (name: string, data: unknown) => void): SSEClient {
+  let src: EventSource | null = null;
+  let stopped = false;
+  let backoff = 1000;
+  let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  let watchdogTimer: ReturnType<typeof setInterval> | null = null;
+  let lastEvent = Date.now();
+
+  function clearReconnect() {
+    if (reconnectTimer !== null) { clearTimeout(reconnectTimer); reconnectTimer = null; }
   }
-  return src;
+
+  function open() {
+    if (stopped) return;
+    const token = localStorage.getItem('access_token');
+    const es = new EventSource(`${BASE}/events?token=${token}`);
+    src = es;
+
+    es.onopen = () => { backoff = 1000; lastEvent = Date.now(); };
+
+    es.onerror = () => {
+      es.close();
+      if (src === es) src = null;
+      if (stopped) return;
+      const jitter = backoff * 0.2 * (Math.random() * 2 - 1);
+      const delay = Math.min(backoff + jitter, 30_000);
+      backoff = Math.min(backoff * 2, 30_000);
+      reconnectTimer = setTimeout(reconnect, delay);
+    };
+
+    const handle = (name: string) => (e: MessageEvent) => {
+      lastEvent = Date.now();
+      if (name === 'heartbeat') return;
+      try { onEvent(name, JSON.parse(e.data)); } catch { /* skip */ }
+    };
+    for (const ev of SSE_EVENTS) {
+      es.addEventListener(ev, handle(ev) as EventListener);
+    }
+  }
+
+  async function reconnect() {
+    if (stopped) return;
+    await tryRefresh();
+    open();
+  }
+
+  const onVisible = () => {
+    if (document.visibilityState === 'visible' && (!src || src.readyState !== EventSource.OPEN)) {
+      clearReconnect();
+      void reconnect();
+    }
+  };
+  document.addEventListener('visibilitychange', onVisible);
+
+  watchdogTimer = setInterval(() => {
+    if (!stopped && Date.now() - lastEvent > 90_000) {
+      src?.close(); src = null;
+      clearReconnect();
+      void reconnect();
+    }
+  }, 20_000);
+
+  open();
+
+  return {
+    stop() {
+      stopped = true;
+      clearReconnect();
+      if (watchdogTimer !== null) { clearInterval(watchdogTimer); watchdogTimer = null; }
+      document.removeEventListener('visibilitychange', onVisible);
+      src?.close(); src = null;
+    },
+  };
 }
