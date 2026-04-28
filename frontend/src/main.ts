@@ -9,3 +9,7 @@ document.fonts.load('400 16px "Font Awesome 7 Free"');
 document.fonts.load('400 16px "Font Awesome 7 Brands"');
 
 registerSW({ immediate: true });
+
+navigator.serviceWorker.addEventListener('controllerchange', () => {
+  window.location.reload();
+});
