@@ -115,13 +115,13 @@ export class DoenApp extends LitElement {
 
     .page-wrap {
       flex: 1;
-      overflow: hidden;
       border-radius: 16px;
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.07);
       display: flex;
       flex-direction: column;
       padding: 28px;
+      min-height: 0;
     }
 
     /* Mobile topbar */
