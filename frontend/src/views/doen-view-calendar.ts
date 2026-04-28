@@ -2,6 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import type { Task } from '../services/types';
 import { sharedStyles } from '../styles/shared-styles';
+import { PullToRefreshController } from '../utils/pull-to-refresh';
 import '../components/doen-task';
 
 type Range = 'day' | 'week' | 'month';
@@ -37,6 +38,10 @@ export class DoenViewCalendar extends LitElement {
   @property({ type: Array }) tasks: Task[] = [];
   @property({ type: String }) range: Range = 'week';
   @property({ type: Object }) anchor: Date = new Date();
+  @property({ attribute: false }) onRefresh?: () => Promise<unknown> | unknown;
+
+  private _ptr = new PullToRefreshController(this, () => this.onRefresh?.());
+
   @state() private _openTaskId: string | null = null;
 
   static styles = [...sharedStyles, css`
@@ -45,6 +50,8 @@ export class DoenViewCalendar extends LitElement {
       flex-direction: column;
       height: 100%;
       overflow: hidden;
+      position: relative;
+      overscroll-behavior-y: contain;
     }
 
     .range-label {
@@ -377,7 +384,7 @@ export class DoenViewCalendar extends LitElement {
       ? this.tasks.find(t => t.id === this._openTaskId)
       : null;
 
-    return html`
+    return this._ptr.wrap(html`
       <div class="range-label">${this._rangeLabel()}</div>
       ${body}
       ${unscheduled.length ? html`
@@ -400,7 +407,7 @@ export class DoenViewCalendar extends LitElement {
           @task-deleted=${this._closePill}
         ></doen-task>
       ` : ''}
-    `;
+    `);
   }
 }
 

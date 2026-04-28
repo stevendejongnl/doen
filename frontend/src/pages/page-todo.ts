@@ -287,13 +287,14 @@ export class PageTodo extends LitElement {
       return html`<doen-view-list .tasks=${this._tasks} .onRefresh=${() => this.reload()}></doen-view-list>`;
     }
     if (this._view === 'kanban') {
-      return html`<doen-view-kanban .tasks=${this._tasks}></doen-view-kanban>`;
+      return html`<doen-view-kanban .tasks=${this._tasks} .onRefresh=${() => this.reload()}></doen-view-kanban>`;
     }
     return html`
       <doen-view-calendar
         .tasks=${this._tasks}
         .range=${this._range}
         .anchor=${this._anchor}
+        .onRefresh=${() => this.reload()}
       ></doen-view-calendar>
     `;
   }

@@ -9,6 +9,7 @@
 
 html, body {
   height: 100%;
+  overflow: hidden;
   background-color: #060d1a;
   background:
     radial-gradient(ellipse at 20% 50%, rgba(6, 182, 212, 0.12) 0%, transparent 55%),

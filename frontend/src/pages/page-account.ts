@@ -6,6 +6,7 @@ import { toast } from '../components/doen-toast';
 import { sharedStyles } from '../styles/shared-styles';
 import { inputValue } from '../utils/form';
 import { formatApiKeyExpiry, toEndOfDayIso } from '../utils/dates';
+import { PullToRefreshController } from '../utils/pull-to-refresh';
 
 interface ApiKey {
   id: string;
@@ -31,6 +32,8 @@ interface Me {
 export class PageAccount extends LitElement {
   @state() private _me: Me | null = null;
 
+  private _ptr = new PullToRefreshController(this, () => Promise.all([this._loadMe(), this._loadKeys()]));
+
   @state() private _currentPw = '';
   @state() private _newPw = '';
   @state() private _newPw2 = '';
@@ -46,7 +49,7 @@ export class PageAccount extends LitElement {
   @state() private _deletingAccount = false;
 
   static styles = [...sharedStyles, css`
-    :host { display: block; overflow-y: auto; height: 100%; }
+    :host { display: block; overflow-y: auto; height: 100%; position: relative; overscroll-behavior-y: contain; }
 
     h1 {
       font-size: 24px; font-weight: 800; color: var(--color-text);
@@ -260,7 +263,7 @@ export class PageAccount extends LitElement {
   }
 
   render() {
-    return html`
+    return this._ptr.wrap(html`
       <h1>Account</h1>
       <p class="subtitle">Beheer je profiel, wachtwoord en API-sleutels voor integraties.</p>
 
@@ -379,7 +382,7 @@ export class PageAccount extends LitElement {
           Account verwijderen
         </button>
       </div>
-    `;
+    `);
   }
 }
 

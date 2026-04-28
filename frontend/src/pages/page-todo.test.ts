@@ -320,4 +320,32 @@ describe('page-todo', () => {
     await el.updateComplete;
     expect((el as any)._loading).toBe(false);
   });
+
+  it('pull-to-refresh controller on kanban view triggers _loadTasks', async () => {
+    await setup();
+    (el as any)._view = 'kanban';
+    await el.updateComplete;
+    vi.mocked(api.get).mockClear();
+    const kanban = el.shadowRoot!.querySelector('doen-view-kanban') as any;
+    expect(kanban).toBeTruthy();
+    const ptr = kanban._ptr;
+    ptr.state = 'ready';
+    (ptr as any).isTracking = true;
+    await (ptr as any)._onTouchEnd();
+    await flushPromises();
+    expect(vi.mocked(api.get)).toHaveBeenCalledWith(expect.stringContaining('/tasks'));
+  });
+
+  it('pull-to-refresh controller on calendar view triggers _loadTasks', async () => {
+    await setup();
+    vi.mocked(api.get).mockClear();
+    const cal = el.shadowRoot!.querySelector('doen-view-calendar') as any;
+    expect(cal).toBeTruthy();
+    const ptr = cal._ptr;
+    ptr.state = 'ready';
+    (ptr as any).isTracking = true;
+    await (ptr as any)._onTouchEnd();
+    await flushPromises();
+    expect(vi.mocked(api.get)).toHaveBeenCalledWith(expect.stringContaining('/tasks'));
+  });
 });

@@ -208,4 +208,15 @@ describe('doen-view-calendar', () => {
     const pillTime = el.shadowRoot!.querySelector('.pill-time');
     expect(pillTime).toBeNull();
   });
+
+  it('onRefresh prop is called when controller triggers refresh', async () => {
+    const onRefresh = vi.fn().mockResolvedValue(undefined);
+    el = await mount<DoenViewCalendar>('doen-view-calendar', { tasks: [], range: 'week', anchor: now, onRefresh });
+    await el.updateComplete;
+    const ptr = (el as any)._ptr;
+    ptr.state = 'ready';
+    (ptr as any).isTracking = true;
+    await (ptr as any)._onTouchEnd();
+    expect(onRefresh).toHaveBeenCalledOnce();
+  });
 });

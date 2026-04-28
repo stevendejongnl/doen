@@ -417,4 +417,16 @@ describe('page-account', () => {
     await flushPromises();
     expect((el as any)._changingPw).toBe(false);
   });
+
+  it('pull-to-refresh controller triggers reload', async () => {
+    await setup();
+    vi.mocked(getMe).mockClear();
+    vi.mocked(api.get).mockClear();
+    const ptr = (el as any)._ptr;
+    ptr.state = 'ready';
+    (ptr as any).isTracking = true;
+    await (ptr as any)._onTouchEnd();
+    await flushPromises();
+    expect(vi.mocked(api.get)).toHaveBeenCalledWith('/auth/api-keys');
+  });
 });

@@ -4,6 +4,7 @@ import type { Task, TaskStatus } from '../services/types';
 import { api, ApiError } from '../services/api';
 import { toast } from '../components/doen-toast';
 import { sharedStyles } from '../styles/shared-styles';
+import { PullToRefreshController } from '../utils/pull-to-refresh';
 import '../components/doen-task';
 
 interface Column {
@@ -22,6 +23,10 @@ const COLUMNS: Column[] = [
 @customElement('doen-view-kanban')
 export class DoenViewKanban extends LitElement {
   @property({ type: Array }) tasks: Task[] = [];
+  @property({ attribute: false }) onRefresh?: () => Promise<unknown> | unknown;
+
+  private _ptr = new PullToRefreshController(this, () => this.onRefresh?.());
+
   @state() private _dragId: string | null = null;
   @state() private _dropCol: TaskStatus | null = null;
   @state() private _openTaskId: string | null = null;
@@ -31,6 +36,8 @@ export class DoenViewKanban extends LitElement {
       display: block;
       height: 100%;
       overflow: hidden;
+      position: relative;
+      overscroll-behavior-y: contain;
     }
 
     .board {
@@ -313,7 +320,7 @@ export class DoenViewKanban extends LitElement {
       ? this.tasks.find(t => t.id === this._openTaskId)
       : null;
 
-    return html`
+    return this._ptr.wrap(html`
       <div class="board">
         ${COLUMNS.map(col => {
           const tasks = this._byStatus(col.id);
@@ -347,7 +354,7 @@ export class DoenViewKanban extends LitElement {
           @task-deleted=${this._closeCard}
         ></doen-task>
       ` : ''}
-    `;
+    `);
   }
 }
 

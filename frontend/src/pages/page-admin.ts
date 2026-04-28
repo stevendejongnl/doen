@@ -5,10 +5,13 @@ import { api, ApiError } from '../services/api';
 import { toast } from '../components/doen-toast';
 import { sharedStyles } from '../styles/shared-styles';
 import { inputValue } from '../utils/form';
+import { PullToRefreshController } from '../utils/pull-to-refresh';
 
 @customElement('page-admin')
 export class PageAdmin extends LitElement {
   @property({ type: Object }) me!: User;
+
+  private _ptr = new PullToRefreshController(this, () => this._load());
 
   @state() private _users: User[] = [];
   @state() private _loading = true;
@@ -20,7 +23,7 @@ export class PageAdmin extends LitElement {
   @state() private _password = '';
 
   static styles = [...sharedStyles, css`
-    :host { display: block; overflow-y: auto; height: 100%; }
+    :host { display: block; overflow-y: auto; height: 100%; position: relative; overscroll-behavior-y: contain; }
 
     h1 { font-size: 24px; font-weight: 800; color: var(--color-text); margin-bottom: 4px; letter-spacing: -0.5px; }
     .subtitle { font-size: 13px; color: var(--color-text-muted); margin-bottom: 28px; }
@@ -299,7 +302,7 @@ export class PageAdmin extends LitElement {
     const filtered = this._filtered();
     const isAdmin = this.me?.is_admin;
 
-    return html`
+    return this._ptr.wrap(html`
       <h1>Gebruikers</h1>
       <p class="subtitle">Beheer accounts die toegang hebben tot Doen.</p>
 
@@ -406,7 +409,7 @@ export class PageAdmin extends LitElement {
           `}
         `}
       </div>
-    `;
+    `);
   }
 }
 

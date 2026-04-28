@@ -464,4 +464,15 @@ describe('doen-view-kanban', () => {
     expect(vi.mocked(api.put)).not.toHaveBeenCalled();
     expect(vi.mocked(api.post)).not.toHaveBeenCalled();
   });
+
+  it('onRefresh prop is called when controller triggers refresh', async () => {
+    const onRefresh = vi.fn().mockResolvedValue(undefined);
+    el = await mount<DoenViewKanban>('doen-view-kanban', { tasks: [], onRefresh });
+    await el.updateComplete;
+    const ptr = (el as any)._ptr;
+    ptr.state = 'ready';
+    (ptr as any).isTracking = true;
+    await (ptr as any)._onTouchEnd();
+    expect(onRefresh).toHaveBeenCalledOnce();
+  });
 });
