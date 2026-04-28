@@ -1,3 +1,10 @@
+## [1.28.2](https://github.com/stevendejongnl/doen/compare/v1.28.1...v1.28.2) (2026-04-28)
+
+
+### Bug Fixes
+
+* **pwa:** fix iOS white bottom and modal z-index via safe-area + backdrop-filter ([a17776c](https://github.com/stevendejongnl/doen/commit/a17776c38e69d86ff15a22e1ba4b64be4ac7b1e6))
+
 ## [1.28.1](https://github.com/stevendejongnl/doen/compare/v1.28.0...v1.28.1) (2026-04-28)
 
 
