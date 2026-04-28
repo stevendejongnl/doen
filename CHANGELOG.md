@@ -1,3 +1,10 @@
+## [1.28.4](https://github.com/stevendejongnl/doen/compare/v1.28.3...v1.28.4) (2026-04-28)
+
+
+### Bug Fixes
+
+* **pwa:** fix white safe-area bottom and modal viewport clipping on iOS ([66aa8c3](https://github.com/stevendejongnl/doen/commit/66aa8c3708bb4864e84c8719615ce7cb7b1f5553))
+
 ## [1.28.3](https://github.com/stevendejongnl/doen/compare/v1.28.2...v1.28.3) (2026-04-28)
 
 
