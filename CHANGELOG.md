@@ -1,3 +1,10 @@
+## [1.28.1](https://github.com/stevendejongnl/doen/compare/v1.28.0...v1.28.1) (2026-04-28)
+
+
+### Bug Fixes
+
+* **pwa:** reload page when new service worker takes control ([5cd9f70](https://github.com/stevendejongnl/doen/commit/5cd9f708ded0a9fc4675f3c8e645be70f8c2be1b))
+
 # [1.28.0](https://github.com/stevendejongnl/doen/compare/v1.27.0...v1.28.0) (2026-04-28)
 
 
