@@ -175,22 +175,41 @@ describe('adjustBalance', () => {
 });
 
 describe('sseConnect', () => {
+  let capturedES: any;
+  const OrigES = (globalThis as any).EventSource;
+
+  beforeEach(() => {
+    capturedES = null;
+    (globalThis as any).EventSource = class extends OrigES {
+      constructor(url: string) {
+        super(url);
+        capturedES = this;
+      }
+    };
+    (globalThis as any).EventSource.CONNECTING = OrigES.CONNECTING;
+    (globalThis as any).EventSource.OPEN = OrigES.OPEN;
+    (globalThis as any).EventSource.CLOSED = OrigES.CLOSED;
+  });
+
+  afterEach(() => {
+    (globalThis as any).EventSource = OrigES;
+  });
+
   it('creates EventSource and registers event listeners', () => {
     localStorage.setItem('access_token', 'tok');
     const received: [string, unknown][] = [];
-    const src = sseConnect((name, data) => received.push([name, data]));
-    expect(src).toBeTruthy();
-    // Emit a task_created event via MockEventSource
-    (src as any).emit('task_created', { id: 't1', title: 'Test' });
+    const client = sseConnect((name, data) => received.push([name, data]));
+    expect(capturedES).toBeTruthy();
+    capturedES.emit('task_created', { id: 't1', title: 'Test' });
     expect(received[0]).toEqual(['task_created', { id: 't1', title: 'Test' }]);
-    src.close();
+    client.stop();
   });
 
   it('silently handles malformed SSE data', () => {
-    const src = sseConnect(() => {});
+    const client = sseConnect(() => {});
     // Bad JSON should not throw
     const badEvent = new MessageEvent('task_created', { data: 'not-json{{' });
-    expect(() => (src as any).dispatchEvent(badEvent)).not.toThrow();
-    src.close();
+    expect(() => capturedES.dispatchEvent(badEvent)).not.toThrow();
+    client.stop();
   });
 });

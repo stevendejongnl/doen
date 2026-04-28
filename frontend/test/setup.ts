@@ -35,6 +35,7 @@ class MockEventSource {
   }
 
   close() { this.readyState = MockEventSource.CLOSED; }
+  stop() { this.close(); }
 
   emit(type: string, data: unknown) {
     const event = new MessageEvent(type, { data: JSON.stringify(data) });
