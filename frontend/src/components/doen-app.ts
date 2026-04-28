@@ -282,6 +282,25 @@ export class DoenApp extends LitElement {
 
   private _onNavigate(e: CustomEvent<{ projectId?: string; page?: string; groupId?: string }>) {
     const { projectId, page, groupId } = e.detail;
+
+    if (this._route.type === 'project') {
+      const isSwitchingAway =
+        (projectId && projectId !== this._route.projectId) ||
+        (!projectId && (page || groupId));
+      if (isSwitchingAway) {
+        const pageEl = this.renderRoot.querySelector('page-project') as
+          | (HTMLElement & {
+              hasUnsavedProjectChanges?: () => boolean;
+              discardProjectEdit?: () => void;
+            })
+          | null;
+        if (pageEl?.hasUnsavedProjectChanges?.()) {
+          if (!confirm('Wijzigingen verwerpen?')) return;
+          pageEl.discardProjectEdit?.();
+        }
+      }
+    }
+
     if (projectId) this._setRoute({ type: 'project', projectId });
     else if (page === 'todo') this._setRoute({ type: 'todo' });
     else if (page === 'groups') this._setRoute({ type: 'groups' });

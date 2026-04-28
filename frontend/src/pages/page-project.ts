@@ -396,7 +396,13 @@ export class PageProject extends LitElement {
   `];
 
   updated(changed: Map<string, unknown>) {
-    if (changed.has('projectId') && this.projectId) this._load();
+    if (changed.has('projectId') && changed.get('projectId') !== this.projectId) {
+      this._editing = false;
+      this._editName = '';
+      this._editColor = '';
+      this._editOffersEnabled = true;
+      if (this.projectId) this._load();
+    }
   }
 
   connectedCallback() {
@@ -552,6 +558,22 @@ export class PageProject extends LitElement {
 
   private _cancelEdit() {
     this._editing = false;
+  }
+
+  discardProjectEdit() {
+    this._editing = false;
+    this._editName = '';
+    this._editColor = '';
+    this._editOffersEnabled = true;
+  }
+
+  hasUnsavedProjectChanges(): boolean {
+    if (!this._editing || !this._project) return false;
+    return (
+      this._editName.trim() !== this._project.name ||
+      this._editColor !== this._project.color ||
+      this._editOffersEnabled !== (this._project.offers_enabled ?? true)
+    );
   }
 
   private _onEditNameInput = (e: Event) => { this._editName = inputValue(e); };
